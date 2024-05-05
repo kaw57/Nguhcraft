@@ -2,6 +2,7 @@ plugins {
     id 'fabric-loom' version '1.6-SNAPSHOT'
     id 'maven-publish'
     id 'org.jetbrains.kotlin.jvm'
+    id 'org.jetbrains.kotlin.plugin.serialization' version '1.9.23'
 }
 
 version = project.mod_version
@@ -31,6 +32,7 @@ dependencies {
 
     // Kotlin
     modImplementation "net.fabricmc:fabric-language-kotlin:1.10.19+kotlin.1.9.23"
+    implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0'
 
     // Discord API
     implementation "net.dv8tion:JDA:5.0.0-beta.21"

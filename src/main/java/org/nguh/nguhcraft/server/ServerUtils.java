@@ -26,7 +26,7 @@ public class ServerUtils {
     }
 
     public static void UpdatePlayerName(ServerPlayerEntity SP) {
-        var S = MinecraftServer.getServer();
+/*        var S = MinecraftServer.getServer();
         var SB = S.getScoreboard();
         var UUID = SP.getStringUUID();
         if (SP.isLinked()) {
@@ -77,6 +77,6 @@ public class ServerUtils {
                     ClientboundPlayerInfoUpdatePacket.Action.UPDATE_DISPLAY_NAME,
                     SP
             ));
-        }
+        }*/
     }
 }

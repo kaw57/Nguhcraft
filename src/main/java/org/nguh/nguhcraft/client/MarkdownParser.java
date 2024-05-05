@@ -3,10 +3,10 @@ package org.nguh.nguhcraft.client;
 import com.mojang.logging.LogUtils;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.ChatFormatting;
-import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.network.chat.Component;
-import org.apache.commons.lang.StringUtils;
+import net.minecraft.text.MutableText;
+import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -26,9 +26,9 @@ public final class MarkdownParser {
     static private sealed class Node permits Emph, Span { }
     static private final class Emph extends Node {
         LinkedList<Node> Children = new LinkedList<>();
-        ChatFormatting S;
+        Formatting S;
 
-        Emph(ChatFormatting S) { this.S = S; }
+        Emph(Formatting S) { this.S = S; }
     }
 
     static private final class Span extends Node {
@@ -80,14 +80,14 @@ public final class MarkdownParser {
     private final ArrayList<Node> Nodes = new ArrayList<>();
 
     /** Render a Markdown string into a Component. */
-    static public MutableComponent Render(String MD) {
+    static public MutableText Render(String MD) {
         try {
             final var P = new MarkdownParser(MD);
             return P.RenderNodes(P.Nodes);
         } catch (final Exception E) {
             LOGGER.error("Error rendering markdown: {}", MD);
             E.printStackTrace();
-            return Component.literal(MD);
+            return Text.literal(MD);
         }
     }
 
@@ -150,12 +150,12 @@ public final class MarkdownParser {
      * @param Strong Whether the delimiter run contains 2 or more delimiters.
      * @return The style that corresponds to a delimiter
      */
-    private ChatFormatting DelimiterStyle(final char Kind, final boolean Strong) {
+    private Formatting DelimiterStyle(final char Kind, final boolean Strong) {
         return switch (Kind) {
-            case '*' -> Strong ? ChatFormatting.BOLD : ChatFormatting.ITALIC;
-            case '_' -> Strong ? ChatFormatting.UNDERLINE : ChatFormatting.ITALIC;
-            case '~' -> ChatFormatting.STRIKETHROUGH; // Always strong.
-            case '|' -> ChatFormatting.OBFUSCATED; // Always strong.
+            case '*' -> Strong ? Formatting.BOLD : Formatting.ITALIC;
+            case '_' -> Strong ? Formatting.UNDERLINE : Formatting.ITALIC;
+            case '~' -> Formatting.STRIKETHROUGH; // Always strong.
+            case '|' -> Formatting.OBFUSCATED; // Always strong.
             default -> throw new IllegalArgumentException("Invalid delimiter kind: " + Kind);
         };
     }
@@ -448,8 +448,8 @@ public final class MarkdownParser {
     }
 
     /** Render Markdown AST to Component. */
-    private MutableComponent RenderNodes(final List<Node> Nodes) {
-        final var C = Component.empty();
+    private MutableText RenderNodes(final List<Node> Nodes) {
+        final var C = Text.empty();
         for (final var N : Nodes) {
             if (N instanceof final Span S) C.append(Render(S));
             else if (N instanceof final Emph E) C.append(Render(E));
@@ -458,16 +458,16 @@ public final class MarkdownParser {
     }
 
     /** Render an Emph to a Component. */
-    private Component Render(final Emph E) {
-        return RenderNodes(E.Children).withStyle(E.S);
+    private Text Render(final Emph E) {
+        return RenderNodes(E.Children).formatted(E.S);
     }
 
     /** Render a Span to a Component. */
-    private Component Render(final Span S) {
+    private Text Render(final Span S) {
         // Apply normalisation to code spans.
         if (S.IsCode) {
             // First, line endings are converted to spaces.
-            var Text = MD.substring(S.Start, S.End).replace('\n', ' ');
+            var T = MD.substring(S.Start, S.End).replace('\n', ' ');
 
             // If the resulting string both begins and ends with a space character,
             // but does not consist entirely of space characters, a single space
@@ -475,25 +475,25 @@ public final class MarkdownParser {
             // code that begins or ends with backtick characters, which must be separated
             // by whitespace from the opening or closing backtick strings.
             if (
-                    Text.length() > 2 &&
-                            Text.charAt(0) == ' ' &&
-                            Text.charAt(Text.length() - 1) == ' ' &&
-                            !Text.chars().allMatch(C -> C == ' ')
-            ) Text = Text.substring(1, Text.length() - 1);
+                T.length() > 2 &&
+                T.charAt(0) == ' ' &&
+                T.charAt(T.length() - 1) == ' ' &&
+                !T.chars().allMatch(C -> C == ' ')
+            ) T = T.substring(1, T.length() - 1);
 
             // That’s all for code spans.
-            return Component.literal(Text);
+            return Text.literal(T);
         }
 
         // Regular text; process escapes.
         final var SB = new StringBuilder();
-        final var Text = MD.substring(S.Start, S.End);
+        final var T = MD.substring(S.Start, S.End);
         int Pos = 0;
         int StartOfText = 0;
         for (;;) {
-            var Backslash = Text.indexOf('\\', Pos);
-            if (Backslash == -1 || Backslash == Text.length() - 1) {
-                SB.append(Text, StartOfText, Text.length());
+            var Backslash = T.indexOf('\\', Pos);
+            if (Backslash == -1 || Backslash == T.length() - 1) {
+                SB.append(T, StartOfText, T.length());
                 break;
             }
 
@@ -501,9 +501,9 @@ public final class MarkdownParser {
             //
             // Any ASCII punctuation character may be backslash-escaped. Backslashes
             // before other characters are treated as literal backslashes.
-            final char Escaped = Text.charAt(Backslash + 1);
+            final char Escaped = T.charAt(Backslash + 1);
             if (ESCAPABLE.indexOf(Escaped) != -1) {
-                SB.append(Text, StartOfText, Backslash);
+                SB.append(T, StartOfText, Backslash);
                 SB.append(Escaped);
                 StartOfText = Backslash + 2;
             }
@@ -513,7 +513,7 @@ public final class MarkdownParser {
         }
 
         // Return the processed text.
-        return Component.literal(SB.toString());
+        return Text.literal(SB.toString());
     }
 
     /** Set the stored index in a Span to that Span’s index in the Nodes array. */
