@@ -1,0 +1,37 @@
+{
+	"schemaVersion": 1,
+	"id": "nguhcraft",
+	"version": "${version}",
+	"name": "Nguhcraft",
+	"description": "Client/server mod for the Agma Schwa Minecraft Server",
+	"authors": [
+		"Sirraide"
+	],
+	"contact": {
+		"website": "https://www.nguh.org",
+		"repo": "https://github.com/Agma-Schwa/Nguhcraftguhcraft"
+	},
+	"license": "MIT",
+	"icon": "assets/nguhcraft/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"org.nguh.nguhcraft.Nguhcraft"
+		],
+		"client": [
+			"org.nguh.nguhcraft.client.NguhcraftClient"
+		],
+		"server": [
+			"org.nguh.nguhcraft.server.NguhcraftServer"
+		]
+	},
+	"mixins": [
+		"nguhcraft.mixins.json"
+	],
+	"depends": {
+		"fabricloader": ">=${loader_version}",
+		"fabric": "*",
+		"minecraft": "${minecraft_version}",
+		"fabric-language-kotlin": ">=1.10.19+kotlin.1.9.23"
+	}
+}
