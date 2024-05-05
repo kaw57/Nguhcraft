@@ -11,9 +11,14 @@ class NguhcraftServer : DedicatedServerModInitializer {
     override fun onInitializeServer() {
         try {
             Start()
+            RegisterPacketHandlers()
         } catch (e: Exception) {
             e.printStackTrace()
             exitProcess(1)
         }
+    }
+
+    private fun RegisterPacketHandlers() {
+
     }
 }

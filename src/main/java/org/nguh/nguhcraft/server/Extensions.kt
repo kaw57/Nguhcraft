@@ -16,6 +16,6 @@ var ServerPlayerEntity.discordName: String?
 var ServerPlayerEntity.discordAvatarURL: String?
     get() = (this as NguhcraftServerPlayer).discordAvatarURL
     set(value) { (this as NguhcraftServerPlayer).discordAvatarURL = value }
-var ServerPlayerEntity.discordDisplayName: Text
+var ServerPlayerEntity.discordDisplayName: Text?
     get() = (this as NguhcraftServerPlayer).discordDisplayName
     set(value) { (this as NguhcraftServerPlayer).discordDisplayName = value }

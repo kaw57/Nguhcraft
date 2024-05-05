@@ -1,7 +1,10 @@
 package org.nguh.nguhcraft.server;
 
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.text.Text;
 
+@Environment(EnvType.SERVER)
 public interface NguhcraftServerPlayer {
     long getDiscordId();
     void setDiscordId(long id);

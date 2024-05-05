@@ -28,6 +28,7 @@ import net.dv8tion.jda.api.utils.MemberCachePolicy
 import net.dv8tion.jda.api.utils.cache.CacheFlag
 import net.fabricmc.api.EnvType
 import net.fabricmc.api.Environment
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
 import net.minecraft.server.command.ServerCommandSource
 import net.minecraft.server.network.ServerPlayerEntity
 import net.minecraft.text.ClickEvent
@@ -38,6 +39,7 @@ import org.jetbrains.annotations.Contract
 import org.nguh.nguhcraft.Colours
 import org.nguh.nguhcraft.Commands
 import org.nguh.nguhcraft.Utils
+import org.nguh.nguhcraft.packets.ClientboundLinkUpdatePacket
 import org.nguh.nguhcraft.server.ServerUtils.Server
 import org.slf4j.Logger
 import java.util.function.Consumer
@@ -46,7 +48,7 @@ import java.io.File
 import java.util.EnumSet
 
 @Environment(EnvType.SERVER)
-class Discord : ListenerAdapter() {
+internal class Discord : ListenerAdapter() {
     override fun onButtonInteraction(E: ButtonInteractionEvent) {
         if (!Ready) return
 
@@ -124,7 +126,7 @@ class Discord : ListenerAdapter() {
             var Name = E.newNickname
             if (Name == null) Name = E.member.effectiveName
             it.discordName = Name
-            ServerUtils.UpdatePlayerName(it)
+            BroadcastPlayerUpdate(it)
         }
     }
 
@@ -224,7 +226,7 @@ class Discord : ListenerAdapter() {
         @JvmStatic
         fun Start() {
             // Load the bot config.
-            val Config = Json.decodeFromString<ConfigFile>(File("config.json").readText())
+            val Config = Json.decodeFromString<ConfigFile>(File("discord-bot-config.json").readText())
             val Intents = EnumSet.allOf(GatewayIntent::class.java).also { it.add(GatewayIntent.GUILD_MEMBERS) }
             Client = JDABuilder.createDefault(Config.token)
                 .setEnabledIntents(Intents)
@@ -301,6 +303,15 @@ class Discord : ListenerAdapter() {
                 E.printStackTrace()
                 LOGGER.error("Failed to send join/quit message: {}", E.message)
             }
+        }
+
+        private fun BroadcastPlayerUpdate(SP: ServerPlayerEntity) {
+            ServerUtils.Broadcast(SP, ClientboundLinkUpdatePacket(
+                SP.uuid,
+                SP.discordColour,
+                SP.discordName!!,
+                SP.isLinked
+            ))
         }
 
         /**
@@ -426,7 +437,7 @@ class Discord : ListenerAdapter() {
                 if (Colour != SP.discordColour) {
                     Server().execute {
                         SP.discordColour = Colour
-                        ServerUtils.UpdatePlayerName(SP)
+                        BroadcastPlayerUpdate(SP)
                     }
                 }
             }
@@ -573,11 +584,10 @@ class Discord : ListenerAdapter() {
         fun Unlink(S: ServerCommandSource, SP: ServerPlayerEntity) {
             if (!Ready) return
             PerformUnlink(SP)
-            S.sendMessage(
-                Text.literal("Unlinked ")
-                    .append(SP.name)
-                    .append(" from Discord.")
-                    .formatted(Formatting.YELLOW)
+            S.sendMessage(Text.literal("Unlinked ")
+                .append(SP.name)
+                .append(" from Discord.")
+                .formatted(Formatting.YELLOW)
             )
 
             val DiscordMsg = "${SP.nameForScoreboard} is no longer linked"
@@ -614,7 +624,7 @@ class Discord : ListenerAdapter() {
             SP.discordName = DisplayName
             SP.discordColour = NameColour
             SP.discordAvatarURL = AvatarURL
-            ServerUtils.UpdatePlayerName(SP)
+            BroadcastPlayerUpdate(SP)
 
             // The 'link'/'unlink' options are only available if the player is
             // unlinked/linked, so we need to refresh the player’s commands.
@@ -635,7 +645,7 @@ class Discord : ListenerAdapter() {
          */
         fun UpdatePlayerAsync(SP: ServerPlayerEntity) {
             if (!SP.isLinked) {
-                ServerUtils.UpdatePlayerName(SP)
+                Server().execute { BroadcastPlayerUpdate(SP) }
                 return
             }
 
@@ -659,4 +669,3 @@ class Discord : ListenerAdapter() {
         }
     }
 }
-
