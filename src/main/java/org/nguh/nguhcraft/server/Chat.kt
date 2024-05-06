@@ -115,7 +115,7 @@ object Chat {
         }
 
         // Log the command to the console.
-        LOGGER.info("Player {} ran command: /{}", SP.name, Command)
+        LOGGER.info("Player {} ran command: /{}", SP.displayName!!.string, Command)
 
         // Dew it.
         val S = SP.server

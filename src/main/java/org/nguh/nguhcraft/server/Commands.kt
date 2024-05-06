@@ -149,7 +149,7 @@ object Commands {
                   Discord Name: ${PD.DiscordName}
                   Name Colour:  
                 """.trimIndent()
-            ).append(Text.literal("#%06X").withColor(PD.DiscordColour))
+            ).append(Text.literal("#${PD.DiscordColour.toString(16)}").withColor(PD.DiscordColour))
             if (AvatarURL != null) Msg.append("\n  Avatar URL:   $AvatarURL")
             S.sendMessage(Msg)
             return 1
