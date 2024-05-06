@@ -2,6 +2,7 @@ package org.nguh.nguhcraft.mixin.server;
 
 import com.llamalad7.mixinextras.sugar.Local;
 import com.mojang.authlib.GameProfile;
+import com.mojang.logging.LogUtils;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.nbt.NbtCompound;
@@ -37,7 +38,7 @@ public abstract class ServerPlayerMixin extends PlayerEntity implements Nguhcraf
     @Unique private String DiscordAvatar = "";
     @Unique private Text NguhcraftDisplayName = null;
 
-    @Shadow static private final Logger LOGGER = null;
+    @Unique static private final Logger LOGGER = LogUtils.getLogger();
 
     @Shadow public abstract void sendMessage(Text message);
 
