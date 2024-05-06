@@ -74,13 +74,14 @@ public abstract class ServerPlayerMixin extends PlayerEntity implements Nguhcraf
     @SuppressWarnings("UnreachableCode")
     @Inject(method = "readCustomDataFromNbt(Lnet/minecraft/nbt/NbtCompound;)V", at = @At("TAIL"))
     private void inject$loadData(@NotNull NbtCompound nbt, CallbackInfo ci) {
-        if (!nbt.contains(TAG_ROOT)) return;
-        nbt = nbt.getCompound(TAG_ROOT);
-        Vanished = nbt.getBoolean(TAG_VANISHED);
-        DiscordId = nbt.getLong(TAG_DISCORD_ID);
-        DiscordColour = nbt.getInt(TAG_DISCORD_COLOUR);
-        DiscordName = nbt.getString(TAG_DISCORD_NAME);
-        DiscordAvatar = nbt.getString(TAG_DISCORD_AVATAR);
+        if (nbt.contains(TAG_ROOT)) {
+            var nguh = nbt.getCompound(TAG_ROOT);
+            Vanished = nguh.getBoolean(TAG_VANISHED);
+            DiscordId = nguh.getLong(TAG_DISCORD_ID);
+            DiscordColour = nguh.getInt(TAG_DISCORD_COLOUR);
+            DiscordName = nguh.getString(TAG_DISCORD_NAME);
+            DiscordAvatar = nguh.getString(TAG_DISCORD_AVATAR);
+        }
 
         // Compute name component for early messages (e.g. join message).
         var SP = (ServerPlayerEntity) (Object) this;
