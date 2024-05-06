@@ -8,7 +8,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(MinecraftDedicatedServer.class)
-public abstract class Server {
+public abstract class DedicatedServerMixin {
     @Inject(method = "shutdown()V", at = @At("HEAD"))
     private void onShutdown(CallbackInfo CI) {
         Discord.Stop();

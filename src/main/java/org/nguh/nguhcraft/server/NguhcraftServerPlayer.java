@@ -18,8 +18,8 @@ public interface NguhcraftServerPlayer {
     String getDiscordAvatarURL();
     void setDiscordAvatarURL(String url);
 
-    Text getDiscordDisplayName();
-    void setDiscordDisplayName(Text name);
+    Text getNguhcraftDisplayName();
+    void setNguhcraftDisplayName(Text name);
 
     boolean isLinked();
 }

@@ -28,7 +28,6 @@ import net.dv8tion.jda.api.utils.MemberCachePolicy
 import net.dv8tion.jda.api.utils.cache.CacheFlag
 import net.fabricmc.api.EnvType
 import net.fabricmc.api.Environment
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
 import net.minecraft.server.command.ServerCommandSource
 import net.minecraft.server.network.ServerPlayerEntity
 import net.minecraft.text.ClickEvent
@@ -161,7 +160,7 @@ internal class Discord : ListenerAdapter() {
     }
 
     companion object {
-        private const val INVALID_ID: Long = 0
+        const val INVALID_ID: Long = 0
 
         /**
          * The '[Discord]' [Text] used in chat messages

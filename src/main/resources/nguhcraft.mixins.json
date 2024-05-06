@@ -8,8 +8,9 @@
   "client": [
   ],
   "server": [
-    "ServerPlayer",
-    "Server"
+      "DedicatedServerMixin",
+	  "ServerPlayerMixin",
+    "MinecraftServerAccessor"
   ],
   "injectors": {
     "defaultRequire": 1

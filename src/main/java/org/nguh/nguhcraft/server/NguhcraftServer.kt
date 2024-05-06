@@ -6,11 +6,13 @@ import net.fabricmc.api.Environment
 import org.nguh.nguhcraft.server.Discord.Companion.Start
 import kotlin.system.exitProcess
 
+
 @Environment(EnvType.SERVER)
 class NguhcraftServer : DedicatedServerModInitializer {
     override fun onInitializeServer() {
         try {
             Start()
+            Commands.Register()
             RegisterPacketHandlers()
         } catch (e: Exception) {
             e.printStackTrace()
@@ -18,7 +20,9 @@ class NguhcraftServer : DedicatedServerModInitializer {
         }
     }
 
-    private fun RegisterPacketHandlers() {
+    companion object {
+        private fun RegisterPacketHandlers() {
 
+        }
     }
 }
