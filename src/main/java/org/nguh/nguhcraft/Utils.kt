@@ -7,7 +7,7 @@ import java.util.*
 
 object Utils {
     /**
-     * [Component][Text] containing the text '[Link]'.
+     * [Text] containing the text '[Link]'.
      *
      *
      * Used to communicate to players that a message contains a clickable

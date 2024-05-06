@@ -10,12 +10,17 @@
 		"client.ClientPlayNetworkHandlerMixin"
 	],
 	"server": [
+		"server.CommandManagerMixin",
 		"server.DedicatedServerMixin",
+		"server.MeCommandMixin",
 		"server.MinecraftServerAccessor",
+		"server.MsgCommandMixin",
 		"server.PlayerAdvancementTrackerMixin",
 		"server.PlayerManagerMixin",
+		"server.SayCommandMixin",
 		"server.ServerPlayerMixin",
-		"server.ServerPlayNetworkHandlerMixin"
+		"server.ServerPlayNetworkHandlerMixin",
+		"server.TeamMsgCommandMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

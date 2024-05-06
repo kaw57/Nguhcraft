@@ -5,6 +5,8 @@ import com.mojang.authlib.GameProfile;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.network.message.MessageType;
+import net.minecraft.network.message.SentMessage;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
@@ -13,7 +15,10 @@ import org.jetbrains.annotations.NotNull;
 import org.nguh.nguhcraft.server.Discord;
 import org.nguh.nguhcraft.server.NguhcraftServerPlayer;
 import org.nguh.nguhcraft.server.PlayerList;
+import org.slf4j.Logger;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Overwrite;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -31,6 +36,10 @@ public abstract class ServerPlayerMixin extends PlayerEntity implements Nguhcraf
     @Unique private String DiscordName = "";
     @Unique private String DiscordAvatar = "";
     @Unique private Text NguhcraftDisplayName = null;
+
+    @Shadow static private final Logger LOGGER = null;
+
+    @Shadow public abstract void sendMessage(Text message);
 
     @Unique static private final String TAG_ROOT = "Nguhcraft";
     @Unique static private final String TAG_VANISHED = "Vanished";
@@ -110,4 +119,16 @@ public abstract class ServerPlayerMixin extends PlayerEntity implements Nguhcraf
         tag.putString(TAG_DISCORD_AVATAR, DiscordAvatar);
         nbt.put(TAG_ROOT, tag);
     }
+
+    /**
+     * Make sure we *never* send signed messages under any circumstances.
+     * <p>
+     * @author Sirraide
+     * @reason Last line of defence. This should *never* be called in the first place. If
+     *         it ever is, that means we forgot to override something else.
+     */
+     @Overwrite
+     public void sendChatMessage(@NotNull SentMessage message, boolean filterMaskEnabled, MessageType.Parameters params) {
+         LOGGER.error("Refusing to send signed message to '{}': {}", getNameForScoreboard(), message.content());
+     }
 }

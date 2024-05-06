@@ -10,6 +10,7 @@ import net.fabricmc.api.EnvType
 import net.fabricmc.api.Environment
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback
 import net.minecraft.command.argument.EntityArgumentType
+import net.minecraft.command.argument.MessageArgumentType
 import net.minecraft.server.command.CommandManager.*
 import net.minecraft.server.command.ServerCommandSource
 import net.minecraft.server.network.ServerPlayerEntity
@@ -33,7 +34,10 @@ object Commands {
 
     fun Register() {
         CommandRegistrationCallback.EVENT.register { dispatcher, _, _ ->
-            dispatcher.register(DiscordCommand())
+            dispatcher.register(DiscordCommand())              // /discord
+            val Msg = dispatcher.register(MessageCommand())    // /msg
+            dispatcher.register(literal("tell").redirect(Msg)) // /tell
+            dispatcher.register(literal("w").redirect(Msg))    // /w
         }
     }
 
@@ -262,4 +266,14 @@ object Commands {
                 )
             }
         )
+
+    private fun MessageCommand(): LiteralArgumentBuilder<ServerCommandSource> = literal("msg")
+        .then(argument("targets", EntityArgumentType.players()))
+        .then(argument("message", MessageArgumentType.message()))
+        .executes { Context ->
+            val Players = EntityArgumentType.getPlayers(Context, "targets")
+            val Message = MessageArgumentType.getMessage(Context, "message")
+            Chat.SendPrivateMessage(Context.source.player, Players, Message)
+            Players.size
+        }
 }

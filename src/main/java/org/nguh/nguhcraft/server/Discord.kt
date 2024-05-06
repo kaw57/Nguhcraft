@@ -165,16 +165,9 @@ internal class Discord : ListenerAdapter() {
         /**
          * The '[Discord]' [Text] used in chat messages
          */
-        private val DISCORD_COMPONENT: Text = Text
-            .literal("[").withColor(Colours.DeepKoamaru)
-            .append(Text.literal("Discord").withColor(Colours.Lavender))
-            .append(Text.literal("] ").withColor(Colours.DeepKoamaru))
-
-        private val REPLY_COMPONENT: Text = Text
-            .literal("[Reply] ").withColor(Colours.Lavender)
-
-        private val IMAGE_COMPONENT: Text = Text
-            .literal("[Image] ").withColor(Colours.Lavender)
+        private val DISCORD_COMPONENT: Text = Chat.BracketedLiteralComponent("Discord")
+        private val REPLY_COMPONENT: Text = Chat.BracketedLiteralComponent("Reply")
+        private val IMAGE_COMPONENT: Text = Chat.BracketedLiteralComponent("Image")
 
         private val INTERNAL_ERROR_PLEASE_RELINK: Text = Text
             .literal("Sorry, we couldn’t fetch your account info from Discord. Please relink your account")
