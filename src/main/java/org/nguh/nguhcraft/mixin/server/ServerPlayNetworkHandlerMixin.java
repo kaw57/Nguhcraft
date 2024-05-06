@@ -4,6 +4,7 @@ import net.minecraft.network.ClientConnection;
 import net.minecraft.network.packet.c2s.play.ChatCommandSignedC2SPacket;
 import net.minecraft.network.packet.c2s.play.ChatMessageC2SPacket;
 import net.minecraft.network.packet.c2s.play.CommandExecutionC2SPacket;
+import net.minecraft.network.packet.c2s.play.PlayerSessionC2SPacket;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ConnectedClientData;
 import net.minecraft.server.network.ServerCommonNetworkHandler;
@@ -65,11 +66,23 @@ public abstract class ServerPlayNetworkHandlerMixin extends ServerCommonNetworkH
      * <p>
      * We need to hijack the command handling logic a bit since an unlinked
      * player should *never* be able to execute commands.
+     *
      * @author Sirraide
      * @reason See above.
      */
-     @Overwrite
-     public void onCommandExecution(@NotNull CommandExecutionC2SPacket Packet) {
-         NetworkHandler.HandleCommand((ServerPlayNetworkHandler) (Object) this, Packet.command());
-     }
+    @Overwrite
+    public void onCommandExecution(@NotNull CommandExecutionC2SPacket Packet) {
+        NetworkHandler.HandleCommand((ServerPlayNetworkHandler) (Object) this, Packet.command());
+    }
+
+    /**
+     * Disconnect if the client tries to establish a session.
+     *
+     * @author Sirraide
+     * @reason The client is patched to never send these.
+     */
+    @Overwrite
+    public void onPlayerSession(PlayerSessionC2SPacket packet) {
+        disconnect(NEEDS_CLIENT_MOD);
+    }
 }

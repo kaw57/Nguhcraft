@@ -6,8 +6,14 @@
 	"mixins": [
 	],
 	"client": [
+		"client.ChatOptionsScreenMixin",
 		"client.ChatScreenMixin",
-		"client.ClientPlayNetworkHandlerMixin"
+		"client.ClientPlayNetworkHandlerMixin",
+		"client.MessageIndicatorMixin",
+		"client.MinecraftClientMixin",
+		"client.SocialInteractionsPlayerListEntryMixin",
+		"client.TitleScreenMixin",
+		"client.YggdrasilUserApiServiceMixin"
 	],
 	"server": [
 		"server.CommandManagerMixin",
