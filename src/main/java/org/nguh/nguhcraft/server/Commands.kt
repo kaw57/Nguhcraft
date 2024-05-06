@@ -210,7 +210,7 @@ object Commands {
             }
         )
         .then(literal("link")
-            .requires { it.entity is ServerPlayerEntity && !(it as ServerPlayerEntity).isLinked }
+            .requires { it.entity is ServerPlayerEntity && !(it.entity as ServerPlayerEntity).isLinked }
             .then(argument("id", LongArgumentType.longArg())
                 .executes {
                     DiscordCommand.TryLink(
@@ -256,7 +256,7 @@ object Commands {
                 }
             )
             .requires {
-                (it.entity is ServerPlayerEntity && (it as ServerPlayerEntity).isLinked) ||
+                (it.entity is ServerPlayerEntity && (it.entity as ServerPlayerEntity).isLinked) ||
                 it.hasPermissionLevel(4)
             }
             .executes {
