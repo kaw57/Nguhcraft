@@ -19,3 +19,6 @@ var ServerPlayerEntity.discordAvatarURL: String?
 var ServerPlayerEntity.discordDisplayName: Text?
     get() = (this as NguhcraftServerPlayer).nguhcraftDisplayName
     set(value) { (this as NguhcraftServerPlayer).nguhcraftDisplayName = value }
+
+val ServerPlayerEntity.isOperator get() = hasPermissionLevel(4)
+val ServerPlayerEntity.isLinkedOrOperator get() = isLinked || isOperator

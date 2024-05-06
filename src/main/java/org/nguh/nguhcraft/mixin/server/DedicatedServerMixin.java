@@ -1,4 +1,4 @@
-package org.nguh.nguhcraft.mixin;
+package org.nguh.nguhcraft.mixin.server;
 
 import net.minecraft.server.dedicated.MinecraftDedicatedServer;
 import org.nguh.nguhcraft.server.Discord;

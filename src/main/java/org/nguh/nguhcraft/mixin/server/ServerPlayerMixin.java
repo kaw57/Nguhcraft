@@ -1,6 +1,8 @@
-package org.nguh.nguhcraft.mixin;
+package org.nguh.nguhcraft.mixin.server;
 
+import com.llamalad7.mixinextras.sugar.Local;
 import com.mojang.authlib.GameProfile;
+import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -54,12 +56,14 @@ public abstract class ServerPlayerMixin extends PlayerEntity implements Nguhcraf
 
     @Override public boolean isLinked() { return DiscordId != 0; }
 
+    /** Get a player’s display name. Used in death messages etc. */
     @Override
     public Text getDisplayName() { return NguhcraftDisplayName; }
 
+    /** Load Nbt data from the player file. */
     @SuppressWarnings("UnreachableCode")
     @Inject(method = "readCustomDataFromNbt(Lnet/minecraft/nbt/NbtCompound;)V", at = @At("TAIL"))
-    private void loadData(@NotNull NbtCompound nbt, CallbackInfo ci) {
+    private void inject$loadData(@NotNull NbtCompound nbt, CallbackInfo ci) {
         if (!nbt.contains(TAG_ROOT)) return;
         nbt = nbt.getCompound(TAG_ROOT);
         Vanished = nbt.getBoolean(TAG_VANISHED);
@@ -76,8 +80,28 @@ public abstract class ServerPlayerMixin extends PlayerEntity implements Nguhcraf
         PlayerList.UpdateCacheEntry(SP);
     }
 
+    /**
+    * Inject code to send a death message to discord (and for custom death messages.)
+    * <p>
+    * The intended injection point for this mixin is directly before the death message
+    * packet is broadcast; this is mainly so we only forward the death message if it is
+    * sent in the first place and so we get the right death message.
+    */
+    @Inject(
+        method = "onDeath(Lnet/minecraft/entity/damage/DamageSource;)V",
+        at = @At(
+            value = "INVOKE",
+            target = "net/minecraft/server/network/ServerPlayNetworkHandler.send (Lnet/minecraft/network/packet/Packet;Lnet/minecraft/network/PacketCallbacks;)V",
+            ordinal = 0
+        )
+    )
+    private void inject$onDeath(DamageSource Source, CallbackInfo CI, @Local Text DeathMessage) {
+        Discord.BroadcastDeathMessage((ServerPlayerEntity) (Object) this, DeathMessage);
+    }
+
+    /** Save Nbt data to the player file. */
     @Inject(method = "writeCustomDataToNbt(Lnet/minecraft/nbt/NbtCompound;)V", at = @At("TAIL"))
-    private void saveData(@NotNull NbtCompound nbt, CallbackInfo ci) {
+    private void inject$saveData(@NotNull NbtCompound nbt, CallbackInfo ci) {
         var tag = new NbtCompound();
         tag.putBoolean(TAG_VANISHED, Vanished);
         tag.putLong(TAG_DISCORD_ID, DiscordId);

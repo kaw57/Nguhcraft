@@ -10,7 +10,7 @@ import net.minecraft.server.network.ServerPlayerEntity
 import net.minecraft.util.WorldSavePath
 import org.nguh.nguhcraft.Colours
 import org.nguh.nguhcraft.Utils.Normalised
-import org.nguh.nguhcraft.mixin.MinecraftServerAccessor
+import org.nguh.nguhcraft.mixin.server.MinecraftServerAccessor
 import org.nguh.nguhcraft.server.ServerUtils.Server
 import java.io.File
 import java.util.*

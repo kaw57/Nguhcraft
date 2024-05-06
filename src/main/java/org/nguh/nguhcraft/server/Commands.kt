@@ -6,6 +6,8 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder
 import com.mojang.brigadier.exceptions.CommandSyntaxException
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType
 import com.mojang.logging.LogUtils
+import net.fabricmc.api.EnvType
+import net.fabricmc.api.Environment
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback
 import net.minecraft.command.argument.EntityArgumentType
 import net.minecraft.server.command.CommandManager.*
@@ -22,7 +24,7 @@ import org.slf4j.Logger
 import java.util.*
 import java.util.regex.PatternSyntaxException
 
-
+@Environment(EnvType.SERVER)
 object Commands {
     private val LOGGER: Logger = LogUtils.getLogger()
 

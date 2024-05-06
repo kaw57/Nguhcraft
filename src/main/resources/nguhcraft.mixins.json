@@ -1,18 +1,23 @@
 {
-  "required": true,
-  "minVersion": "0.8",
-  "package": "org.nguh.nguhcraft.mixin",
-  "compatibilityLevel": "JAVA_21",
-  "mixins": [
-  ],
-  "client": [
-  ],
-  "server": [
-      "DedicatedServerMixin",
-	  "ServerPlayerMixin",
-    "MinecraftServerAccessor"
-  ],
-  "injectors": {
-    "defaultRequire": 1
-  }
+	"required": true,
+	"minVersion": "0.8",
+	"package": "org.nguh.nguhcraft.mixin",
+	"compatibilityLevel": "JAVA_21",
+	"mixins": [
+	],
+	"client": [
+		"client.ChatScreenMixin",
+		"client.ClientPlayNetworkHandlerMixin"
+	],
+	"server": [
+		"server.DedicatedServerMixin",
+		"server.MinecraftServerAccessor",
+		"server.PlayerAdvancementTrackerMixin",
+		"server.PlayerManagerMixin",
+		"server.ServerPlayerMixin",
+		"server.ServerPlayNetworkHandlerMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	}
 }

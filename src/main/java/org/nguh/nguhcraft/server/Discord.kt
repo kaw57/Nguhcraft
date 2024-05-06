@@ -256,6 +256,7 @@ internal class Discord : ListenerAdapter() {
             Client.shutdown()
         }
 
+        @JvmStatic
         fun BroadcastAdvancement(SP: ServerPlayerEntity?, AdvancementMessage: Text) {
             if (!Ready) return
             try {
@@ -267,6 +268,7 @@ internal class Discord : ListenerAdapter() {
             }
         }
 
+        @JvmStatic
         fun BroadcastDeathMessage(SP: ServerPlayerEntity, DeathMessage: Text) {
             if (!Ready) return
 
@@ -291,6 +293,7 @@ internal class Discord : ListenerAdapter() {
             }
         }
 
+        @JvmStatic
         fun BroadcastJoinQuitMessage(SP: ServerPlayerEntity, Joined: Boolean) {
             if (!Ready) return
             try {
