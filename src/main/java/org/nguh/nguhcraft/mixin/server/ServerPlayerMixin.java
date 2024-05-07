@@ -43,13 +43,6 @@ public abstract class ServerPlayerMixin extends PlayerEntity implements Nguhcraf
 
     @Shadow public abstract void sendMessage(Text message);
 
-    @Unique static private final String TAG_ROOT = "Nguhcraft";
-    @Unique static private final String TAG_VANISHED = "Vanished";
-    @Unique static private final String TAG_DISCORD_ID = "DiscordID";
-    @Unique static private final String TAG_DISCORD_COLOUR = "DiscordRoleColour";
-    @Unique static private final String TAG_DISCORD_NAME = "DiscordName";
-    @Unique static private final String TAG_DISCORD_AVATAR = "DiscordAvatar";
-
     @Override public boolean getVanished() { return Vanished; }
     @Override public void setVanished(boolean vanished) { Vanished = vanished; }
 
@@ -145,6 +138,7 @@ public abstract class ServerPlayerMixin extends PlayerEntity implements Nguhcraf
         tag.putInt(TAG_DISCORD_COLOUR, DiscordColour);
         tag.putString(TAG_DISCORD_NAME, DiscordName);
         tag.putString(TAG_DISCORD_AVATAR, DiscordAvatar);
+        tag.putString(TAG_LAST_KNOWN_NAME, getNameForScoreboard());
         nbt.put(TAG_ROOT, tag);
     }
 

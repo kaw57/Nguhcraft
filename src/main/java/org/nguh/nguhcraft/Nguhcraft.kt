@@ -16,13 +16,15 @@ import org.nguh.nguhcraft.packets.ServerboundChatPacket
 //     - [ ] Saturation
 //     - [ ] Smelting
 //     - [ ] Channeling II
-//   - [ ] Render enchantment levels properly
-//   - [ ] Patch enchant command to ignore restrictions
+//   - [x] Render enchantment levels properly
+//   - [x] Patch enchant command to ignore restrictions
 //   - [ ] Prevent players from leaving the border
 //   - [ ] Make Multishot apply to bows (should already work in latest snapshot?)
 //   - [ ] Machine gun Ghasts
 //   - [ ] Import Saved Lore as Lore
 // - [ ] 2. TBA
+// - [ ] Extras
+//   - [ ] Increase chat message history and scrollback size (to like 10000)
 
 class Nguhcraft : ModInitializer {
     override fun onInitialize() {

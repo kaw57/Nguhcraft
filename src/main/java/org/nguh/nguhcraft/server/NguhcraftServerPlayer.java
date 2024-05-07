@@ -8,6 +8,14 @@ import org.jetbrains.annotations.NotNull;
 
 @Environment(EnvType.SERVER)
 public interface NguhcraftServerPlayer {
+    String TAG_ROOT = "Nguhcraft";
+    String TAG_LAST_KNOWN_NAME = "LastKnownMinecraftName";
+    String TAG_VANISHED = "Vanished";
+    String TAG_DISCORD_ID = "DiscordID";
+    String TAG_DISCORD_COLOUR = "DiscordRoleColour";
+    String TAG_DISCORD_NAME = "DiscordName";
+    String TAG_DISCORD_AVATAR = "DiscordAvatar";
+
     boolean getVanished();
     void setVanished(boolean vanished);
 
