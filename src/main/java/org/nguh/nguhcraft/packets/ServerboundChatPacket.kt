@@ -1,7 +1,8 @@
 package org.nguh.nguhcraft.packets
 
-import net.minecraft.network.PacketByteBuf
+import io.netty.buffer.ByteBuf
 import net.minecraft.network.codec.PacketCodec
+import net.minecraft.network.codec.PacketCodecs
 import net.minecraft.network.packet.CustomPayload
 
 /**
@@ -14,18 +15,13 @@ data class ServerboundChatPacket(
     var Message: String
 ) : CustomPayload {
     override fun getId() = ID
-
-    private constructor(buf: PacketByteBuf) : this(buf.readString())
-    private fun write(buf: PacketByteBuf) { buf.writeString(Message) }
-
     companion object {
         @JvmField
         val ID: CustomPayload.Id<ServerboundChatPacket>
             = CustomPayload.id("nguhcraft:serverbound/packet_chat")
 
         @JvmField
-        val CODEC: PacketCodec<PacketByteBuf, ServerboundChatPacket> = PacketCodec.of(
-            { obj: ServerboundChatPacket, buf: PacketByteBuf -> obj.write(buf) },
-            { buf: PacketByteBuf -> ServerboundChatPacket(buf) })
+        val CODEC: PacketCodec<ByteBuf, ServerboundChatPacket>
+            = PacketCodecs.STRING.xmap(::ServerboundChatPacket, ServerboundChatPacket::Message)
     }
 }

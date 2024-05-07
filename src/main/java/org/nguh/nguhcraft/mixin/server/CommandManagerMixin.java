@@ -25,7 +25,6 @@ public abstract class CommandManagerMixin {
         .executes(context -> 0) // Dummy. Never executed.
         .build();
 
-
     /**
     * Hijack the command tree sending code to only send '/discord link'
     * if the player is not linked and not an operator.

@@ -12,12 +12,15 @@ import org.nguh.nguhcraft.client.ClientUtils.Client
 import org.nguh.nguhcraft.packets.ClientboundChatPacket
 import org.nguh.nguhcraft.packets.ClientboundLinkUpdatePacket
 
+/** This runs on the network thread. */
 @Environment(EnvType.CLIENT)
 object NetworkHandler {
     /** Coloured components used in chat messages. */
     private val ARROW_COMPONENT: Text = Text.literal(" → ").withColor(Colours.DeepKoamaru)
     private val ME_COMPONENT = Text.literal("me").withColor(Colours.Lavender)
     private val SPACE_COMPONENT = Text.literal(" ")
+
+    private fun Execute(CB: () -> Unit) = Client().execute(CB)
 
     /** Incoming chat message. */
     fun HandleChatPacket(Packet: ClientboundChatPacket) {
@@ -54,20 +57,31 @@ object NetworkHandler {
                 .append(Message)
         }
 
-        Client().messageHandler.onGameMessage(Message, false)
+        Execute { Client().messageHandler.onGameMessage(Message, false) }
     }
 
     /** Notification to update a player’s Discord name. */
     fun HandleLinkUpdatePacket(Packet: ClientboundLinkUpdatePacket) {
         val C = Client()
         val NW = C.networkHandler ?: return
-        C.execute {
+        Execute {
             NW.playerList.firstOrNull { it.profile.id == Packet.PlayerId }?.let {
-                // The player list also shows the Minecraft name.
-                it.displayName = if (!Packet.Linked) Text.literal(Packet.MinecraftName).formatted(Formatting.GRAY)
-                else Text.literal(Packet.DiscordName).withColor(Packet.DiscordColour)
-                    .append(Text.literal(" "))
-                    .append(Utils.BracketedLiteralComponent(Packet.MinecraftName, false))
+                it as NguhcraftClientPlayerListEntry
+
+                // Player is not linked.
+                if (!Packet.Linked) {
+                    it.nameAboveHead = Text.literal(Packet.MinecraftName)
+                    it.displayName = Text.literal(Packet.MinecraftName).formatted(Formatting.GRAY)
+                }
+
+                // If the player is linked, the player list shows the Minecraft name as well.
+                else {
+                    val DiscordName = Text.literal(Packet.DiscordName).withColor(Packet.DiscordColour)
+                    it.nameAboveHead = DiscordName
+                    it.displayName = DiscordName.copy()
+                        .append(Text.literal(" "))
+                        .append(Utils.BracketedLiteralComponent(Packet.MinecraftName, false))
+                }
             }
         }
     }

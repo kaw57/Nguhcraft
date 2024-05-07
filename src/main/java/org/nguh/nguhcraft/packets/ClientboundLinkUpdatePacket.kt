@@ -2,7 +2,7 @@ package org.nguh.nguhcraft.packets
 
 import net.fabricmc.api.EnvType
 import net.fabricmc.api.Environment
-import net.minecraft.network.PacketByteBuf
+import net.minecraft.network.RegistryByteBuf
 import net.minecraft.network.codec.PacketCodec
 import net.minecraft.network.packet.CustomPayload
 import net.minecraft.server.network.ServerPlayerEntity
@@ -29,7 +29,7 @@ data class ClientboundLinkUpdatePacket(
 ) : CustomPayload {
     override fun getId() = ID
 
-    private constructor(buf: PacketByteBuf) : this(
+    private constructor(buf: RegistryByteBuf) : this(
         buf.readUuid(),
         buf.readString(),
         buf.readInt(),
@@ -46,7 +46,7 @@ data class ClientboundLinkUpdatePacket(
         SP.isLinked
     )
 
-    private fun write(buf: PacketByteBuf) {
+    private fun write(buf: RegistryByteBuf) {
         buf.writeUuid(PlayerId)
         buf.writeString(MinecraftName)
         buf.writeInt(DiscordColour)
@@ -60,8 +60,8 @@ data class ClientboundLinkUpdatePacket(
             = CustomPayload.id("nguhcraft:clientbound/packet_link_update")
 
         @JvmField
-        val CODEC: PacketCodec<PacketByteBuf, ClientboundLinkUpdatePacket> = PacketCodec.of(
-            { obj: ClientboundLinkUpdatePacket, buf: PacketByteBuf -> obj.write(buf) },
-            { buf: PacketByteBuf -> ClientboundLinkUpdatePacket(buf) })
+        val CODEC: PacketCodec<RegistryByteBuf, ClientboundLinkUpdatePacket> = PacketCodec.of(
+            { obj: ClientboundLinkUpdatePacket, buf: RegistryByteBuf -> obj.write(buf) },
+            { buf: RegistryByteBuf -> ClientboundLinkUpdatePacket(buf) })
     }
 }
