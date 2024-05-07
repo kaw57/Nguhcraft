@@ -21,7 +21,7 @@ data class ServerboundChatPacket(
     companion object {
         @JvmField
         val ID: CustomPayload.Id<ServerboundChatPacket>
-            = CustomPayload.id("nguhcraft:packet_chat")
+            = CustomPayload.id("nguhcraft:serverbound/packet_chat")
 
         @JvmField
         val CODEC: PacketCodec<PacketByteBuf, ServerboundChatPacket> = PacketCodec.of(

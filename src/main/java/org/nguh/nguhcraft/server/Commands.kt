@@ -36,6 +36,7 @@ object Commands {
         CommandRegistrationCallback.EVENT.register { dispatcher, _, _ ->
             dispatcher.register(DiscordCommand())              // /discord
             val Msg = dispatcher.register(MessageCommand())    // /msg
+            dispatcher.register(SayCommand())                  // /say
             dispatcher.register(literal("tell").redirect(Msg)) // /tell
             dispatcher.register(literal("w").redirect(Msg))    // /w
         }
@@ -276,11 +277,11 @@ object Commands {
 
     private fun MessageCommand(): LiteralArgumentBuilder<ServerCommandSource> = literal("msg")
         .then(argument("targets", EntityArgumentType.players())
-            .then(argument("message", MessageArgumentType.message())
-                .executes { Context ->
-                    val Players = EntityArgumentType.getPlayers(Context, "targets")
-                    val Message = MessageArgumentType.getMessage(Context, "message")
-                    Chat.SendPrivateMessage(Context.source.player, Players, Message)
+            .then(argument("message", StringArgumentType.greedyString())
+                .executes {
+                    val Players = EntityArgumentType.getPlayers(it, "targets")
+                    val Message = StringArgumentType.getString(it, "message")
+                    Chat.SendPrivateMessage(it.source.player, Players, Message)
                     Players.size
                 }
             )

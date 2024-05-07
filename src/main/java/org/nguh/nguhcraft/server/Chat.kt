@@ -3,6 +3,7 @@ package org.nguh.nguhcraft.server
 import net.fabricmc.api.EnvType
 import net.fabricmc.api.Environment
 import com.mojang.logging.LogUtils
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.Context
 import net.minecraft.network.message.ChatVisibility
 import net.minecraft.network.packet.s2c.play.GameMessageS2CPacket
@@ -13,9 +14,9 @@ import net.minecraft.util.Formatting
 import net.minecraft.util.StringHelper
 import org.nguh.nguhcraft.Colours
 import org.nguh.nguhcraft.Utils
-import org.nguh.nguhcraft.Utils.LBRACK_COMPONENT
-import org.nguh.nguhcraft.Utils.RBRACK_COMPONENT
-import org.nguh.nguhcraft.server.ServerUtils.Server
+import org.nguh.nguhcraft.packets.ClientboundChatPacket
+import org.nguh.nguhcraft.server.ServerUtils.Broadcast
+import org.nguh.nguhcraft.server.ServerUtils.Multicast
 
 /** This handles everything related to chat and messages */
 @Environment(EnvType.SERVER)
@@ -25,26 +26,21 @@ object Chat {
     private val ERR_EMPTY_MESSAGE: Text = Text.translatable("Client attempted to send an empty message.")
     private val ERR_NEEDS_LINK_TO_CHAT: Text = Text.translatable("You must link your account to send messages in chat or run commands (other than /discord link)").formatted(Formatting.RED)
 
-    /** Coloured components used in chat messages. */
-    private val ARROW_COMPONENT: Text = Text.literal(" → ").withColor(Colours.DeepKoamaru)
+    /** Components used in sender names. */
+    private val SERVER_COMPONENT: Text = Utils.BracketedLiteralComponent("Server", false)
     private val SRV_LIT_COMPONENT: Text = Text.literal("Server").withColor(Colours.Lavender)
-    private val ME_COMPONENT = Text.literal("me").withColor(Colours.Lavender)
+    private val COLON_COMPONENT: Text = Text.literal(":")
     private val COMMA_COMPONENT = Text.literal(", ").withColor(Colours.DeepKoamaru)
-
-    /** Coloured '[Server] ' Component. */
-    private val SERVER_COMPONENT: Text = Utils.BracketedLiteralComponent("Server")
-
-    /** Coloured '[Server -> me]' component. */
-    private val SERVER_PRIVATE_MESSAGE_COMPONENT: Text = LBRACK_COMPONENT.copy()
-        .append(SRV_LIT_COMPONENT)
-        .append(ARROW_COMPONENT)
-        .append(ME_COMPONENT)
-        .append(RBRACK_COMPONENT)
 
     /** Actually send a message. */
     private fun DispatchMessage(Sender: ServerPlayerEntity?, Message: String) {
-        val Msg = FormatMessage(Sender, Message)
-        Server().playerManager.broadcast(Msg, false)
+        val Name = (
+            if (Sender == null) SERVER_COMPONENT
+            else Sender.displayName!!.copy()
+                .append(COLON_COMPONENT.copy().withColor(Sender.discordColour))
+        )
+
+        Broadcast(ClientboundChatPacket(Name, Message, ClientboundChatPacket.MK_PUBLIC))
         Discord.ForwardChatMessage(Sender, Message)
     }
 
@@ -56,33 +52,6 @@ object Chat {
             return false
         }
         return true
-    }
-
-    /** Format a chat message.  */
-    private fun FormatMessage(Sender: ServerPlayerEntity?, Message: String): Text {
-        // Server message.
-        if (Sender == null) return SERVER_COMPONENT.copy()
-            .append(Text.literal(Message).formatted(Formatting.WHITE))
-
-        // Unlinked players cannot send chat messages, so discord name must not be null.
-        return Sender.displayName!!.copy()
-            .append(": ").withColor(Sender.discordColour)
-            .append(Text.literal(Message).formatted(Formatting.WHITE))
-    }
-
-    /** Format a DM. */
-    private fun FormatPrivateMessage(Sender: ServerPlayerEntity?, Message: Text): Text {
-        // Server message.
-        if (Sender == null) return SERVER_PRIVATE_MESSAGE_COMPONENT.copy()
-            .append(Message.copy().formatted(Formatting.WHITE))
-
-        // Unlinked players cannot use any commands that send DMs, so discord name must not be null.
-        return LBRACK_COMPONENT.copy()
-            .append(Sender.displayName)
-            .append(ARROW_COMPONENT)
-            .append(ME_COMPONENT)
-            .append(RBRACK_COMPONENT)
-            .append(Message.copy().formatted(Formatting.WHITE))
     }
 
     /** Handle an incoming chat message. */
@@ -121,30 +90,32 @@ object Chat {
     }
 
     /** Send a private message to players. This has already been validated. */
-    fun SendPrivateMessage(From: ServerPlayerEntity?, Players: Collection<ServerPlayerEntity>, Message: Text) {
+    fun SendPrivateMessage(From: ServerPlayerEntity?, Players: Collection<ServerPlayerEntity>, Message: String) {
         // Send an incoming message to all players in the list.
-        val Msg = FormatPrivateMessage(From, Message)
-        for (P in Players) P.networkHandler.sendPacket(GameMessageS2CPacket(Msg, false))
+        val SenderName = if (From == null) SRV_LIT_COMPONENT else From.displayName!!
+        Multicast(Players, ClientboundChatPacket(
+            SenderName,
+            Message,
+            ClientboundChatPacket.MK_INCOMING_DM
+        ))
 
         // And the outgoing message back to the sender. We don’t need to log
         // anything if the console is the sender because the command will have
         // already been logged anyway.
         if (From == null) return
-        val OutgoingMsg = LBRACK_COMPONENT.copy()
-            .append(ME_COMPONENT)
-            .append(ARROW_COMPONENT)
-
-        // Append all players that we’re messaging.
+        val AllReceivers = Text.empty()
         var First = true
         for (P in Players) {
             if (First) First = false
-            else OutgoingMsg.append(COMMA_COMPONENT)
-            OutgoingMsg.append(P.displayName)
+            else AllReceivers.append(COMMA_COMPONENT)
+            AllReceivers.append(P.displayName)
         }
 
-        // Append the message.
-        OutgoingMsg.append(RBRACK_COMPONENT).append(Message)
-        From.networkHandler.sendPacket(GameMessageS2CPacket(OutgoingMsg, false))
+        ServerPlayNetworking.send(From, ClientboundChatPacket(
+            AllReceivers,
+            Message,
+            ClientboundChatPacket.MK_OUTGOING_DM
+        ))
     }
 
     /** Send a message from the console. */

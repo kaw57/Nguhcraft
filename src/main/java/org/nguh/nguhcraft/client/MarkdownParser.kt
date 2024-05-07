@@ -13,7 +13,6 @@ import java.util.*
 /**
  * Convert Markdown text into a Component.
  *
- *
  * This only handles inline markdown because that’s all Minecraft can render. The dialect
  * of Markdown we use is close to whatever Discord uses.
  *

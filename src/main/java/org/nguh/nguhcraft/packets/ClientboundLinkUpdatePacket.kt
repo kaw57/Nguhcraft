@@ -57,7 +57,7 @@ data class ClientboundLinkUpdatePacket(
     companion object {
         @JvmField
         val ID: CustomPayload.Id<ClientboundLinkUpdatePacket>
-            = CustomPayload.id("nguhcraft:packet_link_update")
+            = CustomPayload.id("nguhcraft:clientbound/packet_link_update")
 
         @JvmField
         val CODEC: PacketCodec<PacketByteBuf, ClientboundLinkUpdatePacket> = PacketCodec.of(

@@ -24,6 +24,11 @@ object ServerUtils {
             ServerPlayNetworking.send(Player, P)
     }
 
+    @JvmStatic
+    fun Multicast(P: Collection<ServerPlayerEntity>, Packet: CustomPayload) {
+        for (Player in P) ServerPlayNetworking.send(Player, Packet)
+    }
+
     fun PlayerByUUID(ID: String?): ServerPlayerEntity? {
         return try { Server().playerManager.getPlayer(UUID.fromString(ID)) }
         catch (E: RuntimeException) { null }
