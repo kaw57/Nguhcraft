@@ -1,5 +1,6 @@
 package org.nguh.nguhcraft.server
 
+import com.mojang.brigadier.arguments.BoolArgumentType
 import com.mojang.brigadier.arguments.LongArgumentType
 import com.mojang.brigadier.arguments.StringArgumentType
 import com.mojang.brigadier.builder.LiteralArgumentBuilder
@@ -19,6 +20,7 @@ import net.minecraft.text.Text
 import net.minecraft.util.Formatting
 import org.nguh.nguhcraft.Colours
 import org.nguh.nguhcraft.Commands.Exn
+import org.nguh.nguhcraft.SyncedGameRule
 import org.nguh.nguhcraft.Utils.Normalised
 import org.nguh.nguhcraft.toUUID
 import org.slf4j.Logger
@@ -36,6 +38,7 @@ object Commands {
         CommandRegistrationCallback.EVENT.register { dispatcher, _, _ ->
             dispatcher.register(DiscordCommand())              // /discord
             val Msg = dispatcher.register(MessageCommand())    // /msg
+            dispatcher.register(RuleCommand())                 // /rule
             dispatcher.register(SayCommand())                  // /say
             dispatcher.register(literal("tell").redirect(Msg)) // /tell
             dispatcher.register(literal("w").redirect(Msg))    // /w
@@ -287,12 +290,32 @@ object Commands {
             )
         )
 
-        private fun SayCommand(): LiteralArgumentBuilder<ServerCommandSource> = literal("say")
-            .requires { it.player == null && it.hasPermissionLevel(4) } // Console only.
-            .then(argument("message", StringArgumentType.greedyString())
+    private fun RuleCommand(): LiteralArgumentBuilder<ServerCommandSource> {
+        var Command = literal("rule").requires { it.hasPermissionLevel(4) }
+        SyncedGameRule.entries.forEach { Rule ->
+            Command = Command.then(literal(Rule.Name)
+                .then(argument("value", BoolArgumentType.bool())
+                    .executes {
+                        Rule.Set(BoolArgumentType.getBool(it, "value"))
+                        it.source.sendMessage(Text.literal("Set '${Rule.Name}' to ${Rule.IsSet()}"))
+                        1
+                    }
+                )
                 .executes {
-                    Chat.SendServerMessage(StringArgumentType.getString(it, "message"))
+                    it.source.sendMessage(Text.literal("Rule '${Rule.Name}' is set to ${Rule.IsSet()}"))
                     1
                 }
             )
+        }
+        return Command
+    }
+
+    private fun SayCommand(): LiteralArgumentBuilder<ServerCommandSource> = literal("say")
+        .requires { it.player == null && it.hasPermissionLevel(4) } // Console only.
+        .then(argument("message", StringArgumentType.greedyString())
+            .executes {
+                Chat.SendServerMessage(StringArgumentType.getString(it, "message"))
+                1
+            }
+        )
 }

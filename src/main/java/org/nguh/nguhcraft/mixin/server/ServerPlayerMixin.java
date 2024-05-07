@@ -11,6 +11,7 @@ import net.minecraft.network.message.SentMessage;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.GameMode;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.NotNull;
 import org.nguh.nguhcraft.server.Discord;
@@ -68,6 +69,7 @@ public abstract class ServerPlayerMixin extends PlayerEntity implements Nguhcraf
     @Override public void setDiscordAvatarURL(String url) { DiscordAvatar = url; }
 
     @Override public boolean isLinked() { return DiscordId != 0; }
+    @Override public boolean isLinkedOrOperator() { return isLinked() || hasPermissionLevel(4); }
 
     /** Get a player’s display name. Used in death messages etc. */
     @Override
@@ -156,5 +158,15 @@ public abstract class ServerPlayerMixin extends PlayerEntity implements Nguhcraf
      @Overwrite
      public void sendChatMessage(@NotNull SentMessage message, boolean filterMaskEnabled, MessageType.Parameters params) {
          LOGGER.error("Refusing to send signed message to '{}': {}", getNameForScoreboard(), message.content());
+     }
+
+     /** Put player in adventure mode if they are unlinked. */
+     @SuppressWarnings("UnreachableCode")
+     @Inject(method = "tick()V", at = @At("HEAD"))
+     private void inject$tick(CallbackInfo ci) {
+         if (!isLinkedOrOperator()) {
+             var SP = (ServerPlayerEntity) (Object) this;
+             SP.changeGameMode(GameMode.ADVENTURE);
+         }
      }
 }

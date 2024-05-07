@@ -29,4 +29,5 @@ public interface NguhcraftServerPlayer {
     void LoadNguhcraftNbt(@NotNull NbtCompound nbt);
 
     boolean isLinked();
+    boolean isLinkedOrOperator();
 }

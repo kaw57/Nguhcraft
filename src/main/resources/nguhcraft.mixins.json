@@ -4,6 +4,7 @@
 	"package": "org.nguh.nguhcraft.mixin",
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [
+		"common.EnderEyeItemMixin",
 	],
 	"client": [
 		"client.AbstractClientPlayerMixin",
@@ -20,6 +21,7 @@
 	"server": [
 		"server.CommandManagerMixin",
 		"server.DedicatedServerMixin",
+		"server.EndPortalBlockMixin",
 		"server.MeCommandMixin",
 		"server.MinecraftServerAccessor",
 		"server.MsgCommandMixin",

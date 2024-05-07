@@ -10,6 +10,7 @@ import net.minecraft.server.PlayerManager;
 import net.minecraft.server.network.ConnectedClientData;
 import net.minecraft.server.network.ServerPlayerEntity;
 import org.jetbrains.annotations.NotNull;
+import org.nguh.nguhcraft.SyncedGameRule;
 import org.nguh.nguhcraft.packets.ClientboundLinkUpdatePacket;
 import org.nguh.nguhcraft.server.Discord;
 import org.nguh.nguhcraft.server.NguhcraftServerPlayer;
@@ -69,5 +70,8 @@ public abstract class PlayerManagerMixin {
         for (var P : players)
             if (P != SP)
                 ServerPlayNetworking.send(SP, new ClientboundLinkUpdatePacket(P));
+
+        // Sync game rules with the client.
+        SyncedGameRule.Send(SP);
     }
 }

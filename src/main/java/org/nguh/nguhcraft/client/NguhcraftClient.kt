@@ -6,6 +6,7 @@ import net.fabricmc.api.Environment
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking
 import org.nguh.nguhcraft.packets.ClientboundChatPacket
 import org.nguh.nguhcraft.packets.ClientboundLinkUpdatePacket
+import org.nguh.nguhcraft.packets.ClientboundSyncGameRulesPacket
 
 @Environment(EnvType.CLIENT)
 class NguhcraftClient : ClientModInitializer {
@@ -16,6 +17,10 @@ class NguhcraftClient : ClientModInitializer {
 
         ClientPlayNetworking.registerGlobalReceiver(ClientboundChatPacket.ID) { Payload, _ ->
             NetworkHandler.HandleChatPacket(Payload)
+        }
+
+        ClientPlayNetworking.registerGlobalReceiver(ClientboundSyncGameRulesPacket.ID) { Payload, _ ->
+            NetworkHandler.HandleSyncGameRulesPacket(Payload)
         }
     }
 }

@@ -5,12 +5,14 @@ import net.fabricmc.api.Environment
 import net.minecraft.text.Text
 import net.minecraft.util.Formatting
 import org.nguh.nguhcraft.Colours
+import org.nguh.nguhcraft.SyncedGameRule
 import org.nguh.nguhcraft.Utils
 import org.nguh.nguhcraft.Utils.LBRACK_COMPONENT
 import org.nguh.nguhcraft.Utils.RBRACK_COMPONENT
 import org.nguh.nguhcraft.client.ClientUtils.Client
 import org.nguh.nguhcraft.packets.ClientboundChatPacket
 import org.nguh.nguhcraft.packets.ClientboundLinkUpdatePacket
+import org.nguh.nguhcraft.packets.ClientboundSyncGameRulesPacket
 
 /** This runs on the network thread. */
 @Environment(EnvType.CLIENT)
@@ -85,4 +87,7 @@ object NetworkHandler {
             }
         }
     }
+
+    /** Update the game rules. */
+    fun HandleSyncGameRulesPacket(Packet: ClientboundSyncGameRulesPacket) = SyncedGameRule.Update(Packet)
 }

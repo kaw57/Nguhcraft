@@ -29,7 +29,6 @@ data class ClientboundChatPacket (
     var MessageKind: Byte
 ) : CustomPayload {
     override fun getId() = ID
-
     companion object {
         const val MK_PUBLIC: Byte = 0
         const val MK_OUTGOING_DM: Byte = 1

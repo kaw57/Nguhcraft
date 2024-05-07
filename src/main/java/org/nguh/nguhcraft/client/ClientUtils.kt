@@ -10,5 +10,6 @@ object ClientUtils {
     const val MAX_CHAT_LENGTH = 2000
 
     /** Get the client instance. */
+    @JvmStatic
     fun Client(): MinecraftClient = MinecraftClient.getInstance()
 }
