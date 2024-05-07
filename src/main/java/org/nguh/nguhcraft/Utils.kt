@@ -25,6 +25,12 @@ object Utils {
     val RBRACK_COMPONENT: Text = Text.literal("] ").withColor(Colours.DeepKoamaru)
     val RBRACK_COMPONENT_NO_SPACE: Text = Text.literal("]").withColor(Colours.DeepKoamaru)
 
+    /** For RomanNumeral conversion. */
+    private val M = arrayOf("", "M", "MM", "MMM")
+    private val C = arrayOf("", "C", "CC", "CCC", "CD", "D", "DC", "DCC", "DCCC", "CM")
+    private val X = arrayOf("", "X", "XX", "XXX", "XL", "L", "LX", "LXX", "LXXX", "XC")
+    private val I = arrayOf("", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX")
+
     /**
      * Get a component enclosed in brackets, optionally followed by a space
      * <p>
@@ -46,6 +52,17 @@ object Utils {
 
     /** Normalise a string for fuzzy matching against another string  */
     fun Normalised(S: String) = Normalizer.normalize(S, Normalizer.Form.NFKC).lowercase(Locale.getDefault())
+
+    /** Format a number as a Roman numeral */
+    @JvmStatic
+    fun RomanNumeral(Number: Int): String {
+        if (Number < 1 || Number > 3999) return Number.toString()
+        val Thousands = M[Number / 1000]
+        val Hundreds = C[Number % 1000 / 100]
+        val Tens = X[Number % 100 / 10]
+        val Ones = I[Number % 10]
+        return "$Thousands$Hundreds$Tens$Ones"
+    }
 }
 
 /** Parse a string into a UUID, returning null on failure. */

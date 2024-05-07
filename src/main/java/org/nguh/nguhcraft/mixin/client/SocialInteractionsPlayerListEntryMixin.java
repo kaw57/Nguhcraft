@@ -29,6 +29,6 @@ public abstract class SocialInteractionsPlayerListEntryMixin {
         boolean reportable,
         CallbackInfo ci
     ) {
-        reportButton.active = reportButton.visible = false;
+        reportButton.active = false;
     }
 }

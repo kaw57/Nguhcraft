@@ -7,6 +7,23 @@ import org.nguh.nguhcraft.packets.ClientboundLinkUpdatePacket
 import org.nguh.nguhcraft.packets.ClientboundSyncGameRulesPacket
 import org.nguh.nguhcraft.packets.ServerboundChatPacket
 
+// TODO: Port all patches.
+// - [ ] 1. Big Chungus
+//   - [ ] Enchantments
+//     - [ ] Health
+//     - [ ] Homing
+//     - [ ] Hypershot
+//     - [ ] Saturation
+//     - [ ] Smelting
+//     - [ ] Channeling II
+//   - [ ] Render enchantment levels properly
+//   - [ ] Patch enchant command to ignore restrictions
+//   - [ ] Prevent players from leaving the border
+//   - [ ] Make Multishot apply to bows (should already work in latest snapshot?)
+//   - [ ] Machine gun Ghasts
+//   - [ ] Import Saved Lore as Lore
+// - [ ] 2. TBA
+
 class Nguhcraft : ModInitializer {
     override fun onInitialize() {
         // Clientbound packets.

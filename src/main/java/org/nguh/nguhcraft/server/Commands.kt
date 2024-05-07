@@ -1,6 +1,7 @@
 package org.nguh.nguhcraft.server
 
 import com.mojang.brigadier.arguments.BoolArgumentType
+import com.mojang.brigadier.arguments.IntegerArgumentType
 import com.mojang.brigadier.arguments.LongArgumentType
 import com.mojang.brigadier.arguments.StringArgumentType
 import com.mojang.brigadier.builder.LiteralArgumentBuilder
@@ -10,8 +11,12 @@ import com.mojang.logging.LogUtils
 import net.fabricmc.api.EnvType
 import net.fabricmc.api.Environment
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback
+import net.minecraft.advancement.criterion.ConstructBeaconCriterion.Conditions.level
+import net.minecraft.command.CommandRegistryAccess
 import net.minecraft.command.argument.EntityArgumentType
-import net.minecraft.command.argument.MessageArgumentType
+import net.minecraft.command.argument.RegistryEntryReferenceArgumentType
+import net.minecraft.enchantment.Enchantment
+import net.minecraft.registry.RegistryKeys
 import net.minecraft.server.command.CommandManager.*
 import net.minecraft.server.command.ServerCommandSource
 import net.minecraft.server.network.ServerPlayerEntity
@@ -27,6 +32,7 @@ import org.slf4j.Logger
 import java.util.*
 import java.util.regex.PatternSyntaxException
 
+
 @Environment(EnvType.SERVER)
 object Commands {
     private val LOGGER: Logger = LogUtils.getLogger()
@@ -35,13 +41,14 @@ object Commands {
     private val ALREADY_LINKED: SimpleCommandExceptionType = Exn("Player is already linked to a Discord account!")
 
     fun Register() {
-        CommandRegistrationCallback.EVENT.register { dispatcher, _, _ ->
-            dispatcher.register(DiscordCommand())              // /discord
-            val Msg = dispatcher.register(MessageCommand())    // /msg
-            dispatcher.register(RuleCommand())                 // /rule
-            dispatcher.register(SayCommand())                  // /say
-            dispatcher.register(literal("tell").redirect(Msg)) // /tell
-            dispatcher.register(literal("w").redirect(Msg))    // /w
+        CommandRegistrationCallback.EVENT.register { D, A, _ ->
+            D.register(DiscordCommand())              // /discord
+            D.register(EnchantCommand(A))             // /enchant
+            val Msg = D.register(MessageCommand())    // /msg
+            D.register(RuleCommand())                 // /rule
+            D.register(SayCommand())                  // /say
+            D.register(literal("tell").redirect(Msg)) // /tell
+            D.register(literal("w").redirect(Msg))    // /w
         }
     }
 
@@ -198,6 +205,32 @@ object Commands {
         }
     }
 
+    object EnchantCommand {
+        private val ERR_NO_ITEM = Exn("You must be holding an item to enchant it!")
+
+        fun Enchant(
+            S: ServerCommandSource,
+            SP: ServerPlayerEntity,
+            E: Enchantment,
+            Lvl: Int
+        ): Int {
+            // This *does* work for books. Fabric’s documentation says otherwise,
+            // but it’s simply incorrect about that.
+            val ItemStack = SP.mainHandStack
+            if (ItemStack.isEmpty) throw ERR_NO_ITEM.create()
+            ItemStack.addEnchantment(E, Lvl)
+            S.sendMessage(
+                Text.translatable(
+                    "commands.enchant.success.single", *arrayOf<Any>(
+                        E.getName(Lvl),
+                        SP.displayName!!,
+                    )
+                )
+            )
+            return 1
+        }
+    }
+
     // =========================================================================
     //  Command Trees
     // =========================================================================
@@ -276,6 +309,30 @@ object Commands {
                     it.source.playerOrThrow
                 )
             }
+        )
+
+    private fun EnchantCommand(A: CommandRegistryAccess): LiteralArgumentBuilder<ServerCommandSource> = literal("enchant")
+        .requires { it.hasPermissionLevel(4) }
+        .then(
+            argument("enchantment", RegistryEntryReferenceArgumentType.registryEntry(A, RegistryKeys.ENCHANTMENT))
+                .then(argument("level", IntegerArgumentType.integer())
+                    .executes {
+                        EnchantCommand.Enchant(
+                            it.source,
+                            it.source.playerOrThrow,
+                            RegistryEntryReferenceArgumentType.getEnchantment(it, "enchantment").value(),
+                            IntegerArgumentType.getInteger(it, "level")
+                        )
+                    }
+                )
+                .executes {
+                    EnchantCommand.Enchant(
+                        it.source,
+                        it.source.playerOrThrow,
+                        RegistryEntryReferenceArgumentType.getEnchantment(it, "enchantment").value(),
+                        1
+                    )
+                }
         )
 
     private fun MessageCommand(): LiteralArgumentBuilder<ServerCommandSource> = literal("msg")
