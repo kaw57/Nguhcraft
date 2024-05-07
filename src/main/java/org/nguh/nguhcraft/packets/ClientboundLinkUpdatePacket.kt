@@ -1,13 +1,22 @@
 package org.nguh.nguhcraft.packets
 
+import net.fabricmc.api.EnvType
+import net.fabricmc.api.Environment
 import net.minecraft.network.PacketByteBuf
 import net.minecraft.network.codec.PacketCodec
 import net.minecraft.network.packet.CustomPayload
+import net.minecraft.server.network.ServerPlayerEntity
+import org.nguh.nguhcraft.server.discordColour
+import org.nguh.nguhcraft.server.discordName
+import org.nguh.nguhcraft.server.isLinked
 import java.util.*
 
 data class ClientboundLinkUpdatePacket(
     /** The player.  */
     val PlayerId: UUID,
+
+    /** The player’s Minecraft name. */
+    val MinecraftName: String,
 
     /** The discord colour of the player.  */
     val DiscordColour: Int,
@@ -22,13 +31,24 @@ data class ClientboundLinkUpdatePacket(
 
     private constructor(buf: PacketByteBuf) : this(
         buf.readUuid(),
+        buf.readString(),
         buf.readInt(),
         buf.readString(),
         buf.readBoolean(),
     )
 
+    @Environment(EnvType.SERVER)
+    constructor(SP: ServerPlayerEntity) : this(
+        SP.uuid,
+        SP.nameForScoreboard,
+        SP.discordColour,
+        SP.discordName ?: "",
+        SP.isLinked
+    )
+
     private fun write(buf: PacketByteBuf) {
         buf.writeUuid(PlayerId)
+        buf.writeString(MinecraftName)
         buf.writeInt(DiscordColour)
         buf.writeString(DiscordName)
         buf.writeBoolean(Linked)

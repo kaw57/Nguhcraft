@@ -12,6 +12,10 @@ import net.minecraft.text.Text
 import net.minecraft.util.Formatting
 import net.minecraft.util.StringHelper
 import org.nguh.nguhcraft.Colours
+import org.nguh.nguhcraft.Utils
+import org.nguh.nguhcraft.Utils.LBRACK_COMPONENT
+import org.nguh.nguhcraft.Utils.RBRACK_COMPONENT
+import org.nguh.nguhcraft.server.ServerUtils.Server
 
 /** This handles everything related to chat and messages */
 @Environment(EnvType.SERVER)
@@ -27,12 +31,8 @@ object Chat {
     private val ME_COMPONENT = Text.literal("me").withColor(Colours.Lavender)
     private val COMMA_COMPONENT = Text.literal(", ").withColor(Colours.DeepKoamaru)
 
-    /** Coloured '[' and '] ' components (the latter includes a space). */
-    val LBRACK_COMPONENT: Text = Text.literal("[").withColor(Colours.DeepKoamaru)
-    val RBRACK_COMPONENT: Text = Text.literal("] ").withColor(Colours.DeepKoamaru)
-
     /** Coloured '[Server] ' Component. */
-    val SERVER_COMPONENT: Text = BracketedLiteralComponent("Server")
+    private val SERVER_COMPONENT: Text = Utils.BracketedLiteralComponent("Server")
 
     /** Coloured '[Server -> me]' component. */
     private val SERVER_PRIVATE_MESSAGE_COMPONENT: Text = LBRACK_COMPONENT.copy()
@@ -41,15 +41,12 @@ object Chat {
         .append(ME_COMPONENT)
         .append(RBRACK_COMPONENT)
 
-    /**
-    * Get a component enclosed in brackets, followed by a space
-    * <p>
-    * For example, for an input of "foo", this will return '[foo] ' with
-    * appropriate formatting.
-    */
-    fun BracketedLiteralComponent(Content: String): Text = LBRACK_COMPONENT.copy()
-        .append(Text.literal(Content).withColor(Colours.Lavender))
-        .append(RBRACK_COMPONENT)
+    /** Actually send a message. */
+    private fun DispatchMessage(Sender: ServerPlayerEntity?, Message: String) {
+        val Msg = FormatMessage(Sender, Message)
+        Server().playerManager.broadcast(Msg, false)
+        Discord.ForwardChatMessage(Sender, Message)
+    }
 
     /** Ensure a player is linked and issue an error if they aren’t. */
     private fun EnsurePlayerIsLinked(Context: Context): Boolean {
@@ -64,7 +61,8 @@ object Chat {
     /** Format a chat message.  */
     private fun FormatMessage(Sender: ServerPlayerEntity?, Message: String): Text {
         // Server message.
-        if (Sender == null) return SERVER_COMPONENT.copy().append(Message)
+        if (Sender == null) return SERVER_COMPONENT.copy()
+            .append(Text.literal(Message).formatted(Formatting.WHITE))
 
         // Unlinked players cannot send chat messages, so discord name must not be null.
         return Sender.displayName!!.copy()
@@ -75,15 +73,16 @@ object Chat {
     /** Format a DM. */
     private fun FormatPrivateMessage(Sender: ServerPlayerEntity?, Message: Text): Text {
         // Server message.
-        if (Sender == null) return SERVER_PRIVATE_MESSAGE_COMPONENT.copy().append(Message)
+        if (Sender == null) return SERVER_PRIVATE_MESSAGE_COMPONENT.copy()
+            .append(Message.copy().formatted(Formatting.WHITE))
 
         // Unlinked players cannot use any commands that send DMs, so discord name must not be null.
         return LBRACK_COMPONENT.copy()
-            .append(Sender.discordName!!)
+            .append(Sender.displayName)
             .append(ARROW_COMPONENT)
             .append(ME_COMPONENT)
             .append(RBRACK_COMPONENT)
-            .append(Message)
+            .append(Message.copy().formatted(Formatting.WHITE))
     }
 
     /** Handle an incoming chat message. */
@@ -96,11 +95,7 @@ object Chat {
         // Dew it.
         val SP = Context.player()
         val S = SP.server
-        S.execute {
-            val Msg = FormatMessage(SP, Message)
-            S.playerManager.broadcast(Msg, false)
-            Discord.ForwardChatMessage(SP, Message)
-        }
+        S.execute { DispatchMessage(SP, Message) }
     }
 
     /** Handle an incoming command. */
@@ -151,6 +146,9 @@ object Chat {
         OutgoingMsg.append(RBRACK_COMPONENT).append(Message)
         From.networkHandler.sendPacket(GameMessageS2CPacket(OutgoingMsg, false))
     }
+
+    /** Send a message from the console. */
+    fun SendServerMessage(Message: String) = DispatchMessage(null, Message)
 
     /** Validate an incoming chat message or command. */
     private fun ValidateIncomingMessage(Incoming: String, SP: ServerPlayerEntity): Boolean {

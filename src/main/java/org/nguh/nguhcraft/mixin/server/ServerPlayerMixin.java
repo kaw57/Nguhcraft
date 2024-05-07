@@ -49,6 +49,9 @@ public abstract class ServerPlayerMixin extends PlayerEntity implements Nguhcraf
     @Unique static private final String TAG_DISCORD_NAME = "DiscordName";
     @Unique static private final String TAG_DISCORD_AVATAR = "DiscordAvatar";
 
+    @Override public boolean getVanished() { return Vanished; }
+    @Override public void setVanished(boolean vanished) { Vanished = vanished; }
+
     @Override public long getDiscordId() { return DiscordId; }
     @Override public void setDiscordId(long id) { DiscordId = id; }
 
@@ -68,12 +71,17 @@ public abstract class ServerPlayerMixin extends PlayerEntity implements Nguhcraf
 
     /** Get a player’s display name. Used in death messages etc. */
     @Override
-    public Text getDisplayName() { return NguhcraftDisplayName; }
+    public Text getDisplayName() {
+        if (NguhcraftDisplayName == null) {
+            LOGGER.error("Attempted to get display name for player '{}' before it was set!", getNameForScoreboard());
+            return Text.literal("<name was null: " + getNameForScoreboard() + ">");
+        }
 
-    /** Load Nbt data from the player file. */
-    @SuppressWarnings("UnreachableCode")
-    @Inject(method = "readCustomDataFromNbt(Lnet/minecraft/nbt/NbtCompound;)V", at = @At("TAIL"))
-    private void inject$loadData(@NotNull NbtCompound nbt, CallbackInfo ci) {
+        return NguhcraftDisplayName;
+    }
+
+    /** Load custom data from Nbt. */
+    public void LoadNguhcraftNbt(@NotNull NbtCompound nbt) {
         if (nbt.contains(TAG_ROOT)) {
             var nguh = nbt.getCompound(TAG_ROOT);
             Vanished = nguh.getBoolean(TAG_VANISHED);
@@ -82,13 +90,29 @@ public abstract class ServerPlayerMixin extends PlayerEntity implements Nguhcraf
             DiscordName = nguh.getString(TAG_DISCORD_NAME);
             DiscordAvatar = nguh.getString(TAG_DISCORD_AVATAR);
         }
+    }
 
-        // Compute name component for early messages (e.g. join message).
-        var SP = (ServerPlayerEntity) (Object) this;
-        NguhcraftDisplayName = DiscordId != Discord.INVALID_ID
-            ? Text.literal(getNameForScoreboard())
-            : Text.literal(DiscordName).withColor(DiscordColour);
-        PlayerList.UpdateCacheEntry(SP);
+    /**
+    * Copy over player data from a to-be-deleted instance.
+    * <p>
+    * For SOME UNGODLY REASON, Minecraft creates a NEW PLAYER ENTITY when the player
+    * dies and basically does the equivalent of reconnecting the player, but on the
+    * same network connexion etc.
+    * <p>
+    * This function copies our custom data over to the new player entity.
+    */
+    @Inject(
+        method = "copyFrom(Lnet/minecraft/server/network/ServerPlayerEntity;Z)V",
+        at = @At("TAIL")
+    )
+    private void inject$copyFrom(ServerPlayerEntity Old, boolean Alive, CallbackInfo CI) {
+        var OldNSP = (NguhcraftServerPlayer) Old;
+        Vanished = OldNSP.getVanished();
+        DiscordId = OldNSP.getDiscordId();
+        DiscordColour = OldNSP.getDiscordColour();
+        DiscordName = OldNSP.getDiscordName();
+        DiscordAvatar = OldNSP.getDiscordAvatarURL();
+        NguhcraftDisplayName = OldNSP.getNguhcraftDisplayName();
     }
 
     /**

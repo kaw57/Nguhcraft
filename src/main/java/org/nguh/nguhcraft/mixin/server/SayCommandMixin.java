@@ -10,7 +10,7 @@ import org.spongepowered.asm.mixin.Overwrite;
 public abstract class SayCommandMixin {
     /**
      * @author Sirraide
-     * @reason This command is pointless and uses chat signing.
+     * @reason Command is replaced by a custom implementation.
      */
     @Overwrite
     public static void register(CommandDispatcher<ServerCommandSource> S) { }

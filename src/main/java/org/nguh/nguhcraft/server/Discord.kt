@@ -39,12 +39,13 @@ import org.nguh.nguhcraft.Colours
 import org.nguh.nguhcraft.Commands
 import org.nguh.nguhcraft.Utils
 import org.nguh.nguhcraft.packets.ClientboundLinkUpdatePacket
+import org.nguh.nguhcraft.server.PlayerList.Companion.UpdateCacheEntry
 import org.nguh.nguhcraft.server.ServerUtils.Server
 import org.slf4j.Logger
+import java.io.File
+import java.util.*
 import java.util.function.Consumer
 import kotlin.concurrent.Volatile
-import java.io.File
-import java.util.EnumSet
 
 @Environment(EnvType.SERVER)
 internal class Discord : ListenerAdapter() {
@@ -165,9 +166,9 @@ internal class Discord : ListenerAdapter() {
         /**
          * The '[Discord]' [Text] used in chat messages
          */
-        private val DISCORD_COMPONENT: Text = Chat.BracketedLiteralComponent("Discord")
-        private val REPLY_COMPONENT: Text = Chat.BracketedLiteralComponent("Reply")
-        private val IMAGE_COMPONENT: Text = Chat.BracketedLiteralComponent("Image")
+        private val DISCORD_COMPONENT: Text = Utils.BracketedLiteralComponent("Discord")
+        private val REPLY_COMPONENT: Text = Utils.BracketedLiteralComponent("Reply")
+        private val IMAGE_COMPONENT: Text = Utils.BracketedLiteralComponent("Image")
 
         private val INTERNAL_ERROR_PLEASE_RELINK: Text = Text
             .literal("Sorry, we couldn’t fetch your account info from Discord. Please relink your account")
@@ -301,8 +302,10 @@ internal class Discord : ListenerAdapter() {
         }
 
         private fun BroadcastPlayerUpdate(SP: ServerPlayerEntity) {
-            ServerUtils.Broadcast(SP, ClientboundLinkUpdatePacket(
+            UpdatePlayerName(SP)
+            ServerUtils.Broadcast(ClientboundLinkUpdatePacket(
                 SP.uuid,
+                SP.gameProfile.name,
                 SP.discordColour,
                 SP.discordName!!,
                 SP.isLinked
@@ -661,6 +664,19 @@ internal class Discord : ListenerAdapter() {
                     LOGGER.error("Failed to fetch Discord info for player '${SP.name}': ${failure.message}")
                 }
             })
+        }
+
+        /** Recompute a player’s name after something has changed. */
+        @JvmStatic
+        fun UpdatePlayerName(SP: ServerPlayerEntity) {
+            SP.discordDisplayName = Utils.ComputePlayerName(
+                SP.isLinked,
+                SP.nameForScoreboard,
+                SP.discordName ?: "",
+                SP.discordColour
+            )
+
+            UpdateCacheEntry(SP)
         }
     }
 }

@@ -11,10 +11,17 @@ import java.util.*
 
 @Environment(EnvType.SERVER)
 object ServerUtils {
+    @JvmStatic
     fun Broadcast(Except: ServerPlayerEntity, P: CustomPayload) {
         for (Player in Server().playerManager.playerList)
             if (Player != Except)
                 ServerPlayNetworking.send(Player, P)
+    }
+
+    @JvmStatic
+    fun Broadcast(P: CustomPayload) {
+        for (Player in Server().playerManager.playerList)
+            ServerPlayNetworking.send(Player, P)
     }
 
     fun PlayerByUUID(ID: String?): ServerPlayerEntity? {

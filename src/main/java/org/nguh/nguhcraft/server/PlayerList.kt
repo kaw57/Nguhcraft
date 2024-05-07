@@ -14,6 +14,7 @@ import org.nguh.nguhcraft.mixin.server.MinecraftServerAccessor
 import org.nguh.nguhcraft.server.ServerUtils.Server
 import java.io.File
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 
 /**
 * Server player list that can also handle offline players.
@@ -57,7 +58,7 @@ class PlayerList private constructor(private val ByID: HashMap<UUID, Entry>) : I
          *   - If get() returns NULL_ENTRY, the player has been cached as not found.
          *   - If get() returns a valid entry, the player has been cached as found.
          */
-        private val CACHE = HashMap<UUID, Entry?>()
+        private val CACHE = ConcurrentHashMap<UUID, Entry?>()
 
         /** Null entry. */
         private val NULL_ENTRY = Entry(UUID(0, 0), Discord.INVALID_ID, 0, "", "")

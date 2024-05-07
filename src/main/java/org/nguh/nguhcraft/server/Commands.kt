@@ -51,6 +51,7 @@ object Commands {
         private val RPAREN = Text.literal(")")
         private val ERR_EMPTY_FILTER = Text.literal("Filter may not be empty!")
         private val ERR_EMPTY_QUERY = Text.literal("Query must not be empty!")
+        private val ERR_LIST_SYNTAX = Text.literal("Syntax: /discord list (all|linked|<regex>)")
 
         private fun AddPlayer(List: MutableText, PD: PlayerList.Entry) {
             if (PD.isLinked) {
@@ -105,6 +106,11 @@ object Commands {
                 S.sendError(Text.literal("Invalid regular expression: '${E.message}'"))
                 return 0
             }
+        }
+
+        fun ListSyntaxError(S: ServerCommandSource): Int {
+            S.sendError(ERR_LIST_SYNTAX)
+            return 0
         }
 
         fun QueryMemberInfo(S: ServerCommandSource, Message: String): Int {
@@ -233,6 +239,7 @@ object Commands {
                     )
                 }
             )
+            .executes { DiscordCommand.ListSyntaxError(it.source) }
         )
         .then(literal("query")
             .requires { it.hasPermissionLevel(4) }
@@ -268,12 +275,23 @@ object Commands {
         )
 
     private fun MessageCommand(): LiteralArgumentBuilder<ServerCommandSource> = literal("msg")
-        .then(argument("targets", EntityArgumentType.players()))
-        .then(argument("message", MessageArgumentType.message()))
-        .executes { Context ->
-            val Players = EntityArgumentType.getPlayers(Context, "targets")
-            val Message = MessageArgumentType.getMessage(Context, "message")
-            Chat.SendPrivateMessage(Context.source.player, Players, Message)
-            Players.size
-        }
+        .then(argument("targets", EntityArgumentType.players())
+            .then(argument("message", MessageArgumentType.message())
+                .executes { Context ->
+                    val Players = EntityArgumentType.getPlayers(Context, "targets")
+                    val Message = MessageArgumentType.getMessage(Context, "message")
+                    Chat.SendPrivateMessage(Context.source.player, Players, Message)
+                    Players.size
+                }
+            )
+        )
+
+        private fun SayCommand(): LiteralArgumentBuilder<ServerCommandSource> = literal("say")
+            .requires { it.player == null && it.hasPermissionLevel(4) } // Console only.
+            .then(argument("message", StringArgumentType.greedyString())
+                .executes {
+                    Chat.SendServerMessage(StringArgumentType.getString(it, "message"))
+                    1
+                }
+            )
 }
