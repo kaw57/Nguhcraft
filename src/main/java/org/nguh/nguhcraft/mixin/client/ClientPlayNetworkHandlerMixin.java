@@ -7,6 +7,7 @@ import net.minecraft.client.network.ClientConnectionState;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.network.ClientConnection;
 import net.minecraft.network.packet.c2s.play.CommandExecutionC2SPacket;
+import org.nguh.nguhcraft.client.NguhcraftClient;
 import org.nguh.nguhcraft.packets.ServerboundChatPacket;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
@@ -27,6 +28,7 @@ public abstract class ClientPlayNetworkHandlerMixin extends ClientCommonNetworkH
     @Inject(method = "onGameJoin(Lnet/minecraft/network/packet/s2c/play/GameJoinS2CPacket;)V", at = @At("HEAD"))
     private void inject$onGameJoin(CallbackInfo CI) {
         displayedUnsecureChatWarning = true;
+        NguhcraftClient.InHypershotContext = false;
     }
 
 

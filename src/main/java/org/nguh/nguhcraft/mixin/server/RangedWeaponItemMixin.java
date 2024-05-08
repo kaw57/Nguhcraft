@@ -10,7 +10,10 @@ import net.minecraft.item.RangedWeaponItem;
 import net.minecraft.util.Hand;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
+import org.nguh.nguhcraft.server.accessors.LivingEntityAccessor;
 import org.nguh.nguhcraft.NguhcraftPersistentProjectileEntityAccessor;
+import org.nguh.nguhcraft.server.HypershotContext;
+import org.nguh.nguhcraft.enchantment.NguhcraftEnchantments;
 import org.nguh.nguhcraft.server.ServerUtils;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -18,6 +21,8 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.List;
+
+import static org.nguh.nguhcraft.Utils.EnchantLvl;
 
 @Mixin(RangedWeaponItem.class)
 public abstract class RangedWeaponItemMixin {
@@ -35,7 +40,19 @@ public abstract class RangedWeaponItemMixin {
         @Nullable LivingEntity Tgt,
         CallbackInfo CI,
         @Share("HomingTarget") LocalRef<LivingEntity> HomingTarget
-    ) { HomingTarget.set(ServerUtils.MaybeMakeHomingArrow(W, Shooter, Weapon)); }
+    ) {
+        if (W.isClient) return;
+
+        // Apply homing.
+        if (EnchantLvl(Weapon, NguhcraftEnchantments.HOMING) != 0) {
+            W.getProfiler().push("homingArrows");
+            HomingTarget.set(ServerUtils.MaybeMakeHomingArrow(W, Shooter));
+            W.getProfiler().pop();
+        }
+
+        // If we’re not already in a hypershot context, apply hypershot.
+        ServerUtils.MaybeEnterHypershotContext(Shooter, Hand, Weapon, Projectiles, Speed, Div, Crit);
+    }
 
     /** Then, when we shoot an arrow, set the target appropriately. */
     @Inject(
@@ -60,5 +77,4 @@ public abstract class RangedWeaponItemMixin {
             @Local ProjectileEntity Proj,
             @Share("HomingTarget") LocalRef<LivingEntity> HomingTarget
     ) { ((NguhcraftPersistentProjectileEntityAccessor)Proj).SetHomingTarget(HomingTarget.get()); }
-
 }

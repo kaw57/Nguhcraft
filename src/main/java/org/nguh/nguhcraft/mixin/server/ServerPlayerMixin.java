@@ -15,8 +15,7 @@ import net.minecraft.world.GameMode;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.NotNull;
 import org.nguh.nguhcraft.server.Discord;
-import org.nguh.nguhcraft.server.NguhcraftServerPlayer;
-import org.nguh.nguhcraft.server.PlayerList;
+import org.nguh.nguhcraft.server.accessors.ServerPlayerAccessor;
 import org.slf4j.Logger;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
@@ -27,7 +26,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(ServerPlayerEntity.class)
-public abstract class ServerPlayerMixin extends PlayerEntity implements NguhcraftServerPlayer {
+public abstract class ServerPlayerMixin extends PlayerEntity implements ServerPlayerAccessor {
     public ServerPlayerMixin(World world, BlockPos pos, float yaw, GameProfile gameProfile) {
         super(world, pos, yaw, gameProfile);
     }
@@ -101,7 +100,7 @@ public abstract class ServerPlayerMixin extends PlayerEntity implements Nguhcraf
         at = @At("TAIL")
     )
     private void inject$copyFrom(ServerPlayerEntity Old, boolean Alive, CallbackInfo CI) {
-        var OldNSP = (NguhcraftServerPlayer) Old;
+        var OldNSP = (ServerPlayerAccessor) Old;
         Vanished = OldNSP.getVanished();
         DiscordId = OldNSP.getDiscordId();
         DiscordColour = OldNSP.getDiscordColour();

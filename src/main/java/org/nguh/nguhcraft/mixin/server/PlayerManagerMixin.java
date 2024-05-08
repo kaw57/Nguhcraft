@@ -1,19 +1,16 @@
 package org.nguh.nguhcraft.mixin.server;
 
 import com.llamalad7.mixinextras.sugar.Local;
-import com.llamalad7.mixinextras.sugar.ref.LocalRef;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.ClientConnection;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.PlayerManager;
 import net.minecraft.server.network.ConnectedClientData;
 import net.minecraft.server.network.ServerPlayerEntity;
-import org.jetbrains.annotations.NotNull;
 import org.nguh.nguhcraft.SyncedGameRule;
 import org.nguh.nguhcraft.packets.ClientboundLinkUpdatePacket;
 import org.nguh.nguhcraft.server.Discord;
-import org.nguh.nguhcraft.server.NguhcraftServerPlayer;
+import org.nguh.nguhcraft.server.accessors.ServerPlayerAccessor;
 import org.nguh.nguhcraft.server.ServerUtils;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -45,7 +42,7 @@ public abstract class PlayerManagerMixin {
         CallbackInfo Info,
         @Local Optional<NbtCompound> Nbt
     ) {
-        var NSP = ((NguhcraftServerPlayer)SP);
+        var NSP = ((ServerPlayerAccessor)SP);
         Nbt.ifPresent(NSP::LoadNguhcraftNbt);
         Discord.UpdatePlayerName(SP);
     }

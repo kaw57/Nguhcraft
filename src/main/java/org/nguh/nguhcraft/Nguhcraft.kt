@@ -7,10 +7,7 @@ import net.minecraft.registry.Registries
 import net.minecraft.registry.Registry
 import net.minecraft.util.Identifier
 import org.nguh.nguhcraft.enchantment.NguhcraftEnchantments
-import org.nguh.nguhcraft.packets.ClientboundChatPacket
-import org.nguh.nguhcraft.packets.ClientboundLinkUpdatePacket
-import org.nguh.nguhcraft.packets.ClientboundSyncGameRulesPacket
-import org.nguh.nguhcraft.packets.ServerboundChatPacket
+import org.nguh.nguhcraft.packets.*
 
 // TODO: Port all patches.
 // - [ ] 1. Big Chungus
@@ -47,6 +44,7 @@ class Nguhcraft : ModInitializer {
         PayloadTypeRegistry.playS2C().register(ClientboundChatPacket.ID, ClientboundChatPacket.CODEC)
         PayloadTypeRegistry.playS2C().register(ClientboundLinkUpdatePacket.ID, ClientboundLinkUpdatePacket.CODEC)
         PayloadTypeRegistry.playS2C().register(ClientboundSyncGameRulesPacket.ID, ClientboundSyncGameRulesPacket.CODEC)
+        PayloadTypeRegistry.playS2C().register(ClientboundSyncHypershotStatePacket.ID, ClientboundSyncHypershotStatePacket.CODEC)
 
         // Serverbound packets.
         PayloadTypeRegistry.playC2S().register(ServerboundChatPacket.ID, ServerboundChatPacket.CODEC)

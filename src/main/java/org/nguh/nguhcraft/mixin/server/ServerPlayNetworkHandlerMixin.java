@@ -1,10 +1,7 @@
 package org.nguh.nguhcraft.mixin.server;
 
 import net.minecraft.network.ClientConnection;
-import net.minecraft.network.packet.c2s.play.ChatCommandSignedC2SPacket;
-import net.minecraft.network.packet.c2s.play.ChatMessageC2SPacket;
-import net.minecraft.network.packet.c2s.play.CommandExecutionC2SPacket;
-import net.minecraft.network.packet.c2s.play.PlayerSessionC2SPacket;
+import net.minecraft.network.packet.c2s.play.*;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ConnectedClientData;
 import net.minecraft.server.network.ServerCommonNetworkHandler;
@@ -14,10 +11,9 @@ import net.minecraft.text.Text;
 import org.jetbrains.annotations.NotNull;
 import org.nguh.nguhcraft.server.Discord;
 import org.nguh.nguhcraft.server.NetworkHandler;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
-import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.Unique;
+import org.nguh.nguhcraft.server.accessors.LivingEntityAccessor;
+import org.slf4j.Logger;
+import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -33,10 +29,35 @@ public abstract class ServerPlayNetworkHandlerMixin extends ServerCommonNetworkH
 
     @Shadow public ServerPlayerEntity player;
 
+    @Shadow @Final static Logger LOGGER;
+
     /** Forward quit message to Discord. */
     @Inject(method = "cleanUp()V", at = @At("HEAD"))
     private void inject$cleanUp(CallbackInfo CI) {
         Discord.BroadcastJoinQuitMessage(player, false);
+    }
+
+    /**
+    * Prevent players in a hypershot context from using weapons.
+    * <p>
+    * This should already be prevented client-side, but we check for this
+    * here as well just in case.
+    */
+    @Inject(
+        method = "onPlayerInteractItem",
+        cancellable = true,
+        at = @At(
+            value = "INVOKE",
+            target = "net/minecraft/server/network/ServerPlayerEntity.updateLastActionTime ()V",
+            ordinal = 0,
+            shift = At.Shift.AFTER
+        )
+    )
+    private void inject$onPlayerInteractItem(PlayerInteractItemC2SPacket Packet, CallbackInfo CI) {
+        if (((LivingEntityAccessor)player).getHypershotContext() != null) {
+            LOGGER.warn("Player {} tried to use an item while in hypershot context", player.getDisplayName());
+            CI.cancel();
+        }
     }
 
     /**

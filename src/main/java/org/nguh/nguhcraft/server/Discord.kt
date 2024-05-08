@@ -41,6 +41,7 @@ import org.nguh.nguhcraft.Utils
 import org.nguh.nguhcraft.packets.ClientboundLinkUpdatePacket
 import org.nguh.nguhcraft.server.PlayerList.Companion.UpdateCacheEntry
 import org.nguh.nguhcraft.server.ServerUtils.Server
+import org.nguh.nguhcraft.server.accessors.ServerPlayerAccessor
 import org.slf4j.Logger
 import java.io.File
 import java.util.*
@@ -397,7 +398,7 @@ internal class Discord : ListenerAdapter() {
         }
 
         private fun LinkedPlayerForMember(ID: Long): ServerPlayerEntity?
-            = Server().playerManager.playerList.find { (it as NguhcraftServerPlayer).discordId == ID}
+            = Server().playerManager.playerList.find { (it as ServerPlayerAccessor).discordId == ID}
 
         private fun MemberByID(Source: ServerCommandSource, ID: Long): Member? {
             try {
@@ -449,11 +450,11 @@ internal class Discord : ListenerAdapter() {
          * @param Content   the message content
          */
         private fun Message(Username: String, AvatarURL: String?, Content: String?) {
-            var AvatarURL = AvatarURL
-            if ("" == AvatarURL) AvatarURL = null
+            var Avatar = AvatarURL
+            if ("" == Avatar) Avatar = null
             MessageWebhook.sendMessage(S(Content))
                 .setUsername(SanitiseUsername(Username))
-                .setAvatarUrl(AvatarURL)
+                .setAvatarUrl(Avatar)
                 .queue()
         }
 
@@ -469,7 +470,7 @@ internal class Discord : ListenerAdapter() {
         }
 
         private fun PerformUnlink(SP: ServerPlayerEntity) {
-            val ID = (SP as NguhcraftServerPlayer).discordId
+            val ID = (SP as ServerPlayerAccessor).discordId
             UpdatePlayer(SP, INVALID_ID, null, null, Constants.Grey)
 
             // Remove the @ŋguhcrafter role.
@@ -564,7 +565,7 @@ internal class Discord : ListenerAdapter() {
             SendEmbed(
                 "[Server]",
                 ServerAvatarURL,
-                if (SP == null) null else (SP as NguhcraftServerPlayer).discordAvatarURL,
+                if (SP == null) null else (SP as ServerPlayerAccessor).discordAvatarURL,
                 Text,
                 Colour
             )

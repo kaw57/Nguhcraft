@@ -1,4 +1,4 @@
-package org.nguh.nguhcraft.server;
+package org.nguh.nguhcraft.server.accessors;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -7,7 +7,7 @@ import net.minecraft.text.Text;
 import org.jetbrains.annotations.NotNull;
 
 @Environment(EnvType.SERVER)
-public interface NguhcraftServerPlayer {
+public interface ServerPlayerAccessor {
     String TAG_ROOT = "Nguhcraft";
     String TAG_LAST_KNOWN_NAME = "LastKnownMinecraftName";
     String TAG_VANISHED = "Vanished";

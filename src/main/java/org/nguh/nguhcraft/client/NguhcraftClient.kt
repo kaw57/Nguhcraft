@@ -21,6 +21,10 @@ import org.nguh.nguhcraft.client.ClientUtils.Client
 import org.nguh.nguhcraft.packets.ClientboundChatPacket
 import org.nguh.nguhcraft.packets.ClientboundLinkUpdatePacket
 import org.nguh.nguhcraft.packets.ClientboundSyncGameRulesPacket
+import org.nguh.nguhcraft.packets.ClientboundSyncHypershotStatePacket
+import org.spongepowered.asm.mixin.Unique
+
+
 
 @Environment(EnvType.CLIENT)
 class NguhcraftClient : ClientModInitializer {
@@ -37,6 +41,10 @@ class NguhcraftClient : ClientModInitializer {
             NetworkHandler.HandleSyncGameRulesPacket(Payload)
         }
 
+        ClientPlayNetworking.registerGlobalReceiver(ClientboundSyncHypershotStatePacket.ID) { Payload, _ ->
+            NetworkHandler.HandleSyncHypershotStatePacket(Payload)
+        }
+
         WorldRenderEvents.LAST.register { Renderer.DebugRender(it) }
 
         Registry.register(Registries.ITEM_GROUP, Identifier("nguhcraft", "treasures"), TREASURES_ITEM_GROUP)
@@ -48,6 +56,10 @@ class NguhcraftClient : ClientModInitializer {
             .displayName(Text.literal("Treasures"))
             .entries {  _, Entries -> Treasures.AddAll(Entries) }
             .build()
+
+        @JvmField
+        @Volatile
+        var InHypershotContext = false
 
         @JvmStatic
         fun ProcessF3(key: Int): Boolean {

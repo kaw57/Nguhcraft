@@ -10,9 +10,11 @@ import org.nguh.nguhcraft.Utils
 import org.nguh.nguhcraft.Utils.LBRACK_COMPONENT
 import org.nguh.nguhcraft.Utils.RBRACK_COMPONENT
 import org.nguh.nguhcraft.client.ClientUtils.Client
+import org.nguh.nguhcraft.client.accessors.ClientPlayerListEntryAccessor
 import org.nguh.nguhcraft.packets.ClientboundChatPacket
 import org.nguh.nguhcraft.packets.ClientboundLinkUpdatePacket
 import org.nguh.nguhcraft.packets.ClientboundSyncGameRulesPacket
+import org.nguh.nguhcraft.packets.ClientboundSyncHypershotStatePacket
 
 /** This runs on the network thread. */
 @Environment(EnvType.CLIENT)
@@ -68,7 +70,7 @@ object NetworkHandler {
         val NW = C.networkHandler ?: return
         Execute {
             NW.playerList.firstOrNull { it.profile.id == Packet.PlayerId }?.let {
-                it as NguhcraftClientPlayerListEntry
+                it as ClientPlayerListEntryAccessor
 
                 // Player is not linked.
                 if (!Packet.Linked) {
@@ -90,4 +92,9 @@ object NetworkHandler {
 
     /** Update the game rules. */
     fun HandleSyncGameRulesPacket(Packet: ClientboundSyncGameRulesPacket) = SyncedGameRule.Update(Packet)
+
+    /** Sync hypershot state. */
+    fun HandleSyncHypershotStatePacket(Packet: ClientboundSyncHypershotStatePacket) {
+        NguhcraftClient.InHypershotContext = Packet.InContext
+    }
 }

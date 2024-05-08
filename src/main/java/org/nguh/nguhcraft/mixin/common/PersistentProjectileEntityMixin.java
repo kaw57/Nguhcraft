@@ -43,7 +43,6 @@ public abstract class PersistentProjectileEntityMixin extends ProjectileEntity i
 
     /** Set the homing target. */
     @Override public void SetHomingTarget(LivingEntity Target) {
-        Debug("Targeting {}", Target);
         this.Target = Target;
         this.HomingTicks = 0;
     }

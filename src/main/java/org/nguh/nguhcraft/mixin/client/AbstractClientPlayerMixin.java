@@ -8,7 +8,7 @@ import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
-import org.nguh.nguhcraft.client.NguhcraftClientPlayerListEntry;
+import org.nguh.nguhcraft.client.accessors.ClientPlayerListEntryAccessor;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
@@ -23,7 +23,7 @@ public abstract class AbstractClientPlayerMixin extends PlayerEntity {
     @Override
     public Text getDisplayName() {
         // Overridden for linked players.
-        if (playerListEntry instanceof NguhcraftClientPlayerListEntry PLE) {
+        if (playerListEntry instanceof ClientPlayerListEntryAccessor PLE) {
             Text name = PLE.getNameAboveHead();
             if (name != null) return name;
         }

@@ -12,6 +12,7 @@ import org.nguh.nguhcraft.Constants
 import org.nguh.nguhcraft.Utils.Normalised
 import org.nguh.nguhcraft.mixin.server.MinecraftServerAccessor
 import org.nguh.nguhcraft.server.ServerUtils.Server
+import org.nguh.nguhcraft.server.accessors.ServerPlayerAccessor
 import java.io.File
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
@@ -140,12 +141,12 @@ class PlayerList private constructor(private val ByID: HashMap<UUID, Entry>) : I
             var DiscordName = ""
             var DiscordID = Discord.INVALID_ID
             var RoleColour: Int = Constants.Grey
-            if (Nbt.contains(NguhcraftServerPlayer.TAG_ROOT)) {
-                val Nguhcraft = Nbt.getCompound(NguhcraftServerPlayer.TAG_ROOT)
-                Name = Nguhcraft.getString(NguhcraftServerPlayer.TAG_LAST_KNOWN_NAME)
-                DiscordID = Nguhcraft.getLong(NguhcraftServerPlayer.TAG_DISCORD_ID)
-                RoleColour = Nguhcraft.getInt(NguhcraftServerPlayer.TAG_DISCORD_COLOUR)
-                DiscordName = Nguhcraft.getString(NguhcraftServerPlayer.TAG_DISCORD_NAME)
+            if (Nbt.contains(ServerPlayerAccessor.TAG_ROOT)) {
+                val Nguhcraft = Nbt.getCompound(ServerPlayerAccessor.TAG_ROOT)
+                Name = Nguhcraft.getString(ServerPlayerAccessor.TAG_LAST_KNOWN_NAME)
+                DiscordID = Nguhcraft.getLong(ServerPlayerAccessor.TAG_DISCORD_ID)
+                RoleColour = Nguhcraft.getInt(ServerPlayerAccessor.TAG_DISCORD_COLOUR)
+                DiscordName = Nguhcraft.getString(ServerPlayerAccessor.TAG_DISCORD_NAME)
             }
 
             // Once upon a time, this was a paper server; remnants of that should still be

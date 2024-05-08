@@ -9,7 +9,7 @@ import net.minecraft.command.CommandSource;
 import net.minecraft.network.packet.s2c.play.CommandTreeS2CPacket;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.network.ServerPlayerEntity;
-import org.nguh.nguhcraft.server.NguhcraftServerPlayer;
+import org.nguh.nguhcraft.server.accessors.ServerPlayerAccessor;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -35,7 +35,7 @@ public abstract class CommandManagerMixin {
         cancellable = true
     )
     private void inject$sendCommandTree(ServerPlayerEntity SP, CallbackInfo CI) {
-        if (!((NguhcraftServerPlayer) SP).isLinked() && !SP.hasPermissionLevel(4)) {
+        if (!((ServerPlayerAccessor) SP).isLinked() && !SP.hasPermissionLevel(4)) {
             var Root = new RootCommandNode<CommandSource>();
             Root.addChild(UNLINKED_DISCORD_COMMAND);
             SP.networkHandler.sendPacket(new CommandTreeS2CPacket(Root));
