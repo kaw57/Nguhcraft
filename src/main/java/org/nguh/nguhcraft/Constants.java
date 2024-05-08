@@ -1,6 +1,10 @@
 package org.nguh.nguhcraft;
 
-public interface Colours {
+public interface Constants {
+    /** Maximum distance to the target after which we give up. */
+    int MAX_HOMING_DISTANCE = 128;
+
+    /** Colours. */
     int Lavender = 0xC8BFE7;
     int Green = 0x55FF55;
     int Blue = 0x5555FF;

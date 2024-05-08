@@ -5,13 +5,16 @@
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [
 		"common.EnchantmentMixin",
-		"common.EnderEyeItemMixin"
+		"common.EnderEyeItemMixin",
+		"common.PersistentProjectileEntityMixin",
+		"common.RangedWeaponItemMixin"
 	],
 	"client": [
 		"client.AbstractClientPlayerMixin",
 		"client.ChatOptionsScreenMixin",
 		"client.ChatScreenMixin",
 		"client.ClientPlayNetworkHandlerMixin",
+		"client.KeyboardMixin",
 		"client.MessageIndicatorMixin",
 		"client.MinecraftClientMixin",
 		"client.PlayerListEntryMixin",
@@ -34,6 +37,7 @@
 		"server.ServerPlayerMixin",
 		"server.ServerPlayNetworkHandlerMixin",
 		"server.TeamMsgCommandMixin",
+		"server.TridentEntityMixin",
 		"server.TriggerCommandMixin"
 	],
 	"injectors": {

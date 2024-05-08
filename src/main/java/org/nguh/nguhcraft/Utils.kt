@@ -1,12 +1,19 @@
 package org.nguh.nguhcraft
 
+import com.mojang.logging.LogUtils
+import net.minecraft.enchantment.Enchantment
+import net.minecraft.enchantment.EnchantmentHelper
+import net.minecraft.item.ItemStack
 import net.minecraft.text.Text
 import net.minecraft.util.Formatting
+import org.slf4j.Logger
 import java.text.Normalizer
 import java.util.*
 
 
 object Utils {
+    val LOGGER = LogUtils.getLogger()
+
     /**
      * [Text] containing the text '[Link]'.
      *
@@ -14,16 +21,16 @@ object Utils {
      * Used to communicate to players that a message contains a clickable
      * link. Purely cosmetic since the entire message is clickable anyway.
      */
-    val LINK: Text = Text.literal("[").withColor(Colours.Blue)
-        .append(Text.literal("Link").withColor(Colours.Green))
-        .append(Text.literal("]").withColor(Colours.Blue))
-        .append(Text.literal(".").withColor(Colours.Green))
+    val LINK: Text = Text.literal("[").withColor(Constants.Blue)
+        .append(Text.literal("Link").withColor(Constants.Green))
+        .append(Text.literal("]").withColor(Constants.Blue))
+        .append(Text.literal(".").withColor(Constants.Green))
 
 
     /** Coloured '[' and '] ' components (the latter includes a space). */
-    val LBRACK_COMPONENT: Text = Text.literal("[").withColor(Colours.DeepKoamaru)
-    val RBRACK_COMPONENT: Text = Text.literal("] ").withColor(Colours.DeepKoamaru)
-    val RBRACK_COMPONENT_NO_SPACE: Text = Text.literal("]").withColor(Colours.DeepKoamaru)
+    val LBRACK_COMPONENT: Text = Text.literal("[").withColor(Constants.DeepKoamaru)
+    val RBRACK_COMPONENT: Text = Text.literal("] ").withColor(Constants.DeepKoamaru)
+    val RBRACK_COMPONENT_NO_SPACE: Text = Text.literal("]").withColor(Constants.DeepKoamaru)
 
     /** For RomanNumeral conversion. */
     private val M = arrayOf("", "M", "MM", "MMM")
@@ -38,7 +45,7 @@ object Utils {
      * appropriate formatting.
      */
     fun BracketedLiteralComponent(Content: String, SpaceAfter: Boolean = true): Text = LBRACK_COMPONENT.copy()
-        .append(Text.literal(Content).withColor(Colours.Lavender))
+        .append(Text.literal(Content).withColor(Constants.Lavender))
         .append(if (SpaceAfter) RBRACK_COMPONENT else RBRACK_COMPONENT_NO_SPACE)
 
     /** Compute the name of a (linked) player. */
@@ -49,6 +56,14 @@ object Utils {
         DiscordColour: Int
     ): Text = if (!IsLinked) Text.literal(ScoreboardName).formatted(Formatting.GRAY)
               else Text.literal(DiscordName).withColor(DiscordColour)
+
+    /** Print a debug message. */
+    @JvmStatic
+    fun Debug(Message: String, vararg Objects : Any) = LOGGER.info(Message, *Objects)
+
+    /** Get the level of an enchantment on an item stack. */
+    @JvmStatic
+    fun EnchantLvl(Stack: ItemStack, E: Enchantment): Int = EnchantmentHelper.getLevel(E, Stack)
 
     /** Normalise a string for fuzzy matching against another string  */
     fun Normalised(S: String) = Normalizer.normalize(S, Normalizer.Form.NFKC).lowercase(Locale.getDefault())

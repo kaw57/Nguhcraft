@@ -15,16 +15,23 @@ import org.nguh.nguhcraft.packets.ServerboundChatPacket
 //     - [ ] Hypershot
 //     - [ ] Saturation
 //     - [ ] Smelting
-//     - [ ] Channeling II
+//     - [x] Channeling II
+//     - [ ] Make Multishot apply to bows (should already work in latest snapshot?)
 //   - [x] Render enchantment levels properly
 //   - [x] Patch enchant command to ignore restrictions
 //   - [ ] Prevent players from leaving the border
-//   - [ ] Make Multishot apply to bows (should already work in latest snapshot?)
 //   - [ ] Machine gun Ghasts
 //   - [ ] Import Saved Lore as Lore
 // - [ ] 2. TBA
 // - [ ] Extras
 //   - [ ] Increase chat message history and scrollback size (to like 10000)
+//   - [ ] Moderator permission (store bit in player nbt)
+//   - [ ] Creative mode tab for treasures etc
+
+
+/// NOW:
+// - Trident also strike lightning on block hit.
+// - Figure out where the hell were casting the damned ray to.
 
 class Nguhcraft : ModInitializer {
     override fun onInitialize() {

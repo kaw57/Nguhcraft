@@ -60,7 +60,7 @@ enum class SyncedGameRule(
             val Tag = LoadData.getCompound(TAG_NAME)
             for (R in entries)
                 if (Tag.contains(R.Name))
-                    Tag.getBoolean(R.Name)
+                    R.Value = Tag.getBoolean(R.Name)
         }
 
         /** Save the rules to disk. */

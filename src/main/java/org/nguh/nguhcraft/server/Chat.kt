@@ -5,14 +5,12 @@ import net.fabricmc.api.Environment
 import com.mojang.logging.LogUtils
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.Context
-import net.minecraft.network.message.ChatVisibility
 import net.minecraft.network.packet.s2c.play.GameMessageS2CPacket
 import net.minecraft.server.network.ServerPlayNetworkHandler
 import net.minecraft.server.network.ServerPlayerEntity
 import net.minecraft.text.Text
 import net.minecraft.util.Formatting
-import net.minecraft.util.StringHelper
-import org.nguh.nguhcraft.Colours
+import org.nguh.nguhcraft.Constants
 import org.nguh.nguhcraft.Utils
 import org.nguh.nguhcraft.packets.ClientboundChatPacket
 import org.nguh.nguhcraft.server.ServerUtils.Broadcast
@@ -26,9 +24,9 @@ object Chat {
 
     /** Components used in sender names. */
     private val SERVER_COMPONENT: Text = Utils.BracketedLiteralComponent("Server", false)
-    private val SRV_LIT_COMPONENT: Text = Text.literal("Server").withColor(Colours.Lavender)
+    private val SRV_LIT_COMPONENT: Text = Text.literal("Server").withColor(Constants.Lavender)
     private val COLON_COMPONENT: Text = Text.literal(":")
-    private val COMMA_COMPONENT = Text.literal(", ").withColor(Colours.DeepKoamaru)
+    private val COMMA_COMPONENT = Text.literal(", ").withColor(Constants.DeepKoamaru)
 
     /** Actually send a message. */
     private fun DispatchMessage(Sender: ServerPlayerEntity?, Message: String) {

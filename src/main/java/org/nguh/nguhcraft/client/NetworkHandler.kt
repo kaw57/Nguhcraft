@@ -4,7 +4,7 @@ import net.fabricmc.api.EnvType
 import net.fabricmc.api.Environment
 import net.minecraft.text.Text
 import net.minecraft.util.Formatting
-import org.nguh.nguhcraft.Colours
+import org.nguh.nguhcraft.Constants
 import org.nguh.nguhcraft.SyncedGameRule
 import org.nguh.nguhcraft.Utils
 import org.nguh.nguhcraft.Utils.LBRACK_COMPONENT
@@ -18,8 +18,8 @@ import org.nguh.nguhcraft.packets.ClientboundSyncGameRulesPacket
 @Environment(EnvType.CLIENT)
 object NetworkHandler {
     /** Coloured components used in chat messages. */
-    private val ARROW_COMPONENT: Text = Text.literal(" → ").withColor(Colours.DeepKoamaru)
-    private val ME_COMPONENT = Text.literal("me").withColor(Colours.Lavender)
+    private val ARROW_COMPONENT: Text = Text.literal(" → ").withColor(Constants.DeepKoamaru)
+    private val ME_COMPONENT = Text.literal("me").withColor(Constants.Lavender)
     private val SPACE_COMPONENT = Text.literal(" ")
 
     private fun Execute(CB: () -> Unit) = Client().execute(CB)

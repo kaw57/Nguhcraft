@@ -26,7 +26,7 @@ import kotlin.system.exitProcess
 class NguhcraftServer : DedicatedServerModInitializer {
     override fun onInitializeServer() {
         try {
-            LoadPersistentState()
+            LOGGER.info("Initialising server")
             Discord.Start()
             Commands.Register()
             RegisterPacketHandlers()
@@ -35,7 +35,6 @@ class NguhcraftServer : DedicatedServerModInitializer {
             exitProcess(1)
         }
     }
-
 
     companion object {
         private val LOGGER = LogUtils.getLogger()
@@ -79,8 +78,16 @@ class NguhcraftServer : DedicatedServerModInitializer {
 
         @JvmStatic
         fun Shutdown() {
+            LOGGER.info("Shutting down server")
             Discord.Stop()
             SavePersistentState()
+        }
+
+        /** Called once the server instance has been created. */
+        @JvmStatic
+        fun Setup() {
+            LOGGER.info("Setting up server state")
+            LoadPersistentState()
         }
     }
 }

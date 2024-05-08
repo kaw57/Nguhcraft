@@ -8,10 +8,9 @@ import net.minecraft.nbt.NbtIo
 import net.minecraft.nbt.NbtSizeTracker
 import net.minecraft.server.network.ServerPlayerEntity
 import net.minecraft.util.WorldSavePath
-import org.nguh.nguhcraft.Colours
+import org.nguh.nguhcraft.Constants
 import org.nguh.nguhcraft.Utils.Normalised
 import org.nguh.nguhcraft.mixin.server.MinecraftServerAccessor
-import org.nguh.nguhcraft.mixin.server.ServerPlayerMixin
 import org.nguh.nguhcraft.server.ServerUtils.Server
 import java.io.File
 import java.util.*
@@ -140,7 +139,7 @@ class PlayerList private constructor(private val ByID: HashMap<UUID, Entry>) : I
             var Name = ""
             var DiscordName = ""
             var DiscordID = Discord.INVALID_ID
-            var RoleColour: Int = Colours.Grey
+            var RoleColour: Int = Constants.Grey
             if (Nbt.contains(NguhcraftServerPlayer.TAG_ROOT)) {
                 val Nguhcraft = Nbt.getCompound(NguhcraftServerPlayer.TAG_ROOT)
                 Name = Nguhcraft.getString(NguhcraftServerPlayer.TAG_LAST_KNOWN_NAME)

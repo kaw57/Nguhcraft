@@ -35,7 +35,7 @@ import net.minecraft.text.Text
 import net.minecraft.util.Formatting
 import net.minecraft.world.GameMode
 import org.jetbrains.annotations.Contract
-import org.nguh.nguhcraft.Colours
+import org.nguh.nguhcraft.Constants
 import org.nguh.nguhcraft.Commands
 import org.nguh.nguhcraft.Utils
 import org.nguh.nguhcraft.packets.ClientboundLinkUpdatePacket
@@ -145,7 +145,7 @@ internal class Discord : ListenerAdapter() {
         if (E.isWebhookMessage || A.isBot || E.channel.idLong != MessageChannel.idLong) return
         val M = E.member
         val Name = A.effectiveName
-        val Colour = M?.colorRaw ?: Colours.Grey
+        val Colour = M?.colorRaw ?: Constants.Grey
         val Mess = E.message
         val Content = Mess.contentDisplay
         val HasAttachments = Mess.attachments.isNotEmpty()
@@ -239,14 +239,14 @@ internal class Discord : ListenerAdapter() {
             NgimpRole = Get("required role") { AgmaSchwaGuild.getRoleById(Config.requiredRoleId) }
             ServerAvatarURL = AgmaSchwaGuild.iconUrl ?: Client.selfUser.effectiveAvatarUrl
             Ready = true
-            SendSimpleEmbed(null, "Starting server...", Colours.Lavender);
+            SendSimpleEmbed(null, "Starting server...", Constants.Lavender);
         }
 
         @JvmStatic
         fun Stop() {
             if (!Ready) return
             Ready = false
-            SendSimpleEmbed(null, "Shutting down...", Colours.Lavender)
+            SendSimpleEmbed(null, "Shutting down...", Constants.Lavender)
             Client.shutdown()
         }
 
@@ -255,7 +255,7 @@ internal class Discord : ListenerAdapter() {
             if (!Ready) return
             try {
                 val Text = AdvancementMessage.string
-                SendSimpleEmbed(SP, Text, Colours.Lavender)
+                SendSimpleEmbed(SP, Text, Constants.Lavender)
             } catch (E: Exception) {
                 E.printStackTrace()
                 LOGGER.error("Failed to send advancement message: {}", E.message)
@@ -271,14 +271,14 @@ internal class Discord : ListenerAdapter() {
             // exception escape in any case.
             try {
                 val Text = DeathMessage.string
-                SendSimpleEmbed(SP, Text, Colours.Red)
+                SendSimpleEmbed(SP, Text, Constants.Red)
             } catch (E: Exception) {
                 if (E is IllegalArgumentException || E is ErrorResponseException) {
                     // Death message was too long.
                     val S = DeathMessage.asTruncatedString(256)
                     val Msg = Text.translatable("death.attack.even_more_magic", SP.displayName)
                     val Abbr = Text.translatable("death.attack.message_too_long", Text.literal(S))
-                    SendSimpleEmbed(SP, "$Msg\n\n$Abbr", Colours.Black)
+                    SendSimpleEmbed(SP, "$Msg\n\n$Abbr", Constants.Black)
                     return
                 }
 
@@ -294,7 +294,7 @@ internal class Discord : ListenerAdapter() {
                 val Name = if (SP.isLinked) SP.discordName
                 else SP.nameForScoreboard
                 val Text = "$Name ${if (Joined) "joined" else "left"} the game"
-                SendSimpleEmbed(SP, Text, if (Joined) Colours.Green else Colours.Red)
+                SendSimpleEmbed(SP, Text, if (Joined) Constants.Green else Constants.Red)
             } catch (E: Exception) {
                 E.printStackTrace()
                 LOGGER.error("Failed to send join/quit message: {}", E.message)
@@ -346,7 +346,7 @@ internal class Discord : ListenerAdapter() {
             try {
                 // Message sent by the server.
                 if (SP == null) {
-                    SendSimpleEmbed(null, Message, Colours.Lavender)
+                    SendSimpleEmbed(null, Message, Constants.Lavender)
                     return
                 }
 
@@ -385,7 +385,7 @@ internal class Discord : ListenerAdapter() {
                         "Follow this link and press the button to link your Minecraft account '"
                         + Name + "' to your Discord account '" + Member.effectiveName + "': "
                     )
-                    .withColor(Colours.Green)
+                    .withColor(Constants.Green)
                     .append(Utils.LINK)
                     .styled { style -> style.withClickEvent(ClickEvent(ClickEvent.Action.OPEN_URL, Mess.jumpUrl)) })
             } catch (E: ErrorResponseException) {
@@ -470,7 +470,7 @@ internal class Discord : ListenerAdapter() {
 
         private fun PerformUnlink(SP: ServerPlayerEntity) {
             val ID = (SP as NguhcraftServerPlayer).discordId
-            UpdatePlayer(SP, INVALID_ID, null, null, Colours.Grey)
+            UpdatePlayer(SP, INVALID_ID, null, null, Constants.Grey)
 
             // Remove the @ŋguhcrafter role.
             AgmaSchwaGuild.removeRoleFromMember(UserSnowflake.fromId(ID), NguhcrafterRole).queue()
@@ -487,7 +487,7 @@ internal class Discord : ListenerAdapter() {
             AgmaSchwaGuild.addRoleToMember(M, NguhcrafterRole).queue()
 
             // Broadcast the change to all players and send a message to Discord.
-            SendSimpleEmbed(null, DiscordMsg, Colours.Green)
+            SendSimpleEmbed(null, DiscordMsg, Constants.Green)
             Server().playerManager.broadcast(
                 Text.empty()
                     .append(Text.literal(SP.nameForScoreboard).formatted(Formatting.AQUA))
@@ -589,7 +589,7 @@ internal class Discord : ListenerAdapter() {
             )
 
             val DiscordMsg = "${SP.nameForScoreboard} is no longer linked"
-            SendSimpleEmbed(SP, DiscordMsg, Colours.Red)
+            SendSimpleEmbed(SP, DiscordMsg, Constants.Red)
         }
 
         /**

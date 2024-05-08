@@ -11,7 +11,6 @@ import com.mojang.logging.LogUtils
 import net.fabricmc.api.EnvType
 import net.fabricmc.api.Environment
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback
-import net.minecraft.advancement.criterion.ConstructBeaconCriterion.Conditions.level
 import net.minecraft.command.CommandRegistryAccess
 import net.minecraft.command.argument.EntityArgumentType
 import net.minecraft.command.argument.RegistryEntryReferenceArgumentType
@@ -23,7 +22,7 @@ import net.minecraft.server.network.ServerPlayerEntity
 import net.minecraft.text.MutableText
 import net.minecraft.text.Text
 import net.minecraft.util.Formatting
-import org.nguh.nguhcraft.Colours
+import org.nguh.nguhcraft.Constants
 import org.nguh.nguhcraft.Commands.Exn
 import org.nguh.nguhcraft.SyncedGameRule
 import org.nguh.nguhcraft.Utils.Normalised
@@ -75,7 +74,7 @@ object Commands {
                     .append(RPAREN)
             } else {
                 List.append(LIST_ENTRY)
-                    .append(Text.literal(PD.toString()).withColor(Colours.Lavender))
+                    .append(Text.literal(PD.toString()).withColor(Constants.Lavender))
             }
         }
 
