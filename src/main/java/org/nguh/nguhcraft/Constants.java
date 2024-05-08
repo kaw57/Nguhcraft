@@ -4,6 +4,9 @@ public interface Constants {
     /** Maximum distance to the target after which we give up. */
     int MAX_HOMING_DISTANCE = 128;
 
+    /** Maximum enchantment level. */
+    int MAX_ENCHANT_LVL = 255;
+
     /** Colours. */
     int Lavender = 0xC8BFE7;
     int Green = 0x55FF55;

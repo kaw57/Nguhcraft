@@ -14,6 +14,8 @@ public abstract class EnchantmentMixin {
     @Shadow public abstract String getTranslationKey();
     @Shadow public abstract boolean isCursed();
 
+    @Shadow public abstract int getMaxLevel();
+
     /**
      * Render large enchantment levels properly.
      *
@@ -25,7 +27,7 @@ public abstract class EnchantmentMixin {
         var Lvl = level >= 255 || level < 0 ? "∞" : Utils.RomanNumeral(level);
         return Text.translatable(getTranslationKey())
             .append(ScreenTexts.SPACE)
-            .append(Text.literal(Lvl))
+            .append(getMaxLevel() > 1 || level > 1 ? Text.literal(Lvl) : ScreenTexts.EMPTY)
             .formatted(isCursed() ? Formatting.RED : Formatting.GRAY);
     }
 }

@@ -2,6 +2,7 @@ package org.nguh.nguhcraft
 
 import net.fabricmc.api.ModInitializer
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry
+import net.minecraft.enchantment.Enchantment
 import net.minecraft.registry.Registries
 import net.minecraft.registry.Registry
 import net.minecraft.util.Identifier
@@ -15,11 +16,13 @@ import org.nguh.nguhcraft.packets.ServerboundChatPacket
 // - [ ] 1. Big Chungus
 //   - [ ] Enchantments
 //     - [ ] Health
-//     - [ ] Homing
+//     - [x] Homing
 //     - [ ] Hypershot
 //     - [ ] Saturation
 //     - [ ] Smelting
 //     - [x] Channeling II
+//       - [x] On entity hit
+//       = [ ] On block hit
 //     - [ ] Make Multishot apply to bows (should already work in latest snapshot?)
 //   - [x] Render enchantment levels properly
 //   - [x] Patch enchant command to ignore restrictions
@@ -30,7 +33,8 @@ import org.nguh.nguhcraft.packets.ServerboundChatPacket
 // - [ ] Extras
 //   - [ ] Increase chat message history and scrollback size (to like 10000)
 //   - [ ] Moderator permission (store bit in player nbt)
-//   - [ ] Creative mode tab for treasures etc
+//   - [x] Creative mode tab for treasures etc
+//   - [x] Render potion levels properly.
 
 
 /// NOW:
@@ -48,6 +52,14 @@ class Nguhcraft : ModInitializer {
         PayloadTypeRegistry.playC2S().register(ServerboundChatPacket.ID, ServerboundChatPacket.CODEC)
 
         // Enchantments.
-        Registry.register(Registries.ENCHANTMENT, Identifier("nguhcraft", "homing"), NguhcraftEnchantments.HOMING)
+        Register("homing", NguhcraftEnchantments.HOMING)
+        Register("hypershot", NguhcraftEnchantments.HYPERSHOT)
+        Register("smelting", NguhcraftEnchantments.SMELTING)
+    }
+
+    companion object {
+        private fun Register(Name: String, E: Enchantment) {
+            Registry.register(Registries.ENCHANTMENT, Identifier("nguhcraft", Name), E)
+        }
     }
 }

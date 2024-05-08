@@ -5,17 +5,22 @@ import net.fabricmc.api.EnvType
 import net.fabricmc.api.Environment
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents
-import org.nguh.nguhcraft.packets.ClientboundChatPacket
-import org.nguh.nguhcraft.packets.ClientboundLinkUpdatePacket
-import org.nguh.nguhcraft.packets.ClientboundSyncGameRulesPacket
-import net.minecraft.client.util.math.MatrixStack
+import net.minecraft.item.ItemGroup
+import net.minecraft.item.ItemStack
+import net.minecraft.item.Items
+import net.minecraft.registry.Registries
+import net.minecraft.registry.Registry
+import net.minecraft.text.Text
+import net.minecraft.util.Identifier
 import net.minecraft.util.hit.HitResult
-import net.minecraft.util.math.ColorHelper
 import net.minecraft.world.RaycastContext
 import org.lwjgl.glfw.GLFW
 import org.nguh.nguhcraft.Constants.MAX_HOMING_DISTANCE
 import org.nguh.nguhcraft.Utils.Debug
 import org.nguh.nguhcraft.client.ClientUtils.Client
+import org.nguh.nguhcraft.packets.ClientboundChatPacket
+import org.nguh.nguhcraft.packets.ClientboundLinkUpdatePacket
+import org.nguh.nguhcraft.packets.ClientboundSyncGameRulesPacket
 
 @Environment(EnvType.CLIENT)
 class NguhcraftClient : ClientModInitializer {
@@ -33,9 +38,17 @@ class NguhcraftClient : ClientModInitializer {
         }
 
         WorldRenderEvents.LAST.register { Renderer.DebugRender(it) }
+
+        Registry.register(Registries.ITEM_GROUP, Identifier("nguhcraft", "treasures"), TREASURES_ITEM_GROUP)
     }
 
     companion object {
+        val TREASURES_ITEM_GROUP: ItemGroup = net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup.builder()
+            .icon { ItemStack(Items.NETHERITE_INGOT) }
+            .displayName(Text.literal("Treasures"))
+            .entries {  _, Entries -> Treasures.AddAll(Entries) }
+            .build()
+
         @JvmStatic
         fun ProcessF3(key: Int): Boolean {
             if (key == GLFW.GLFW_KEY_F12) {

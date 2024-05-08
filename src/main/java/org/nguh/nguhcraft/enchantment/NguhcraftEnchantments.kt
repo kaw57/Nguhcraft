@@ -7,9 +7,33 @@ import net.minecraft.entity.EquipmentSlot
 import net.minecraft.registry.tag.ItemTags
 
 object NguhcraftEnchantments {
-    @JvmField val HOMING = TreasureEnchantment(
+    val HOMING = TreasureEnchantment(
         properties(
             ItemTags.BOW_ENCHANTABLE,
+            1,
+            1,
+            constantCost(200),
+            constantCost(200),
+            1,
+            EquipmentSlot.MAINHAND
+        )
+    )
+
+    val HYPERSHOT = TreasureEnchantment(
+        properties(
+            ItemTags.CROSSBOW_ENCHANTABLE,
+            1,
+            100,
+            constantCost(200),
+            constantCost(200),
+            1,
+            EquipmentSlot.MAINHAND
+        )
+    )
+
+    val SMELTING = TreasureEnchantment(
+        properties(
+            ItemTags.MINING_ENCHANTABLE,
             1,
             1,
             constantCost(200),
