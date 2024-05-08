@@ -35,7 +35,7 @@ public abstract class RangedWeaponItemMixin {
         @Nullable LivingEntity Tgt,
         CallbackInfo CI,
         @Share("HomingTarget") LocalRef<LivingEntity> HomingTarget
-    ) { HomingTarget.set(ServerUtils.MaybeMakeHomingArrow(W, Shooter)); }
+    ) { HomingTarget.set(ServerUtils.MaybeMakeHomingArrow(W, Shooter, Weapon)); }
 
     /** Then, when we shoot an arrow, set the target appropriately. */
     @Inject(

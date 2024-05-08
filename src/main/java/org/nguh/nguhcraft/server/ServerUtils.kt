@@ -8,6 +8,7 @@ import net.minecraft.entity.Entity
 import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.mob.Monster
 import net.minecraft.entity.projectile.ProjectileUtil
+import net.minecraft.item.ItemStack
 import net.minecraft.network.packet.CustomPayload
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.network.ServerPlayerEntity
@@ -18,6 +19,8 @@ import net.minecraft.world.RaycastContext
 import net.minecraft.world.World
 import org.nguh.nguhcraft.Constants.MAX_HOMING_DISTANCE
 import org.nguh.nguhcraft.Utils.Debug
+import org.nguh.nguhcraft.Utils.EnchantLvl
+import org.nguh.nguhcraft.enchantment.NguhcraftEnchantments
 import java.util.*
 import java.util.function.Predicate
 
@@ -38,7 +41,9 @@ object ServerUtils {
     }
 
     @JvmStatic
-    fun MaybeMakeHomingArrow(W: World, Shooter: LivingEntity): LivingEntity? {
+    fun MaybeMakeHomingArrow(W: World, Shooter: LivingEntity, Weapon: ItemStack): LivingEntity? {
+        if (EnchantLvl(Weapon, NguhcraftEnchantments.HOMING) == 0) return null
+
         // Perform a ray cast up to the max distance, starting at the shooter’s
         // position. Passing a 1 for the tick delta yields the actual camera pos
         // etc.
@@ -101,5 +106,6 @@ object ServerUtils {
         catch (E: RuntimeException) { null }
     }
 
+    @Suppress("DEPRECATION")
     fun Server() = FabricLoader.getInstance().gameInstance as MinecraftServer
 }

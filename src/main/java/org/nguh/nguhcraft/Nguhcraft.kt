@@ -2,6 +2,10 @@ package org.nguh.nguhcraft
 
 import net.fabricmc.api.ModInitializer
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry
+import net.minecraft.registry.Registries
+import net.minecraft.registry.Registry
+import net.minecraft.util.Identifier
+import org.nguh.nguhcraft.enchantment.NguhcraftEnchantments
 import org.nguh.nguhcraft.packets.ClientboundChatPacket
 import org.nguh.nguhcraft.packets.ClientboundLinkUpdatePacket
 import org.nguh.nguhcraft.packets.ClientboundSyncGameRulesPacket
@@ -42,5 +46,8 @@ class Nguhcraft : ModInitializer {
 
         // Serverbound packets.
         PayloadTypeRegistry.playC2S().register(ServerboundChatPacket.ID, ServerboundChatPacket.CODEC)
+
+        // Enchantments.
+        Registry.register(Registries.ENCHANTMENT, Identifier("nguhcraft", "homing"), NguhcraftEnchantments.HOMING)
     }
 }
