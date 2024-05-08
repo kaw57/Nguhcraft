@@ -6,8 +6,7 @@
 	"mixins": [
 		"common.EnchantmentMixin",
 		"common.EnderEyeItemMixin",
-		"common.PersistentProjectileEntityMixin",
-		"common.RangedWeaponItemMixin"
+		"common.PersistentProjectileEntityMixin"
 	],
 	"client": [
 		"client.AbstractClientPlayerMixin",
@@ -32,6 +31,7 @@
 		"server.MsgCommandMixin",
 		"server.PlayerAdvancementTrackerMixin",
 		"server.PlayerManagerMixin",
+		"server.RangedWeaponItemMixin",
 		"server.SayCommandMixin",
 		"server.ServerCommandSourceMixin",
 		"server.ServerPlayerMixin",

@@ -54,8 +54,13 @@ public abstract class PersistentProjectileEntityMixin extends ProjectileEntity i
         // Not a homing projectile.
         if (Target == null) return;
 
-        // Stop if we’ve been going for too long.
-        if (HomingTicks++ >= MAX_HOMING_TICKS || isRemoved()) {
+        // Stop if we’ve been going for too long or the target is gone.
+        if (
+            HomingTicks++ >= MAX_HOMING_TICKS ||
+            isRemoved() ||
+            !Target.isAlive() ||
+            Target.isRemoved()
+        ) {
             Target = null;
             return;
         }
@@ -63,7 +68,7 @@ public abstract class PersistentProjectileEntityMixin extends ProjectileEntity i
         // Calculate the distance vector to the target.
         var TPos = Target.getPos();
         var PPos = getPos();
-        var DVec = TPos.subtract(PPos);
+        var DVec = TPos.subtract(PPos).add(0, Target.getHeight() / 2., 0);
         var Dist = DVec.length();
         if (Dist > MAX_HOMING_DISTANCE) {
             Target = null;
