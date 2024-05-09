@@ -167,8 +167,9 @@ class TreeToChop private constructor(private val Owner: ServerPlayerEntity, priv
                     if (St.get(LeavesBlock.PERSISTENT)) return
                     SeenNonPersistentLeaves = true
                 } else if (WoodTypes.contains(B)) {
+                    val Up = Block.up()
                     Tree.Add(Block)
-                    VisitLog(Q, Visited, Block.up())
+                    VisitLog(Q, Visited, Up)
                     VisitLog(Q, Visited, Block.north())
                     VisitLog(Q, Visited, Block.east())
                     VisitLog(Q, Visited, Block.south())
@@ -177,12 +178,20 @@ class TreeToChop private constructor(private val Owner: ServerPlayerEntity, priv
                     // Do chop downwards if these are Mangrove roots because it looks stupid
                     // if only the roots are left (re ‘that is not how trees work’: they’re
                     // roots; they’d probably fall over or something).
-                    if (ChopDownwards &&
-                        (
-                            B == Blocks.MANGROVE_ROOTS ||
-                            B == Blocks.MUDDY_MANGROVE_ROOTS
-                        )
-                    ) VisitLog(Q, Visited, Block.down())
+                    if (ChopDownwards && (
+                        B == Blocks.MANGROVE_ROOTS ||
+                        B == Blocks.MUDDY_MANGROVE_ROOTS
+                    )) VisitLog(Q, Visited, Block.down())
+
+                    // Some trees are really dumb and generate in non-obvious ways, the worst
+                    // offender arguably being acacia trees; for those, we also need to check
+                    // W, E, N, and S of the block above the log.
+                    if (B == Blocks.ACACIA_LOG) {
+                        VisitLog(Q, Visited, Up.north())
+                        VisitLog(Q, Visited, Up.east())
+                        VisitLog(Q, Visited, Up.south())
+                        VisitLog(Q, Visited, Up.west())
+                    }
                 }
             }
 
