@@ -5,7 +5,6 @@ import net.minecraft.item.ItemUsageContext;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
-import org.nguh.nguhcraft.Nguhcraft;
 import org.nguh.nguhcraft.SyncedGameRule;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;

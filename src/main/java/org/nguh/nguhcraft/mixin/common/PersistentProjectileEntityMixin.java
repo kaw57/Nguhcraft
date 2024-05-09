@@ -1,19 +1,15 @@
 package org.nguh.nguhcraft.mixin.common;
 
-import com.mojang.logging.LogUtils;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.projectile.PersistentProjectileEntity;
 import net.minecraft.entity.projectile.ProjectileEntity;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.RaycastContext;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
-import org.nguh.nguhcraft.NguhcraftPersistentProjectileEntityAccessor;
-import org.slf4j.Logger;
+import org.nguh.nguhcraft.PersistentProjectileEntityAccessor;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -21,10 +17,9 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import static org.nguh.nguhcraft.Constants.MAX_HOMING_DISTANCE;
-import static org.nguh.nguhcraft.Utils.Debug;
 
 @Mixin(PersistentProjectileEntity.class)
-public abstract class PersistentProjectileEntityMixin extends ProjectileEntity implements NguhcraftPersistentProjectileEntityAccessor {
+public abstract class PersistentProjectileEntityMixin extends ProjectileEntity implements PersistentProjectileEntityAccessor {
     public PersistentProjectileEntityMixin(EntityType<? extends ProjectileEntity> entityType, World world) {
         super(entityType, world);
     }
@@ -41,10 +36,31 @@ public abstract class PersistentProjectileEntityMixin extends ProjectileEntity i
     /** How long we’ve been following the entity. */
     @Unique private int HomingTicks;
 
+    /**
+    * Whether this is a hypershot arrow.
+    * <p>
+    * To make hypershot actually work, we need to cancel an entity’s
+    * invulnerability time if it is hit by an arrow that was shot
+    * from a hypershot bow. That includes the first arrow shot from
+    * the bow as well.
+    */
+    @Unique private boolean IsHypershotArrow = false;
+
+    /** Turn this into a hypershot arrow. */
+    @Override public void MakeHypershotArrow() { IsHypershotArrow = true; }
+
     /** Set the homing target. */
     @Override public void SetHomingTarget(LivingEntity Target) {
         this.Target = Target;
         this.HomingTicks = 0;
+    }
+
+
+    /** Disable damage cooldown if an entity is hit with a hypershot arrow. */
+    @Inject(method = "onHit", at = @At("TAIL"))
+    private void inject$onHit(LivingEntity Target, CallbackInfo CI) {
+        // FIXME: Could use DamageTags.BYPASSES_COOLDOWN for this.
+        if (IsHypershotArrow) Target.timeUntilRegen = 0;
     }
 
     /** Implement the homing enchantment. */

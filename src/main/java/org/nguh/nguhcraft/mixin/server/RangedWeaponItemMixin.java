@@ -4,17 +4,17 @@ import com.llamalad7.mixinextras.sugar.Local;
 import com.llamalad7.mixinextras.sugar.Share;
 import com.llamalad7.mixinextras.sugar.ref.LocalRef;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.projectile.PersistentProjectileEntity;
 import net.minecraft.entity.projectile.ProjectileEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.RangedWeaponItem;
 import net.minecraft.util.Hand;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
-import org.nguh.nguhcraft.server.accessors.LivingEntityAccessor;
-import org.nguh.nguhcraft.NguhcraftPersistentProjectileEntityAccessor;
-import org.nguh.nguhcraft.server.HypershotContext;
+import org.nguh.nguhcraft.PersistentProjectileEntityAccessor;
 import org.nguh.nguhcraft.enchantment.NguhcraftEnchantments;
 import org.nguh.nguhcraft.server.ServerUtils;
+import org.nguh.nguhcraft.server.accessors.LivingEntityAccessor;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -26,7 +26,7 @@ import static org.nguh.nguhcraft.Utils.EnchantLvl;
 
 @Mixin(RangedWeaponItem.class)
 public abstract class RangedWeaponItemMixin {
-    /** At the start of the function, find a target to home in on. */
+    /** At the start of the function, compute homing and hypershot info. */
     @Inject(method = "shootAll", at = @At("HEAD"))
     private void inject$shootAll$0(
         World W,
@@ -39,7 +39,9 @@ public abstract class RangedWeaponItemMixin {
         boolean Crit,
         @Nullable LivingEntity Tgt,
         CallbackInfo CI,
-        @Share("HomingTarget") LocalRef<LivingEntity> HomingTarget
+        @Share("HomingTarget") LocalRef<LivingEntity> HomingTarget,
+        @Share("Hypershot") LocalRef<Boolean> IsHypershot,
+        @Share("DisallowItemPickup") LocalRef<Boolean> DisallowItemPickup
     ) {
         if (W.isClient) return;
 
@@ -50,8 +52,17 @@ public abstract class RangedWeaponItemMixin {
             W.getProfiler().pop();
         }
 
-        // If we’re not already in a hypershot context, apply hypershot.
-        ServerUtils.MaybeEnterHypershotContext(Shooter, Hand, Weapon, Projectiles, Speed, Div, Crit);
+        // If we’re not already in a hypershot context, apply hypershot. In
+        // any case, make the arrow a hypershot arrow if we end up in a hypershot
+        // context. This is so we can cancel invulnerability time for the entity
+        // hit by this arrow.
+        var AlreadyInHypershotContext = ((LivingEntityAccessor)Shooter).getHypershotContext() != null;
+        var HS = ServerUtils.MaybeEnterHypershotContext(Shooter, Hand, Weapon, Projectiles, Speed, Div, Crit);
+        IsHypershot.set(HS);
+
+        // We need to disallow item pickup if this is not the first arrow shot
+        // from a hypershot bow.
+        DisallowItemPickup.set(HS && !AlreadyInHypershotContext);
     }
 
     /** Then, when we shoot an arrow, set the target appropriately. */
@@ -75,6 +86,17 @@ public abstract class RangedWeaponItemMixin {
             @Nullable LivingEntity Tgt,
             CallbackInfo CI,
             @Local ProjectileEntity Proj,
-            @Share("HomingTarget") LocalRef<LivingEntity> HomingTarget
-    ) { ((NguhcraftPersistentProjectileEntityAccessor)Proj).SetHomingTarget(HomingTarget.get()); }
+            @Share("HomingTarget") LocalRef<LivingEntity> HomingTarget,
+            @Share("Hypershot") LocalRef<Boolean> IsHypershot,
+            @Share("DisallowItemPickup") LocalRef<Boolean> DisallowItemPickup
+    ) {
+        if (W.isClient) return;
+
+        // Apply settings computed above to the projectiles.
+        var PPE = (PersistentProjectileEntityAccessor)Proj;
+        PPE.SetHomingTarget(HomingTarget.get());
+        if (IsHypershot.get()) PPE.MakeHypershotArrow();
+        if (DisallowItemPickup.get()) ((PersistentProjectileEntity)Proj).pickupType
+            = PersistentProjectileEntity.PickupPermission.CREATIVE_ONLY;
+    }
 }

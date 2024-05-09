@@ -43,6 +43,7 @@ object ServerUtils {
             ServerPlayNetworking.send(Player, P)
     }
 
+    /** @return `true` if the entity entered or was already in a hypershot context. */
     @JvmStatic
     fun MaybeEnterHypershotContext(
         Shooter: LivingEntity,
@@ -52,14 +53,17 @@ object ServerUtils {
         Speed: Float,
         Div: Float,
         Crit: Boolean
-    ) {
+    ): Boolean {
         // Entity already in hypershot context.
         val NLE = (Shooter as LivingEntityAccessor)
-        if (NLE.hypershotContext != null) return
+        if (NLE.hypershotContext != null) return true
+
+        // Stack does not have hypershot.
+        val HSLvl = EnchantLvl(Weapon, NguhcraftEnchantments.HYPERSHOT)
+        if (HSLvl == 0) return false
 
         // Enter hypershot context.
-        val HSLvl = EnchantLvl(Weapon, NguhcraftEnchantments.HYPERSHOT)
-        if (HSLvl != 0) NLE.setHypershotContext(
+        NLE.setHypershotContext(
             HypershotContext(
                 Hand,
                 Weapon,
@@ -76,6 +80,8 @@ object ServerUtils {
             Shooter,
             ClientboundSyncHypershotStatePacket(true)
         )
+
+        return true
     }
 
     @JvmStatic
