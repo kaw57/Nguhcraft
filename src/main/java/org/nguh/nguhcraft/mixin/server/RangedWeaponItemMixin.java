@@ -95,7 +95,7 @@ public abstract class RangedWeaponItemMixin {
         // Apply settings computed above to the projectiles.
         var PPE = (ProjectileEntityAccessor)Proj;
         PPE.SetHomingTarget(HomingTarget.get());
-        if (IsHypershot.get()) PPE.MakeHypershotArrow();
+        if (IsHypershot.get()) PPE.MakeHypershotProjectile();
         if (DisallowItemPickup.get() && Proj instanceof PersistentProjectileEntity E)
             E.pickupType = PersistentProjectileEntity.PickupPermission.CREATIVE_ONLY;
     }

@@ -6,14 +6,11 @@ import org.spongepowered.asm.mixin.Mixin;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.projectile.PersistentProjectileEntity;
-import net.minecraft.entity.projectile.ProjectileEntity;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.RaycastContext;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 import org.nguh.nguhcraft.ProjectileEntityAccessor;
-import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -50,7 +47,7 @@ public abstract class ProjectileEntityMixin extends Entity implements Projectile
     @Unique private boolean IsHypershotArrow = false;
 
     /** Turn this into a hypershot arrow. */
-    @Override public void MakeHypershotArrow() { IsHypershotArrow = true; }
+    @Override public void MakeHypershotProjectile() { IsHypershotArrow = true; }
 
     /** Set the homing target. */
     @Override public void SetHomingTarget(LivingEntity Target) {

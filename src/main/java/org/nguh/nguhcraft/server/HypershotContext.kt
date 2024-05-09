@@ -3,14 +3,17 @@ package org.nguh.nguhcraft.server
 import net.fabricmc.api.EnvType
 import net.fabricmc.api.Environment
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
+import net.minecraft.enchantment.Enchantments
 import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.item.ItemStack
+import net.minecraft.item.TridentItem
 import net.minecraft.server.network.ServerPlayerEntity
 import net.minecraft.sound.SoundCategory
 import net.minecraft.sound.SoundEvents
 import net.minecraft.util.Hand
 import net.minecraft.world.World
+import org.nguh.nguhcraft.Utils.EnchantLvl
 import org.nguh.nguhcraft.mixin.server.RangedWeaponItemAccessor
 import org.nguh.nguhcraft.packets.ClientboundSyncHypershotStatePacket
 import org.nguh.nguhcraft.server.accessors.LivingEntityAccessor
@@ -69,29 +72,42 @@ data class HypershotContext(
         //
         // Take care to duplicate the projectile item stacks unless we’re on the
         // last tick, in which case we can just use the original list.
-        (Weapon.item as RangedWeaponItemAccessor).InvokeShootAll(
-            W,
-            Shooter,
-            Hand,
-            Weapon,
-            if (Ticks < 1) Projectiles else Projectiles.toList().map { it.copy() },
-            Speed,
-            Divergence,
-            Critical,
-            null
-        )
+        val I = Weapon.item
+        if (I is RangedWeaponItemAccessor) {
+            I.InvokeShootAll(
+                W,
+                Shooter,
+                Hand,
+                Weapon,
+                if (Ticks < 1) Projectiles else Projectiles.toList().map { it.copy() },
+                Speed,
+                Divergence,
+                Critical,
+                null
+            )
 
-        // Also play a sound effect.
-        if (Shooter is PlayerEntity) W.playSound(
-            null,
-            Shooter.getX(),
-            Shooter.getY(),
-            Shooter.getZ(),
-            SoundEvents.ENTITY_ARROW_SHOOT,
-            SoundCategory.PLAYERS,
-            1.0f,
-            1.0f / (W.getRandom().nextFloat() * 0.4f + 1.2f)
-        )
+            // Also play a sound effect.
+            if (Shooter is PlayerEntity) W.playSound(
+                null,
+                Shooter.getX(),
+                Shooter.getY(),
+                Shooter.getZ(),
+                SoundEvents.ENTITY_ARROW_SHOOT,
+                SoundCategory.PLAYERS,
+                1.0f,
+                1.0f / (W.getRandom().nextFloat() * 0.4f + 1.2f)
+            )
+        }
+
+        // We also support tridents here.
+        else if (I is TridentItem && Shooter is PlayerEntity) {
+            ServerUtils.ActOnTridentThrown(
+                W,
+                Shooter,
+                Weapon,
+                1
+            )
+        }
 
         // Keep ticking this.
         return !EXPIRED

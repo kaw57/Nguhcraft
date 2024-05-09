@@ -7,7 +7,8 @@
 		"common.DamageEnchantmentMixin",
 		"common.EnchantmentMixin",
 		"common.EnderEyeItemMixin",
-		"common.PotionContentsComponent"
+		"common.PotionContentsComponent",
+		"common.TridentEntityMixin"
 	],
 	"client": [
 		"client.AbstractClientPlayerMixin",
@@ -42,7 +43,7 @@
 		"server.ServerPlayerMixin",
 		"server.ServerPlayNetworkHandlerMixin",
 		"server.TeamMsgCommandMixin",
-		"server.TridentEntityMixin",
+		"server.TridentItemMixin",
 		"server.TriggerCommandMixin"
 	],
 	"injectors": {
