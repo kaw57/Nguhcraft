@@ -11,7 +11,7 @@ import net.minecraft.item.RangedWeaponItem;
 import net.minecraft.util.Hand;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
-import org.nguh.nguhcraft.PersistentProjectileEntityAccessor;
+import org.nguh.nguhcraft.ProjectileEntityAccessor;
 import org.nguh.nguhcraft.enchantment.NguhcraftEnchantments;
 import org.nguh.nguhcraft.server.ServerUtils;
 import org.nguh.nguhcraft.server.accessors.LivingEntityAccessor;
@@ -93,10 +93,10 @@ public abstract class RangedWeaponItemMixin {
         if (W.isClient) return;
 
         // Apply settings computed above to the projectiles.
-        var PPE = (PersistentProjectileEntityAccessor)Proj;
+        var PPE = (ProjectileEntityAccessor)Proj;
         PPE.SetHomingTarget(HomingTarget.get());
         if (IsHypershot.get()) PPE.MakeHypershotArrow();
-        if (DisallowItemPickup.get()) ((PersistentProjectileEntity)Proj).pickupType
-            = PersistentProjectileEntity.PickupPermission.CREATIVE_ONLY;
+        if (DisallowItemPickup.get() && Proj instanceof PersistentProjectileEntity E)
+            E.pickupType = PersistentProjectileEntity.PickupPermission.CREATIVE_ONLY;
     }
 }

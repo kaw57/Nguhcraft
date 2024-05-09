@@ -26,8 +26,8 @@ object NguhcraftEnchantments {
             ItemTags.BOW_ENCHANTABLE,
             1,
             1,
-            constantCost(200),
-            constantCost(200),
+            constantCost(35),
+            constantCost(35),
             1,
             EquipmentSlot.MAINHAND
         )
@@ -59,9 +59,9 @@ object NguhcraftEnchantments {
         properties(
             ItemTags.CROSSBOW_ENCHANTABLE,
             1,
-            100,
-            constantCost(200),
-            constantCost(200),
+            5,
+            constantCost(35),
+            constantCost(35),
             1,
             EquipmentSlot.MAINHAND
         )
@@ -81,8 +81,8 @@ object NguhcraftEnchantments {
             ItemTags.MINING_ENCHANTABLE,
             1,
             1,
-            constantCost(200),
-            constantCost(200),
+            constantCost(35),
+            constantCost(35),
             1,
             EquipmentSlot.MAINHAND
         )

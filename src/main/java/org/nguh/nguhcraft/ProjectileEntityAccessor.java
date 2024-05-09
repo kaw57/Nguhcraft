@@ -2,7 +2,7 @@ package org.nguh.nguhcraft;
 
 import net.minecraft.entity.LivingEntity;
 
-public interface PersistentProjectileEntityAccessor {
+public interface ProjectileEntityAccessor {
     void SetHomingTarget(LivingEntity Target);
     void MakeHypershotArrow();
 }

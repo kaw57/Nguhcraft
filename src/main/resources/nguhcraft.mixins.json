@@ -7,7 +7,6 @@
 		"common.DamageEnchantmentMixin",
 		"common.EnchantmentMixin",
 		"common.EnderEyeItemMixin",
-		"common.PersistentProjectileEntityMixin",
 		"common.PotionContentsComponent"
 	],
 	"client": [
@@ -35,6 +34,7 @@
 		"server.MsgCommandMixin",
 		"server.PlayerAdvancementTrackerMixin",
 		"server.PlayerManagerMixin",
+		"server.ProjectileEntityMixin",
 		"server.RangedWeaponItemAccessor",
 		"server.RangedWeaponItemMixin",
 		"server.SayCommandMixin",
