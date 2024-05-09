@@ -11,6 +11,7 @@ import net.minecraft.text.Text;
 import org.jetbrains.annotations.NotNull;
 import org.nguh.nguhcraft.server.Discord;
 import org.nguh.nguhcraft.server.NetworkHandler;
+import org.nguh.nguhcraft.server.ServerUtils;
 import org.nguh.nguhcraft.server.accessors.LivingEntityAccessor;
 import org.slf4j.Logger;
 import org.spongepowered.asm.mixin.*;
@@ -59,6 +60,16 @@ public abstract class ServerPlayNetworkHandlerMixin extends ServerCommonNetworkH
             CI.cancel();
         }
     }
+
+    /**
+    * Initial player tick.
+    * <p>
+    * This is called before doing any other processing on the player. Despite
+    * the fact that this is part of the network handler, this is still called
+    * on the tick thread.
+    */
+    @Inject(method = "tick()V", at = @At("HEAD"))
+    private void inject$tick(CallbackInfo CI) { ServerUtils.ActOnPlayerTick(player); }
 
     /**
      * Disconnect on incoming signed chat messages.

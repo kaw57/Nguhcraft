@@ -23,7 +23,7 @@ import org.nguh.nguhcraft.packets.*
 //     - [x] Make Multishot apply to bows (should already work in latest snapshot?)
 //   - [x] Render enchantment levels properly
 //   - [x] Patch enchant command to ignore restrictions
-//   - [ ] Prevent players from leaving the border
+//   - [x] Prevent players from leaving the border
 //   - [ ] Machine gun Ghasts
 //   - [ ] Import Saved Lore as Lore
 // - [ ] 2. TBA
@@ -32,11 +32,6 @@ import org.nguh.nguhcraft.packets.*
 //   - [ ] Moderator permission (store bit in player nbt)
 //   - [x] Creative mode tab for treasures etc
 //   - [x] Render potion levels properly.
-
-
-/// NOW:
-// - Trident also strike lightning on block hit.
-// - Figure out where the hell were casting the damned ray to.
 
 class Nguhcraft : ModInitializer {
     override fun onInitialize() {

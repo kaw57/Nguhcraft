@@ -1,5 +1,6 @@
 package org.nguh.nguhcraft.server
 
+import com.mojang.logging.LogUtils
 import net.fabricmc.api.EnvType
 import net.fabricmc.api.Environment
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
@@ -17,9 +18,13 @@ import net.minecraft.entity.projectile.TridentEntity
 import net.minecraft.inventory.SimpleInventory
 import net.minecraft.item.ItemStack
 import net.minecraft.network.packet.CustomPayload
+import net.minecraft.network.packet.s2c.play.SubtitleS2CPacket
+import net.minecraft.network.packet.s2c.play.TitleS2CPacket
 import net.minecraft.recipe.RecipeType
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.network.ServerPlayerEntity
+import net.minecraft.text.Text
+import net.minecraft.util.Formatting
 import net.minecraft.util.Hand
 import net.minecraft.util.hit.HitResult
 import net.minecraft.util.math.Box
@@ -38,6 +43,26 @@ import java.util.*
 
 @Environment(EnvType.SERVER)
 object ServerUtils {
+    val BORDER_TITLE: Text = Text.literal("TURN BACK").formatted(Formatting.RED)
+    val BORDER_SUBTITLE: Text = Text.literal("You may not cross the border")
+    val LOGGER = LogUtils.getLogger()
+
+    /**
+    * Early player tick.
+    *
+    * This currently handles the world border check.
+    */
+    @JvmStatic
+    fun ActOnPlayerTick(SP: ServerPlayerEntity) {
+        val SW = SP.serverWorld
+        if (!SP.hasPermissionLevel(4) && !SW.worldBorder.contains(SP.boundingBox)) {
+            val Spawn = SW.spawnPos
+            SP.teleport(Spawn.x.toDouble(), Spawn.y.toDouble(), Spawn.z.toDouble())
+            SendTitle(SP, BORDER_TITLE, BORDER_SUBTITLE)
+            LOGGER.warn("Player {} tried to leave the border.", SP.displayName!!.string)
+        }
+    }
+
     /** Handle multishot tridents. */
     @JvmStatic
     fun ActOnTridentThrown(W: World, PE: PlayerEntity, S: ItemStack, Extra: Int = 0) {
@@ -193,6 +218,17 @@ object ServerUtils {
         val Frac = MathHelper.fractionalPart(Exp)
         if (Frac != 0.0f && Math.random() < Frac.toDouble()) Int++
         return Int
+    }
+
+    /**
+    * Send a title (and subtitle) to a player.
+    *
+    * @param Title The title to send. Ignored if `null`.
+    * @param Subtitle The subtitle to send. Ignored if `null`.
+    */
+    fun SendTitle(SP: ServerPlayerEntity, Title: Text?, Subtitle: Text?) {
+        if (Title != null) SP.networkHandler.sendPacket(TitleS2CPacket(Title))
+        if (Subtitle != null) SP.networkHandler.sendPacket(SubtitleS2CPacket(Subtitle))
     }
 
     @Suppress("DEPRECATION")
