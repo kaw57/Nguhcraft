@@ -1,6 +1,5 @@
 package org.nguh.nguhcraft.enchantment
 
-import net.minecraft.enchantment.Enchantment
 import net.minecraft.enchantment.Enchantment.constantCost
 import net.minecraft.enchantment.Enchantment.properties
 import net.minecraft.entity.EquipmentSlot

@@ -3,7 +3,6 @@ package org.nguh.nguhcraft.server
 import net.fabricmc.api.EnvType
 import net.fabricmc.api.Environment
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
-import net.minecraft.enchantment.Enchantments
 import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.item.ItemStack
@@ -13,7 +12,6 @@ import net.minecraft.sound.SoundCategory
 import net.minecraft.sound.SoundEvents
 import net.minecraft.util.Hand
 import net.minecraft.world.World
-import org.nguh.nguhcraft.Utils.EnchantLvl
 import org.nguh.nguhcraft.mixin.server.RangedWeaponItemAccessor
 import org.nguh.nguhcraft.packets.ClientboundSyncHypershotStatePacket
 import org.nguh.nguhcraft.server.accessors.LivingEntityAccessor

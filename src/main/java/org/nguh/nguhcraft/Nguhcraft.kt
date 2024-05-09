@@ -28,8 +28,8 @@ import org.nguh.nguhcraft.packets.*
 //   - [ ] Import Saved Lore as Lore
 // - [ ] 2. Vanish
 // - [ ] 3. Tree Chopping
-//   - [ ] Basic implementation
-//   - [ ] Acacia and other diagonal trees.
+//   - [x] Basic implementation
+//   - [x] Acacia and other diagonal trees.
 // - [ ] Extras
 //   - [ ] Increase chat message history and scrollback size (to like 10000)
 //   - [ ] Moderator permission (store bit in player nbt)

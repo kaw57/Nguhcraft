@@ -2,12 +2,9 @@ package org.nguh.nguhcraft
 
 import net.fabricmc.api.EnvType
 import net.fabricmc.api.Environment
-import net.fabricmc.fabric.api.gamerule.v1.GameRuleFactory
-import net.fabricmc.fabric.api.gamerule.v1.GameRuleRegistry
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
 import net.minecraft.nbt.NbtCompound
 import net.minecraft.server.network.ServerPlayerEntity
-import net.minecraft.world.GameRules
 import org.nguh.nguhcraft.packets.ClientboundSyncGameRulesPacket
 import org.nguh.nguhcraft.server.ServerUtils
 

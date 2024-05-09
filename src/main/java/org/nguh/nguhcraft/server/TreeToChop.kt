@@ -1,11 +1,9 @@
 package org.nguh.nguhcraft.server
 
-import com.google.common.collect.HashMultimap
 import net.minecraft.block.Block
 import net.minecraft.block.BlockState
 import net.minecraft.block.Blocks
 import net.minecraft.block.LeavesBlock
-import net.minecraft.entity.Entity
 import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.item.ItemStack
 import net.minecraft.registry.tag.BlockTags
@@ -16,7 +14,6 @@ import net.minecraft.util.math.BlockPos
 import net.minecraft.world.World
 import org.nguh.nguhcraft.server.accessors.ServerWorldAccessor
 import java.util.*
-import java.util.function.Consumer
 
 /**
  * This class handles chopping down an entire tree if a user breaks

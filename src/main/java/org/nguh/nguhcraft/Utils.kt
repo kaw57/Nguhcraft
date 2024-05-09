@@ -6,7 +6,6 @@ import net.minecraft.enchantment.EnchantmentHelper
 import net.minecraft.item.ItemStack
 import net.minecraft.text.Text
 import net.minecraft.util.Formatting
-import org.slf4j.Logger
 import java.text.Normalizer
 import java.util.*
 

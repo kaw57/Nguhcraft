@@ -8,11 +8,6 @@ import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
 import net.minecraft.nbt.NbtCompound
 import net.minecraft.nbt.NbtIo
 import net.minecraft.nbt.NbtSizeTracker
-import net.minecraft.network.message.ChatVisibility
-import net.minecraft.network.packet.s2c.play.GameMessageS2CPacket
-import net.minecraft.text.Text
-import net.minecraft.util.Formatting
-import net.minecraft.util.StringHelper
 import net.minecraft.util.WorldSavePath
 import org.nguh.nguhcraft.SyncedGameRule
 import org.nguh.nguhcraft.packets.ServerboundChatPacket

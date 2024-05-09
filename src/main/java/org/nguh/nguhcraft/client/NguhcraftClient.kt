@@ -22,8 +22,6 @@ import org.nguh.nguhcraft.packets.ClientboundChatPacket
 import org.nguh.nguhcraft.packets.ClientboundLinkUpdatePacket
 import org.nguh.nguhcraft.packets.ClientboundSyncGameRulesPacket
 import org.nguh.nguhcraft.packets.ClientboundSyncHypershotStatePacket
-import org.spongepowered.asm.mixin.Unique
-
 
 
 @Environment(EnvType.CLIENT)
