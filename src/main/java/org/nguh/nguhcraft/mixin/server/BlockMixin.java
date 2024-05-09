@@ -5,6 +5,7 @@ import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.ExperienceOrbEntity;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
@@ -12,10 +13,12 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import org.nguh.nguhcraft.enchantment.NguhcraftEnchantments;
 import org.nguh.nguhcraft.server.ServerUtils;
+import org.nguh.nguhcraft.server.TreeToChop;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import static org.nguh.nguhcraft.Utils.EnchantLvl;
 
@@ -50,5 +53,20 @@ public abstract class BlockMixin {
             ExperienceOrbEntity.spawn(SW, Vec3d.ofCenter(Pos), SR.getExperience());
             CI.cancel();
         }
+    }
+
+    /** Hook into tree chopping code. */
+    @Inject(
+        method = "onBreak(Lnet/minecraft/world/World;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;Lnet/minecraft/entity/player/PlayerEntity;)Lnet/minecraft/block/BlockState;",
+        at = @At("TAIL")
+    )
+    private void inject$onBreak(
+        World W,
+        BlockPos Pos,
+        BlockState State,
+        PlayerEntity PE,
+        CallbackInfoReturnable<BlockState> CIR
+    ) {
+        TreeToChop.ActOnBlockDestroyed(W, Pos, W.getBlockState(Pos), PE);
     }
 }

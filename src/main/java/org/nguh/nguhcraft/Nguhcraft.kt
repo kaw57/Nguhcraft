@@ -26,7 +26,10 @@ import org.nguh.nguhcraft.packets.*
 //   - [x] Prevent players from leaving the border
 //   - [ ] Machine gun Ghasts
 //   - [ ] Import Saved Lore as Lore
-// - [ ] 2. TBA
+// - [ ] 2. Vanish
+// - [ ] 3. Tree Chopping
+//   - [ ] Basic implementation
+//   - [ ] Acacia and other diagonal trees.
 // - [ ] Extras
 //   - [ ] Increase chat message history and scrollback size (to like 10000)
 //   - [ ] Moderator permission (store bit in player nbt)

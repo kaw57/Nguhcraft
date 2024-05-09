@@ -44,6 +44,7 @@
 		"server.ServerCommandSourceMixin",
 		"server.ServerPlayerMixin",
 		"server.ServerPlayNetworkHandlerMixin",
+		"server.ServerWorldMixin",
 		"server.TeamMsgCommandMixin",
 		"server.TridentItemMixin",
 		"server.TriggerCommandMixin"
