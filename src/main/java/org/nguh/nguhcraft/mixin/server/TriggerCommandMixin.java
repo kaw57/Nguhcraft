@@ -7,7 +7,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 
 @Mixin(TriggerCommand.class)
-public class TriggerCommandMixin {
+public abstract class TriggerCommandMixin {
     /**
     * @author Sirraide
     * @reason It’s unnecessary, and removing it cleans up the command list a bit.

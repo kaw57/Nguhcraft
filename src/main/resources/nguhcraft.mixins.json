@@ -29,6 +29,7 @@
 		"server.DedicatedServerMixin",
 		"server.EnchantCommandMixin",
 		"server.EndPortalBlockMixin",
+		"server.EntityMixin",
 		"server.LivingEntityMixin",
 		"server.MeCommandMixin",
 		"server.MinecraftServerAccessor",

@@ -85,6 +85,7 @@ public abstract class TridentEntityMixin extends PersistentProjectileEntity impl
         var Thunder = getWorld().isThundering();
         var Lvl = EnchantLvl(getItemStack(), Enchantments.CHANNELING);
         if (getWorld() instanceof ServerWorld W && Lvl > 0 && (Thunder || Lvl >= 2)) {
+            EHR.getEntity().timeUntilRegen = 0;
             BlockPos Where = EHR.getEntity().getBlockPos();
             if (Lvl >= 2 || W.isSkyVisible(Where)) {
                 StrikeLighting(W, Where);
