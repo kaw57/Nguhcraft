@@ -14,13 +14,13 @@ import org.nguh.nguhcraft.packets.*
 //   - [ ] Enchantments
 //     - [ ] Health
 //     - [x] Homing
-//     - [ ] Hypershot
+//     - [x] Hypershot
 //     - [ ] Saturation
-//     - [ ] Smelting
+//     - [x] Smelting
 //     - [x] Channeling II
 //       - [x] On entity hit
-//       = [ ] On block hit
-//     - [ ] Make Multishot apply to bows (should already work in latest snapshot?)
+//       = [x] On block hit
+//     - [x] Make Multishot apply to bows (should already work in latest snapshot?)
 //   - [x] Render enchantment levels properly
 //   - [x] Patch enchant command to ignore restrictions
 //   - [ ] Prevent players from leaving the border

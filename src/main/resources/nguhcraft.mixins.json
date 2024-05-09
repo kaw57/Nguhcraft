@@ -25,6 +25,7 @@
 		"client.YggdrasilUserApiServiceMixin"
 	],
 	"server": [
+		"server.BlockMixin",
 		"server.CommandManagerMixin",
 		"server.DedicatedServerMixin",
 		"server.EnchantCommandMixin",

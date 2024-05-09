@@ -4,6 +4,7 @@ import net.fabricmc.api.EnvType
 import net.fabricmc.api.Environment
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
 import net.fabricmc.loader.api.FabricLoader
+import net.minecraft.block.BlockState
 import net.minecraft.enchantment.Enchantments
 import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.mob.AbstractPiglinEntity
@@ -11,12 +12,12 @@ import net.minecraft.entity.mob.Monster
 import net.minecraft.entity.passive.IronGolemEntity
 import net.minecraft.entity.passive.VillagerEntity
 import net.minecraft.entity.player.PlayerEntity
-import net.minecraft.entity.projectile.PersistentProjectileEntity
-import net.minecraft.entity.projectile.ProjectileEntity
 import net.minecraft.entity.projectile.ProjectileUtil
 import net.minecraft.entity.projectile.TridentEntity
+import net.minecraft.inventory.SimpleInventory
 import net.minecraft.item.ItemStack
 import net.minecraft.network.packet.CustomPayload
+import net.minecraft.recipe.RecipeType
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.network.ServerPlayerEntity
 import net.minecraft.util.Hand
@@ -33,6 +34,7 @@ import org.nguh.nguhcraft.enchantment.NguhcraftEnchantments
 import org.nguh.nguhcraft.packets.ClientboundSyncHypershotStatePacket
 import org.nguh.nguhcraft.server.accessors.LivingEntityAccessor
 import java.util.*
+
 
 @Environment(EnvType.SERVER)
 object ServerUtils {
@@ -186,6 +188,31 @@ object ServerUtils {
         catch (E: RuntimeException) { null }
     }
 
+    fun RoundExp(Exp: Float): Int {
+        var Int = MathHelper.floor(Exp)
+        val Frac = MathHelper.fractionalPart(Exp)
+        if (Frac != 0.0f && Math.random() < Frac.toDouble()) Int++
+        return Int
+    }
+
     @Suppress("DEPRECATION")
     fun Server() = FabricLoader.getInstance().gameInstance as MinecraftServer
+
+    @Environment(EnvType.SERVER)
+    data class SmeltingResult(val Stack: ItemStack, val Experience: Int)
+
+    /** Try to smelt this block as an item. */
+    @JvmStatic
+    fun TrySmeltBlock(W: World, Block: BlockState): SmeltingResult? {
+        val I = ItemStack(Block.block.asItem())
+        if (I.isEmpty) return null
+
+        val optional = W.recipeManager.getFirstMatch(RecipeType.SMELTING, SimpleInventory(I), W)
+        if (optional.isEmpty) return null
+
+        val Recipe = optional.get().value()
+        val Smelted: ItemStack = Recipe.getResult(W.registryManager)
+        if (Smelted.isEmpty) return null
+        return SmeltingResult(Smelted.copyWithCount(I.count), RoundExp(Recipe.experience))
+    }
 }
