@@ -2,6 +2,8 @@ package org.nguh.nguhcraft.client
 
 import net.fabricmc.api.EnvType
 import net.fabricmc.api.Environment
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking
+import net.minecraft.network.packet.CustomPayload
 import net.minecraft.text.Text
 import net.minecraft.util.Formatting
 import org.nguh.nguhcraft.Constants
@@ -11,10 +13,8 @@ import org.nguh.nguhcraft.Utils.LBRACK_COMPONENT
 import org.nguh.nguhcraft.Utils.RBRACK_COMPONENT
 import org.nguh.nguhcraft.client.ClientUtils.Client
 import org.nguh.nguhcraft.client.accessors.ClientPlayerListEntryAccessor
-import org.nguh.nguhcraft.packets.ClientboundChatPacket
-import org.nguh.nguhcraft.packets.ClientboundLinkUpdatePacket
-import org.nguh.nguhcraft.packets.ClientboundSyncGameRulesPacket
-import org.nguh.nguhcraft.packets.ClientboundSyncHypershotStatePacket
+import org.nguh.nguhcraft.packets.*
+import org.nguh.nguhcraft.protect.ProtectionManager
 
 /** This runs on the network thread. */
 @Environment(EnvType.CLIENT)
@@ -27,7 +27,7 @@ object NetworkHandler {
     private fun Execute(CB: () -> Unit) = Client().execute(CB)
 
     /** Incoming chat message. */
-    fun HandleChatPacket(Packet: ClientboundChatPacket) {
+    private fun HandleChatPacket(Packet: ClientboundChatPacket) {
         // Render content as Markdown.
         var Message = MarkdownParser.Render(Packet.Content).formatted(Formatting.WHITE)
         Message = when (Packet.MessageKind) {
@@ -65,7 +65,7 @@ object NetworkHandler {
     }
 
     /** Notification to update a player’s Discord name. */
-    fun HandleLinkUpdatePacket(Packet: ClientboundLinkUpdatePacket) {
+    private fun HandleLinkUpdatePacket(Packet: ClientboundLinkUpdatePacket) {
         val C = Client()
         val NW = C.networkHandler ?: return
         Execute {
@@ -92,10 +92,29 @@ object NetworkHandler {
     }
 
     /** Update the game rules. */
-    fun HandleSyncGameRulesPacket(Packet: ClientboundSyncGameRulesPacket) = SyncedGameRule.Update(Packet)
+    private fun HandleSyncGameRulesPacket(Packet: ClientboundSyncGameRulesPacket) = SyncedGameRule.Update(Packet)
 
     /** Sync hypershot state. */
-    fun HandleSyncHypershotStatePacket(Packet: ClientboundSyncHypershotStatePacket) {
+    private fun HandleSyncHypershotStatePacket(Packet: ClientboundSyncHypershotStatePacket) {
         NguhcraftClient.InHypershotContext = Packet.InContext
+    }
+
+    /** Sync protection manager state. */
+    private fun HandleSyncProtectionMgrPacket(Packet: ClientboundSyncProtectionMgrPacket) {
+        ProtectionManager.UpdateState(Packet)
+    }
+
+    /** Initialise packet handlers. */
+    fun Init() {
+        Register(ClientboundLinkUpdatePacket.ID, ::HandleLinkUpdatePacket)
+        Register(ClientboundChatPacket.ID, ::HandleChatPacket)
+        Register(ClientboundSyncGameRulesPacket.ID, ::HandleSyncGameRulesPacket)
+        Register(ClientboundSyncHypershotStatePacket.ID, ::HandleSyncHypershotStatePacket)
+        Register(ClientboundSyncProtectionMgrPacket.ID, ::HandleSyncProtectionMgrPacket)
+    }
+
+    /** Register a packet handler. */
+    private fun <T : CustomPayload?> Register(ID: CustomPayload.Id<T>, Handler: (T) -> Unit) {
+        ClientPlayNetworking.registerGlobalReceiver(ID) { Payload, _ -> Handler(Payload) }
     }
 }

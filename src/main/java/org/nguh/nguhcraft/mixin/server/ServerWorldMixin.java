@@ -67,7 +67,8 @@ public abstract class ServerWorldMixin extends World implements ServerWorldAcces
     /** Save regions. */
     @Inject(method = "save", at = @At("TAIL"))
     private void inject$save(ProgressListener PL, boolean Flush, boolean SavingDisabled, CallbackInfo CI) {
-        ServerUtils.SaveExtraWorldData((ServerWorld)(Object)this);
+        if (!SavingDisabled)
+            ServerUtils.SaveExtraWorldData((ServerWorld)(Object)this);
     }
 
     /** Chop trees. */

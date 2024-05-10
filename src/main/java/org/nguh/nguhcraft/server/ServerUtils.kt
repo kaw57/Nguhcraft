@@ -18,7 +18,6 @@ import net.minecraft.entity.projectile.TridentEntity
 import net.minecraft.inventory.SimpleInventory
 import net.minecraft.item.ItemStack
 import net.minecraft.nbt.NbtCompound
-import net.minecraft.nbt.NbtElement
 import net.minecraft.nbt.NbtIo
 import net.minecraft.nbt.NbtSizeTracker
 import net.minecraft.network.packet.CustomPayload
@@ -38,13 +37,12 @@ import net.minecraft.util.math.MathHelper
 import net.minecraft.world.RaycastContext
 import net.minecraft.world.World
 import org.nguh.nguhcraft.Constants.MAX_HOMING_DISTANCE
+import org.nguh.nguhcraft.Utils.EnchantLvl
 import org.nguh.nguhcraft.accessors.ProjectileEntityAccessor
 import org.nguh.nguhcraft.accessors.TridentEntityAccessor
-import org.nguh.nguhcraft.Utils.EnchantLvl
-import org.nguh.nguhcraft.accessors.WorldAccessor
 import org.nguh.nguhcraft.enchantment.NguhcraftEnchantments
 import org.nguh.nguhcraft.packets.ClientboundSyncHypershotStatePacket
-import org.nguh.nguhcraft.protect.Region
+import org.nguh.nguhcraft.protect.ProtectionManager
 import org.nguh.nguhcraft.server.accessors.LivingEntityAccessor
 import java.util.*
 
@@ -54,7 +52,6 @@ object ServerUtils {
     val BORDER_TITLE: Text = Text.literal("TURN BACK").formatted(Formatting.RED)
     val BORDER_SUBTITLE: Text = Text.literal("You may not cross the border")
     val LOGGER = LogUtils.getLogger()
-    val TAG_REGIONS = "Regions"
 
     /**
     * Early player tick.
@@ -120,9 +117,8 @@ object ServerUtils {
             val Path = NguhWorldSavePath(SW)
             val Tag = NbtIo.readCompressed(Path, NbtSizeTracker.ofUnlimitedBytes())
 
-            // Load regions.
-            val RegionsTag = Tag.getList(TAG_REGIONS, NbtElement.COMPOUND_TYPE.toInt())
-            for (R in RegionsTag) (SW as WorldAccessor).AddRegion(Region(R as NbtCompound))
+            // Load.
+            ProtectionManager.LoadRegions(SW, Tag)
         } catch (E: Exception) {
             LOGGER.error("Nguhcraft: Failed to load extra world data: ${E.message}")
         }
@@ -253,9 +249,8 @@ object ServerUtils {
             val Tag = NbtCompound()
             val Path = NguhWorldSavePath(SW)
 
-            // Save regions.
-            val RegionsTag = Tag.getList(TAG_REGIONS, NbtElement.COMPOUND_TYPE.toInt())
-            (SW as WorldAccessor).regions.forEach { RegionsTag.add(it.Save()) }
+            // Save.
+            ProtectionManager.SaveRegions(SW, Tag)
 
             // Write to disk.
             NbtIo.writeCompressed(Tag, Path)

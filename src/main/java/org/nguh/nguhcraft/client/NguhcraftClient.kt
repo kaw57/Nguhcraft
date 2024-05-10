@@ -27,21 +27,7 @@ import org.nguh.nguhcraft.packets.ClientboundSyncHypershotStatePacket
 @Environment(EnvType.CLIENT)
 class NguhcraftClient : ClientModInitializer {
     override fun onInitializeClient() {
-        ClientPlayNetworking.registerGlobalReceiver(ClientboundLinkUpdatePacket.ID) { Payload, _ ->
-            NetworkHandler.HandleLinkUpdatePacket(Payload)
-        }
-
-        ClientPlayNetworking.registerGlobalReceiver(ClientboundChatPacket.ID) { Payload, _ ->
-            NetworkHandler.HandleChatPacket(Payload)
-        }
-
-        ClientPlayNetworking.registerGlobalReceiver(ClientboundSyncGameRulesPacket.ID) { Payload, _ ->
-            NetworkHandler.HandleSyncGameRulesPacket(Payload)
-        }
-
-        ClientPlayNetworking.registerGlobalReceiver(ClientboundSyncHypershotStatePacket.ID) { Payload, _ ->
-            NetworkHandler.HandleSyncHypershotStatePacket(Payload)
-        }
+        NetworkHandler.Init()
 
         WorldRenderEvents.LAST.register { Renderer.DebugRender(it) }
 

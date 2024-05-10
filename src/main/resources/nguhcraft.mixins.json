@@ -8,8 +8,7 @@
 		"common.EnchantmentMixin",
 		"common.EnderEyeItemMixin",
 		"common.PotionContentsComponent",
-		"common.TridentEntityMixin",
-		"common.WorldMixin"
+		"common.TridentEntityMixin"
 	],
 	"client": [
 		"client.AbstractClientPlayerMixin",
@@ -17,6 +16,7 @@
 		"client.ChatScreenMixin",
 		"client.ClientPlayerInteractionManagerMixin",
 		"client.ClientPlayNetworkHandlerMixin",
+		"client.GameRendererMixin",
 		"client.KeyboardMixin",
 		"client.MessageIndicatorMixin",
 		"client.MinecraftClientMixin",

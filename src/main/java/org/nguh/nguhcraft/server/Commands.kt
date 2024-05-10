@@ -30,7 +30,7 @@ import org.nguh.nguhcraft.Constants
 import org.nguh.nguhcraft.Commands.Exn
 import org.nguh.nguhcraft.SyncedGameRule
 import org.nguh.nguhcraft.Utils.Normalised
-import org.nguh.nguhcraft.accessors.WorldAccessor
+import org.nguh.nguhcraft.protect.ProtectionManager
 import org.nguh.nguhcraft.protect.Region
 import org.nguh.nguhcraft.toUUID
 import org.slf4j.Logger
@@ -252,7 +252,17 @@ object Commands {
                 ToZ = To.z
             )
 
-            (W as WorldAccessor).AddRegion(R)
+            try {
+                ProtectionManager.AddRegionToWorld(W, R)
+            } catch (E: IllegalArgumentException) {
+                S.sendError(Text.literal("Region with name ")
+                    .append(Text.literal(Name).formatted(Formatting.AQUA))
+                    .append(" already exists in world ")
+                    .append(Text.literal(W.registryKey.value.path.toString()).withColor(Constants.Lavender))
+                )
+                return 0
+            }
+
             S.sendMessage(Text.literal("Created region ")
                 .append(Text.literal(Name).formatted(Formatting.AQUA))
                 .append(" in world ")
@@ -272,39 +282,36 @@ object Commands {
         }
 
         fun DeleteRegion(S: ServerCommandSource, W: World, Name: String): Int {
-            val Regions = (W as WorldAccessor).regions
-            val R = Regions.find { it.Name.equals(Name, ignoreCase = true) }
-            if (R == null) {
+            if (!ProtectionManager.DeleteRegionFromWorld(W, Name)) {
                 S.sendError(Text.literal("No region found with name ")
                     .append(Text.literal(Name).formatted(Formatting.AQUA))
                     .append(" in world ")
-                    .append(Text.literal(W.dimension.toString()).withColor(Constants.Lavender))
+                    .append(Text.literal(W.registryKey.value.path.toString()).withColor(Constants.Lavender))
                 )
                 return 0
             }
 
-            Regions.remove(R)
             S.sendMessage(Text.literal("Deleted region ")
                 .append(Text.literal(Name).formatted(Formatting.AQUA))
                 .append(" in world ")
-                .append(Text.literal(W.dimension.toString()).withColor(Constants.Lavender))
+                .append(Text.literal(W.registryKey.value.path.toString()).withColor(Constants.Lavender))
                 .formatted(Formatting.GREEN)
             )
             return 1
         }
 
         fun ListRegions(S: ServerCommandSource, W: World): Int {
-            val Regions = (W as WorldAccessor).regions
+            val Regions = ProtectionManager.GetRegions(W)
             if (Regions.isEmpty()) {
                 S.sendMessage(Text.literal("No regions defined in world ")
-                    .append(Text.literal(W.dimension.toString()).withColor(Constants.Lavender))
+                    .append(Text.literal(W.registryKey.value.path.toString()).withColor(Constants.Lavender))
                     .formatted(Formatting.YELLOW)
                 )
                 return 0
             }
 
             val List = Text.literal("Regions in world ")
-                .append(Text.literal(W.dimension.toString()).withColor(Constants.Lavender))
+                .append(Text.literal(W.registryKey.value.path.toString()).withColor(Constants.Lavender))
                 .append(":")
 
             for (R in Regions) {

@@ -1,6 +1,7 @@
 package org.nguh.nguhcraft.protect
 
 import net.minecraft.nbt.NbtCompound
+import net.minecraft.network.RegistryByteBuf
 import net.minecraft.util.math.BlockPos
 import kotlin.math.max
 import kotlin.math.min
@@ -45,13 +46,23 @@ class Region(
         ToZ = Tag.getInt(TAG_MAX_Z)
     ) {
         if (Name.isEmpty()) throw IllegalArgumentException("Region name cannot be empty!")
-        RegionFlags = Tag.getLong(TAG_FLAGS)
+        val FlagsTag = Tag.getCompound(TAG_FLAGS)
+        RegionFlags = Flags.entries.fold(0L) { Acc, Flag ->
+            if (FlagsTag.getBoolean(Flag.name.lowercase())) Acc or Flag.Bit() else Acc
+        }
     }
 
+    /** Deserialise a region from a packet. */
+    constructor(buf: RegistryByteBuf) : this(
+        Name = buf.readString(),
+        FromX = buf.readInt(),
+        FromZ = buf.readInt(),
+        ToX = buf.readInt(),
+        ToZ = buf.readInt()
+    ) { RegionFlags = buf.readLong() }
+
     /** Check if this region allows block breaking. */
-    fun AllowsBlockModification(): Boolean {
-        return RegionFlags and Flags.CHANGE_BLOCKS.Bit() != 0L
-    }
+    fun AllowsBlockModification() = Test(Flags.CHANGE_BLOCKS)
 
     /** Check if this region contains a block. */
     fun Contains(Pos: BlockPos): Boolean {
@@ -68,8 +79,31 @@ class Region(
         Tag.putInt(TAG_MIN_Z, MinZ)
         Tag.putInt(TAG_MAX_X, MaxX)
         Tag.putInt(TAG_MAX_Z, MaxZ)
-        Tag.putLong(TAG_FLAGS, RegionFlags)
+
+        // Store flags as strings for robustness.
+        val FlagsTag = NbtCompound()
+        Flags.entries.forEach { FlagsTag.putBoolean(it.name.lowercase(), Test(it)) }
+        Tag.put(TAG_FLAGS, FlagsTag)
+
         return Tag
+    }
+
+    /** Helper to simplify testing flags. */
+    private fun Test(Flag: Flags) = RegionFlags and Flag.Bit() != 0L
+
+    /** Write this region to a packet. */
+    fun Write(buf: RegistryByteBuf) {
+        buf.writeString(Name)
+        buf.writeInt(MinX)
+        buf.writeInt(MinZ)
+        buf.writeInt(MaxX)
+        buf.writeInt(MaxZ)
+        buf.writeLong(RegionFlags)
+    }
+
+    /** Get a string representation of this region. */
+    override fun toString(): String {
+        return "Region($Name, [$MinX, $MinZ] -> [$MaxX, $MaxZ]): $RegionFlags"
     }
 
     companion object {
