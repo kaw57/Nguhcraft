@@ -10,7 +10,7 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.RaycastContext;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
-import org.nguh.nguhcraft.ProjectileEntityAccessor;
+import org.nguh.nguhcraft.accessors.ProjectileEntityAccessor;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;

@@ -71,6 +71,7 @@ object NetworkHandler {
         Execute {
             NW.playerList.firstOrNull { it.profile.id == Packet.PlayerId }?.let {
                 it as ClientPlayerListEntryAccessor
+                it.isLinked = Packet.Linked
 
                 // Player is not linked.
                 if (!Packet.Linked) {

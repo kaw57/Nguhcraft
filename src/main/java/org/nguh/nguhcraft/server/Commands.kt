@@ -12,6 +12,8 @@ import net.fabricmc.api.EnvType
 import net.fabricmc.api.Environment
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback
 import net.minecraft.command.CommandRegistryAccess
+import net.minecraft.command.argument.BlockPosArgumentType
+import net.minecraft.command.argument.DimensionArgumentType
 import net.minecraft.command.argument.EntityArgumentType
 import net.minecraft.command.argument.RegistryEntryReferenceArgumentType
 import net.minecraft.enchantment.Enchantment
@@ -22,10 +24,14 @@ import net.minecraft.server.network.ServerPlayerEntity
 import net.minecraft.text.MutableText
 import net.minecraft.text.Text
 import net.minecraft.util.Formatting
+import net.minecraft.util.math.BlockPos
+import net.minecraft.world.World
 import org.nguh.nguhcraft.Constants
 import org.nguh.nguhcraft.Commands.Exn
 import org.nguh.nguhcraft.SyncedGameRule
 import org.nguh.nguhcraft.Utils.Normalised
+import org.nguh.nguhcraft.accessors.WorldAccessor
+import org.nguh.nguhcraft.protect.Region
 import org.nguh.nguhcraft.toUUID
 import org.slf4j.Logger
 import java.util.*
@@ -44,6 +50,7 @@ object Commands {
             D.register(DiscordCommand())              // /discord
             D.register(EnchantCommand(A))             // /enchant
             val Msg = D.register(MessageCommand())    // /msg
+            D.register(RegionCommand())               // /region
             D.register(RuleCommand())                 // /rule
             D.register(SayCommand())                  // /say
             D.register(literal("tell").redirect(Msg)) // /tell
@@ -230,6 +237,95 @@ object Commands {
         }
     }
 
+    object RegionCommand {
+        fun AddRegion(S: ServerCommandSource, W: World, Name: String, From: BlockPos, To: BlockPos): Int {
+            if (From == To) {
+                S.sendError(Text.literal("Refusing to create empty region!"))
+                return 0
+            }
+
+            val R = Region(
+                Name,
+                FromX = From.x,
+                FromZ = From.z,
+                ToX = To.x,
+                ToZ = To.z
+            )
+
+            (W as WorldAccessor).AddRegion(R)
+            S.sendMessage(Text.literal("Created region ")
+                .append(Text.literal(Name).formatted(Formatting.AQUA))
+                .append(" in world ")
+                .append(Text.literal(W.registryKey.value.path.toString()).withColor(Constants.Lavender))
+                .append(" with bounds [")
+                .append(Text.literal("${R.MinX}").formatted(Formatting.GRAY))
+                .append(", ")
+                .append(Text.literal("${R.MinZ}").formatted(Formatting.GRAY))
+                .append("] → [")
+                .append(Text.literal("${R.MaxX}").formatted(Formatting.GRAY))
+                .append(", ")
+                .append(Text.literal("${R.MaxZ}").formatted(Formatting.GRAY))
+                .append("]")
+                .formatted(Formatting.GREEN)
+            )
+            return 1
+        }
+
+        fun DeleteRegion(S: ServerCommandSource, W: World, Name: String): Int {
+            val Regions = (W as WorldAccessor).regions
+            val R = Regions.find { it.Name.equals(Name, ignoreCase = true) }
+            if (R == null) {
+                S.sendError(Text.literal("No region found with name ")
+                    .append(Text.literal(Name).formatted(Formatting.AQUA))
+                    .append(" in world ")
+                    .append(Text.literal(W.dimension.toString()).withColor(Constants.Lavender))
+                )
+                return 0
+            }
+
+            Regions.remove(R)
+            S.sendMessage(Text.literal("Deleted region ")
+                .append(Text.literal(Name).formatted(Formatting.AQUA))
+                .append(" in world ")
+                .append(Text.literal(W.dimension.toString()).withColor(Constants.Lavender))
+                .formatted(Formatting.GREEN)
+            )
+            return 1
+        }
+
+        fun ListRegions(S: ServerCommandSource, W: World): Int {
+            val Regions = (W as WorldAccessor).regions
+            if (Regions.isEmpty()) {
+                S.sendMessage(Text.literal("No regions defined in world ")
+                    .append(Text.literal(W.dimension.toString()).withColor(Constants.Lavender))
+                    .formatted(Formatting.YELLOW)
+                )
+                return 0
+            }
+
+            val List = Text.literal("Regions in world ")
+                .append(Text.literal(W.dimension.toString()).withColor(Constants.Lavender))
+                .append(":")
+
+            for (R in Regions) {
+                List.append(Text.literal("\n  - "))
+                    .append(Text.literal(R.Name).formatted(Formatting.AQUA))
+                    .append(Text.literal(" ["))
+                    .append(Text.literal("${R.MinX}").formatted(Formatting.GRAY))
+                    .append(", ")
+                    .append(Text.literal("${R.MinZ}").formatted(Formatting.GRAY))
+                    .append("] → [")
+                    .append(Text.literal("${R.MaxX}").formatted(Formatting.GRAY))
+                    .append(", ")
+                    .append(Text.literal("${R.MaxZ}").formatted(Formatting.GRAY))
+                    .append("]")
+            }
+
+            S.sendMessage(List.formatted(Formatting.YELLOW))
+            return 1
+        }
+    }
+
     // =========================================================================
     //  Command Trees
     // =========================================================================
@@ -343,6 +439,41 @@ object Commands {
                     Chat.SendPrivateMessage(it.source.player, Players, Message)
                     Players.size
                 }
+            )
+        )
+
+    private fun RegionCommand(): LiteralArgumentBuilder<ServerCommandSource> = literal("region")
+        .requires { it.hasPermissionLevel(4) }
+        .then(literal("list")
+            .then(argument("world", DimensionArgumentType.dimension())
+                .executes { RegionCommand.ListRegions(it.source, DimensionArgumentType.getDimensionArgument(it, "world")) }
+            )
+            .executes { RegionCommand.ListRegions(it.source, it.source.world) }
+        )
+        .then(literal("add")
+            .then(argument("name", StringArgumentType.word())
+                .then(argument("from", BlockPosArgumentType.blockPos())
+                    .then(argument("to", BlockPosArgumentType.blockPos())
+                        .executes { RegionCommand.AddRegion(
+                            it.source,
+                            it.source.world,
+                            StringArgumentType.getString(it, "name"),
+                            BlockPosArgumentType.getValidBlockPos(it, "from"),
+                            BlockPosArgumentType.getValidBlockPos(it, "to"),
+                        ) }
+                    )
+                )
+            )
+        )
+        .then(literal("del")
+            .then(argument("name", StringArgumentType.word())
+                .then(argument("world", DimensionArgumentType.dimension())
+                    .executes { RegionCommand.DeleteRegion(
+                        it.source,
+                        DimensionArgumentType.getDimensionArgument(it, "world"),
+                        StringArgumentType.getString(it, "name"),
+                    ) }
+                )
             )
         )
 

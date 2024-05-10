@@ -1,4 +1,4 @@
-package org.nguh.nguhcraft;
+package org.nguh.nguhcraft.accessors;
 
 import net.minecraft.entity.LivingEntity;
 

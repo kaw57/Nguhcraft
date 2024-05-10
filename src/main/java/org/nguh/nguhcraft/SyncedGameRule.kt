@@ -16,16 +16,16 @@ import org.nguh.nguhcraft.server.ServerUtils
 * client.
 */
 enum class SyncedGameRule(
-    /** Flag for this rule. */
-    private val Flag: Long,
-
     /** Name of this rule. */
     val Name: String,
 
     /** Default value for this rule. */
     default: Boolean
 ) {
-    END_ENABLED(1, "EndEnabled", false);
+    END_ENABLED("EndEnabled", false);
+
+    /** Flag for this rule. */
+    private val Flag = 1L shl ordinal
 
     /** Current value. */
     @Volatile

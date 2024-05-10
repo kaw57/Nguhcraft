@@ -11,7 +11,7 @@ import net.minecraft.item.RangedWeaponItem;
 import net.minecraft.util.Hand;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
-import org.nguh.nguhcraft.ProjectileEntityAccessor;
+import org.nguh.nguhcraft.accessors.ProjectileEntityAccessor;
 import org.nguh.nguhcraft.enchantment.NguhcraftEnchantments;
 import org.nguh.nguhcraft.server.ServerUtils;
 import org.nguh.nguhcraft.server.accessors.LivingEntityAccessor;

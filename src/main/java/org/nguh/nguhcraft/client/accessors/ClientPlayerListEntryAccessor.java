@@ -8,4 +8,6 @@ import net.minecraft.text.Text;
 public interface ClientPlayerListEntryAccessor {
     void setNameAboveHead(Text name);
     Text getNameAboveHead();
+    void setLinked(boolean linked);
+    boolean isLinked();
 }

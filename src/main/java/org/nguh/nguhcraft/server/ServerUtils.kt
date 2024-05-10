@@ -17,26 +17,34 @@ import net.minecraft.entity.projectile.ProjectileUtil
 import net.minecraft.entity.projectile.TridentEntity
 import net.minecraft.inventory.SimpleInventory
 import net.minecraft.item.ItemStack
+import net.minecraft.nbt.NbtCompound
+import net.minecraft.nbt.NbtElement
+import net.minecraft.nbt.NbtIo
+import net.minecraft.nbt.NbtSizeTracker
 import net.minecraft.network.packet.CustomPayload
 import net.minecraft.network.packet.s2c.play.SubtitleS2CPacket
 import net.minecraft.network.packet.s2c.play.TitleS2CPacket
 import net.minecraft.recipe.RecipeType
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.network.ServerPlayerEntity
+import net.minecraft.server.world.ServerWorld
 import net.minecraft.text.Text
 import net.minecraft.util.Formatting
 import net.minecraft.util.Hand
+import net.minecraft.util.WorldSavePath
 import net.minecraft.util.hit.HitResult
 import net.minecraft.util.math.Box
 import net.minecraft.util.math.MathHelper
 import net.minecraft.world.RaycastContext
 import net.minecraft.world.World
 import org.nguh.nguhcraft.Constants.MAX_HOMING_DISTANCE
-import org.nguh.nguhcraft.ProjectileEntityAccessor
-import org.nguh.nguhcraft.TridentEntityAccessor
+import org.nguh.nguhcraft.accessors.ProjectileEntityAccessor
+import org.nguh.nguhcraft.accessors.TridentEntityAccessor
 import org.nguh.nguhcraft.Utils.EnchantLvl
+import org.nguh.nguhcraft.accessors.WorldAccessor
 import org.nguh.nguhcraft.enchantment.NguhcraftEnchantments
 import org.nguh.nguhcraft.packets.ClientboundSyncHypershotStatePacket
+import org.nguh.nguhcraft.protect.Region
 import org.nguh.nguhcraft.server.accessors.LivingEntityAccessor
 import java.util.*
 
@@ -46,6 +54,7 @@ object ServerUtils {
     val BORDER_TITLE: Text = Text.literal("TURN BACK").formatted(Formatting.RED)
     val BORDER_SUBTITLE: Text = Text.literal("You may not cross the border")
     val LOGGER = LogUtils.getLogger()
+    val TAG_REGIONS = "Regions"
 
     /**
     * Early player tick.
@@ -84,7 +93,7 @@ object ServerUtils {
             // despawn after 5 seconds, and tells that client that it doesn’t have
             // loyalty so the copies don’t try to return to the owner.
             (TE as TridentEntityAccessor).SetCopy()
-            if (HS) (TE as  ProjectileEntityAccessor).MakeHypershotProjectile()
+            if (HS) (TE as ProjectileEntityAccessor).MakeHypershotProjectile()
             W.spawnEntity(TE)
         }
         W.profiler.pop()
@@ -103,6 +112,20 @@ object ServerUtils {
     fun Broadcast(P: CustomPayload) {
         for (Player in Server().playerManager.playerList)
             ServerPlayNetworking.send(Player, P)
+    }
+
+    @JvmStatic
+    fun LoadExtraWorldData(SW: ServerWorld) {
+        try {
+            val Path = NguhWorldSavePath(SW)
+            val Tag = NbtIo.readCompressed(Path, NbtSizeTracker.ofUnlimitedBytes())
+
+            // Load regions.
+            val RegionsTag = Tag.getList(TAG_REGIONS, NbtElement.COMPOUND_TYPE.toInt())
+            for (R in RegionsTag) (SW as WorldAccessor).AddRegion(Region(R as NbtCompound))
+        } catch (E: Exception) {
+            LOGGER.error("Nguhcraft: Failed to load extra world data: ${E.message}")
+        }
     }
 
     /** @return `true` if the entity entered or was already in a hypershot context. */
@@ -208,6 +231,10 @@ object ServerUtils {
         for (Player in P) ServerPlayNetworking.send(Player, Packet)
     }
 
+    private fun NguhWorldSavePath(SW: ServerWorld) = Server().getSavePath(WorldSavePath.ROOT).resolve(
+        "nguhcraft.extraworlddata.${SW.registryKey.value.path}.dat"
+    )
+
     fun PlayerByUUID(ID: String?): ServerPlayerEntity? {
         return try { Server().playerManager.getPlayer(UUID.fromString(ID)) }
         catch (E: RuntimeException) { null }
@@ -218,6 +245,23 @@ object ServerUtils {
         val Frac = MathHelper.fractionalPart(Exp)
         if (Frac != 0.0f && Math.random() < Frac.toDouble()) Int++
         return Int
+    }
+
+    @JvmStatic
+    fun SaveExtraWorldData(SW: ServerWorld) {
+        try {
+            val Tag = NbtCompound()
+            val Path = NguhWorldSavePath(SW)
+
+            // Save regions.
+            val RegionsTag = Tag.getList(TAG_REGIONS, NbtElement.COMPOUND_TYPE.toInt())
+            (SW as WorldAccessor).regions.forEach { RegionsTag.add(it.Save()) }
+
+            // Write to disk.
+            NbtIo.writeCompressed(Tag, Path)
+        } catch (E: Exception) {
+            LOGGER.error("Nguhcraft: Failed to save extra world data: ${E.message}")
+        }
     }
 
     /**

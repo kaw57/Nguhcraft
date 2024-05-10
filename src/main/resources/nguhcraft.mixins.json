@@ -8,7 +8,8 @@
 		"common.EnchantmentMixin",
 		"common.EnderEyeItemMixin",
 		"common.PotionContentsComponent",
-		"common.TridentEntityMixin"
+		"common.TridentEntityMixin",
+		"common.WorldMixin"
 	],
 	"client": [
 		"client.AbstractClientPlayerMixin",
@@ -42,6 +43,7 @@
 		"server.RangedWeaponItemMixin",
 		"server.SayCommandMixin",
 		"server.ServerCommandSourceMixin",
+		"server.ServerPlayerInteractionManagerMixin",
 		"server.ServerPlayerMixin",
 		"server.ServerPlayNetworkHandlerMixin",
 		"server.ServerWorldMixin",

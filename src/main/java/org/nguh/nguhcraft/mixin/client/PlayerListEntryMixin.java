@@ -9,7 +9,10 @@ import org.spongepowered.asm.mixin.Unique;
 @Mixin(PlayerListEntry.class)
 public abstract class PlayerListEntryMixin implements ClientPlayerListEntryAccessor {
     @Unique private Text NameAboveHead = null;
+    @Unique private boolean Linked = false;
 
     @Override public void setNameAboveHead(Text Name) { NameAboveHead = Name; }
     @Override public Text getNameAboveHead() { return NameAboveHead; }
+    @Override public void setLinked(boolean Linked) { this.Linked = Linked; }
+    @Override public boolean isLinked() { return Linked; }
 }

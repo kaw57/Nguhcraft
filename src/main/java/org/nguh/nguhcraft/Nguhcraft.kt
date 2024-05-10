@@ -35,6 +35,22 @@ import org.nguh.nguhcraft.packets.*
 //   - [ ] Moderator permission (store bit in player nbt)
 //   - [x] Creative mode tab for treasures etc
 //   - [x] Render potion levels properly.
+//   - [ ] Make homing arrows target ‘Target Blocks’ if there are no valid entities (or if you target it directly)
+// - [ ] World protection
+//       This is used both for protected areas and to prevent unlinked
+//       players from doing anything.
+//   - [ ] Block placement/breaking
+//     - [ ] Block state changes (opening door, activating button/lever)
+//     - [ ] Special case: editing signs
+//   - [ ] Entity interactions
+//     - [ ] Attacking entities
+//     - [ ] Using boats/minecarts
+//   - [ ] Disable enderman griefing entirely.
+//   - [ ] TNT
+//   - [ ] Pistons that extend into protected areas
+//   - [ ] Fire spread, lava flow and placement, flint and steel.
+//   - [ ] Creepers
+//   - [ ] Projectiles
 
 class Nguhcraft : ModInitializer {
     override fun onInitialize() {
