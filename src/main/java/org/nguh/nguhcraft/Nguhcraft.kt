@@ -39,8 +39,8 @@ import org.nguh.nguhcraft.packets.*
 // - [ ] World protection
 //       This is used both for protected areas and to prevent unlinked
 //       players from doing anything.
-//   - [ ] Block placement/breaking
-//     - [ ] Block state changes (opening door, activating button/lever)
+//   - [x] Block placement/breaking
+//     - [x] Block state changes (opening door, activating button/lever)
 //     - [ ] Special case: editing signs
 //   - [ ] Entity interactions
 //     - [ ] Attacking entities

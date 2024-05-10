@@ -103,6 +103,7 @@ object ProtectionManager {
     }
 
     /** Check if a block is within a protected region. */
+    @JvmStatic
     fun IsProtectedBlock(W: World, Pos: BlockPos): Boolean {
         val Regions = RegionList(W)
         val R = Regions.find { it.Contains(Pos) } ?: return false

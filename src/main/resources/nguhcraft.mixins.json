@@ -8,6 +8,7 @@
 		"common.DamageEnchantmentMixin",
 		"common.EnchantmentMixin",
 		"common.EnderEyeItemMixin",
+		"common.ExplosionMixin",
 		"common.PlayerEntityMixin",
 		"common.PotionContentsComponent",
 		"common.TridentEntityMixin"
