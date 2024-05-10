@@ -32,7 +32,7 @@ public abstract class ServerPlayerInteractionManagerMixin {
         int Seq,
         CallbackInfo CI
     ) {
-        if (!ProtectionManager.AllowBlockBreak(player, this.world, Pos)) {
+        if (!ProtectionManager.AllowBlockModify(player, this.world, Pos)) {
             player.networkHandler.sendPacket(new BlockUpdateS2CPacket(Pos, this.world.getBlockState(Pos)));
             onBlockBreakingAction(Pos, false, Seq, "disallowed");
             CI.cancel();

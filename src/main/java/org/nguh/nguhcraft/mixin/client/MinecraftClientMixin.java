@@ -13,7 +13,6 @@ import org.nguh.nguhcraft.protect.ProtectionManager;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -35,7 +34,7 @@ public abstract class MinecraftClientMixin {
         )
     )
     private void inject$doAttack(CallbackInfoReturnable<Boolean> CI, @Local BlockPos Pos) {
-        if (!ProtectionManager.AllowBlockBreak(player, world, Pos)) {
+        if (!ProtectionManager.AllowBlockModify(player, world, Pos)) {
             // Returning true will make the client hallucinate that we did actually
             // break something and stop further processing of this event, without
             // in fact breaking anything.

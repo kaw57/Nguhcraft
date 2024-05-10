@@ -19,4 +19,7 @@ public interface Constants {
     int Orange = 16753920;
     int Black = 0;
     int Purple = 0xAA00AA;
+
+    /** Build version. Needs to be compatible between server and client. */
+    int NGUHCRAFT_VERSION = 1;
 }

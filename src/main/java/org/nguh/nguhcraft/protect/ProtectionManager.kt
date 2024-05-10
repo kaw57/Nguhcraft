@@ -42,13 +42,12 @@ object ProtectionManager {
         return true
     }
 
-    /** Check if a player is allowed to break or start breaking a certain block. */
+    /**
+    * Check if a player is allowed to break, start breaking, or place a
+    * block at this block position.
+    */
     @JvmStatic
-    fun AllowBlockBreak(
-        PE: PlayerEntity,
-        W: World,
-        Pos: BlockPos
-    ) : Boolean {
+    fun AllowBlockModify(PE: PlayerEntity, W: World, Pos: BlockPos) : Boolean {
         // Player is operator. Always allow.
         if (PE.hasPermissionLevel(4)) return true
 
@@ -56,7 +55,22 @@ object ProtectionManager {
         if (!IsLinked(PE)) return false
 
         // Block is within the bounds of a protected region. Deny.
-        if (W.isClient) PE.sendMessage(Text.of(S.toString()))
+        if (IsProtectedBlock(W, Pos)) return false
+
+        // Otherwise, allow.
+        return true
+    }
+
+    /** Check if a player is allowed to interact (= right-click) with a block. */
+    @JvmStatic
+    fun AllowBlockInteract(PE: PlayerEntity, W: World, Pos: BlockPos) : Boolean {
+        // Player is operator. Always allow.
+        if (PE.hasPermissionLevel(4)) return true
+
+        // Player is not linked. Always deny.
+        if (!IsLinked(PE)) return false
+
+        // Block is within the bounds of a protected region. Deny.
         if (IsProtectedBlock(W, Pos)) return false
 
         // Otherwise, allow.

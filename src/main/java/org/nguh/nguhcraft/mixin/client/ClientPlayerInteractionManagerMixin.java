@@ -1,10 +1,12 @@
 package org.nguh.nguhcraft.mixin.client;
 
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.network.ClientPlayerInteractionManager;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
+import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import org.nguh.nguhcraft.client.NguhcraftClient;
@@ -20,6 +22,18 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class ClientPlayerInteractionManagerMixin {
     @Shadow @Final private MinecraftClient client;
 
+    /** Prevent interactions with blocks within regions. */
+    @Inject(method = "interactBlock", at = @At("HEAD"), cancellable = true)
+    private void inject$interactBlock(
+        ClientPlayerEntity Player,
+        Hand H,
+        BlockHitResult BHR,
+        CallbackInfoReturnable<ActionResult> CIR
+    ) {
+        if (!ProtectionManager.AllowBlockInteract(Player, Player.clientWorld, BHR.getBlockPos()))
+            CIR.setReturnValue(ActionResult.FAIL);
+    }
+
     @Inject(method = "interactItem", at = @At("HEAD"), cancellable = true)
     private void inject$interactItem(PlayerEntity Player, Hand Hand, CallbackInfoReturnable<ActionResult> CIR) {
         if (NguhcraftClient.InHypershotContext) CIR.setReturnValue(ActionResult.PASS);
@@ -28,7 +42,7 @@ public abstract class ClientPlayerInteractionManagerMixin {
     /** Prevent block breaking in a region to avoid desync issues. */
     @Inject(method ="updateBlockBreakingProgress", at = @At("HEAD"), cancellable = true)
     private void inject$updateBlockBreakingProgress(BlockPos Pos, Direction Dir, CallbackInfoReturnable<Boolean> CIR) {
-        if (!ProtectionManager.AllowBlockBreak(client.player, client.world, Pos))
+        if (!ProtectionManager.AllowBlockModify(client.player, client.world, Pos))
             CIR.setReturnValue(false);
     }
 }

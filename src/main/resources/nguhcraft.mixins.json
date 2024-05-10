@@ -4,9 +4,11 @@
 	"package": "org.nguh.nguhcraft.mixin",
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [
+		"common.BlockItemMixin",
 		"common.DamageEnchantmentMixin",
 		"common.EnchantmentMixin",
 		"common.EnderEyeItemMixin",
+		"common.PlayerEntityMixin",
 		"common.PotionContentsComponent",
 		"common.TridentEntityMixin"
 	],

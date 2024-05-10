@@ -28,7 +28,7 @@ public abstract class GameRendererMixin {
     )
     private void inject$shouldRenderBlockOutline(CallbackInfoReturnable<Boolean> CI, @Local BlockPos Pos) {
         // FIXME: This should work, but it doesn’t...
-        if (!ProtectionManager.AllowBlockBreak(client.player, client.world, Pos))
+        if (!ProtectionManager.AllowBlockModify(client.player, client.world, Pos))
             CI.setReturnValue(false);
     }
 }
