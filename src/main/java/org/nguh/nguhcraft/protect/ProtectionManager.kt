@@ -4,12 +4,13 @@ import net.fabricmc.api.EnvType
 import net.fabricmc.api.Environment
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
 import net.minecraft.client.network.ClientPlayerEntity
+import net.minecraft.entity.Entity
+import net.minecraft.entity.mob.Monster
 import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.nbt.NbtCompound
 import net.minecraft.nbt.NbtElement
 import net.minecraft.network.RegistryByteBuf
 import net.minecraft.server.network.ServerPlayerEntity
-import net.minecraft.text.Text
 import net.minecraft.util.math.BlockPos
 import net.minecraft.world.World
 import org.nguh.nguhcraft.client.accessors.AbstractClientPlayerEntityAccessor
@@ -108,6 +109,33 @@ object ProtectionManager {
         val Regions = RegionList(W)
         val R = Regions.find { it.Contains(Pos) } ?: return false
         return !R.AllowsBlockModification()
+    }
+
+    /** Check if this entity is protected from attacks by a player. */
+    @JvmStatic
+    fun IsProtectedEntity(AttackingPlayer: PlayerEntity, AttackedEntity: Entity): Boolean {
+        // Player is operator. Always allow.
+        if (AttackingPlayer.hasPermissionLevel(4)) return false
+
+        // Player is not linked. Always deny.
+        if (!IsLinked(AttackingPlayer)) return true
+
+        // Entity is a player. Check PvP flag.
+        if (AttackedEntity is PlayerEntity) {
+            val Regions = RegionList(AttackedEntity.world)
+            val R = Regions.find { it.Contains(AttackedEntity.blockPos) } ?: return false
+            return !R.AllowsPvP()
+        }
+
+        // Entity is a mob. Check friendly attack flag.
+        if (AttackedEntity !is Monster) {
+            val Regions = RegionList(AttackedEntity.world)
+            val R = Regions.find { it.Contains(AttackedEntity.blockPos) } ?: return false
+            return !R.AllowsAttackingFriendlyEntities()
+        }
+
+        // Otherwise, allow.
+        return false
     }
 
     /**

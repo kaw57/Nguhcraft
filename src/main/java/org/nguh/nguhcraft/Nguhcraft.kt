@@ -41,16 +41,16 @@ import org.nguh.nguhcraft.packets.*
 //       players from doing anything.
 //   - [x] Block placement/breaking
 //     - [x] Block state changes (opening door, activating button/lever)
-//     - [ ] Special case: editing signs
+//     - [x] Special case: editing signs
 //   - [ ] Entity interactions
-//     - [ ] Attacking entities
+//     - [x] Attacking entities
 //     - [ ] Using boats/minecarts
 //   - [ ] Disable enderman griefing entirely.
-//   - [ ] TNT
+//   - [x] TNT
 //   - [ ] Pistons that extend into protected areas
 //   - [ ] Fire spread, lava flow and placement, flint and steel.
-//   - [ ] Creepers
-//   - [ ] Projectiles
+//   - [x] Creepers
+//   - [ ] Ranged weapons (bows, crossbows, tridents, fire charges)
 
 class Nguhcraft : ModInitializer {
     override fun onInitialize() {

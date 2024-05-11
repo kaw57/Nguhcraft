@@ -44,14 +44,34 @@ import org.nguh.nguhcraft.enchantment.NguhcraftEnchantments
 import org.nguh.nguhcraft.packets.ClientboundSyncHypershotStatePacket
 import org.nguh.nguhcraft.protect.ProtectionManager
 import org.nguh.nguhcraft.server.accessors.LivingEntityAccessor
+import org.slf4j.Logger
 import java.util.*
 
 
 @Environment(EnvType.SERVER)
 object ServerUtils {
-    val BORDER_TITLE: Text = Text.literal("TURN BACK").formatted(Formatting.RED)
-    val BORDER_SUBTITLE: Text = Text.literal("You may not cross the border")
-    val LOGGER = LogUtils.getLogger()
+    private val BORDER_TITLE: Text = Text.literal("TURN BACK").formatted(Formatting.RED)
+    private val BORDER_SUBTITLE: Text = Text.literal("You may not cross the border")
+    private val LOGGER: Logger = LogUtils.getLogger()
+
+    /** Living entity tick. */
+    @JvmStatic
+    fun ActOnLivingEntityBaseTick(LE: LivingEntity) {
+        // Handle entities with NaN health.
+        if (LE.health.isNaN()) {
+            // Disconnect players.
+            if (LE is ServerPlayerEntity) {
+                LOGGER.warn("Player {} had NaN health, disconnecting.", LE.displayName!!.string)
+                LE.health = 0F
+                LE.networkHandler.disconnect(Text.of("Health was NaN!"))
+                return
+            }
+
+            // Discard entities.
+            LOGGER.warn("Living entity has NaN health, discarding: {}", LE)
+            LE.discard()
+        }
+    }
 
     /**
     * Early player tick.

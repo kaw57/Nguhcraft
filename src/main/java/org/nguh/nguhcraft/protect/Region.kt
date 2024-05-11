@@ -22,7 +22,13 @@ class Region(
     */
     enum class Flags {
         /** Allow breaking and placing blocks. */
-        CHANGE_BLOCKS;
+        CHANGE_BLOCKS,
+
+        /** Allow attacking non-hostile entities. */
+        ATTACK_FRIENDLY,
+
+        /** Allow attacking players. */
+        ATTACK_PLAYERS;
 
         /** Get the bit mask for this flag. */
         fun Bit() = 1L shl ordinal
@@ -61,8 +67,14 @@ class Region(
         ToZ = buf.readInt()
     ) { RegionFlags = buf.readLong() }
 
+    /** Check if this region allows players to attack non-hostile mobs. */
+    fun AllowsAttackingFriendlyEntities() = Test(Flags.ATTACK_FRIENDLY)
+
     /** Check if this region allows block breaking. */
     fun AllowsBlockModification() = Test(Flags.CHANGE_BLOCKS)
+
+    /** Check if this region allows players to be attacked. */
+    fun AllowsPvP() = Test(Flags.ATTACK_PLAYERS)
 
     /** Check if this region contains a block. */
     fun Contains(Pos: BlockPos): Boolean {
