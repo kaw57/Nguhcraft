@@ -33,6 +33,7 @@
 		"server.CommandManagerMixin",
 		"server.DedicatedServerMixin",
 		"server.EnchantCommandMixin",
+		"server.EndermanEntityMixin",
 		"server.EndPortalBlockMixin",
 		"server.EntityMixin",
 		"server.LivingEntityMixin",
