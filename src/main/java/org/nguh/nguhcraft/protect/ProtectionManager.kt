@@ -7,6 +7,7 @@ import net.minecraft.client.network.ClientPlayerEntity
 import net.minecraft.entity.Entity
 import net.minecraft.entity.mob.Monster
 import net.minecraft.entity.player.PlayerEntity
+import net.minecraft.entity.vehicle.VehicleEntity
 import net.minecraft.nbt.NbtCompound
 import net.minecraft.nbt.NbtElement
 import net.minecraft.network.RegistryByteBuf
@@ -78,6 +79,26 @@ object ProtectionManager {
         return true
     }
 
+    /** Check if a player is allowed to interact (= right-click) with an entity. */
+    @JvmStatic
+    fun AllowEntityInteract(PE: PlayerEntity, E: Entity) : Boolean {
+        // Player is operator. Always allow.
+        if (PE.hasPermissionLevel(4)) return true
+
+        // Player is not linked. Always deny.
+        if (!IsLinked(PE)) return false
+
+        // Entity is a vehicle; check region flags.
+        if (E is VehicleEntity) {
+            val R = FindRegionContainingBlock(E.world, E.blockPos) ?: return true
+            return R.AllowsVehicleUse()
+        }
+
+        // Check regular region flags.
+        val R = FindRegionContainingBlock(E.world, E.blockPos) ?: return true
+        return R.AllowsEntityInteraction()
+    }
+
     /**
      * This function is the intended way to delete a region from a world.
      *
@@ -106,8 +127,7 @@ object ProtectionManager {
     /** Check if a block is within a protected region. */
     @JvmStatic
     fun IsProtectedBlock(W: World, Pos: BlockPos): Boolean {
-        val Regions = RegionList(W)
-        val R = Regions.find { it.Contains(Pos) } ?: return false
+        val R = FindRegionContainingBlock(W, Pos) ?: return false
         return !R.AllowsBlockModification()
     }
 
@@ -149,6 +169,9 @@ object ProtectionManager {
         RegionsTag.forEach { Regions.add(Region(it as NbtCompound)) }
     }
 
+    /** Find the region that contains a block. */
+    private fun FindRegionContainingBlock(W: World, Pos: BlockPos) = RegionList(W).find { it.Contains(Pos) }
+
     /** Get the regions for a world. */
     private fun RegionList(W: World): MutableList<Region> {
         if (W.registryKey == World.OVERWORLD) return S.OverworldRegions
@@ -171,7 +194,8 @@ object ProtectionManager {
     }
 
     /** Sync regions to the clients. */
-    private fun Sync() {
+    @Environment(EnvType.SERVER)
+    fun Sync() {
         ServerUtils.Broadcast(ClientboundSyncProtectionMgrPacket(S))
     }
 

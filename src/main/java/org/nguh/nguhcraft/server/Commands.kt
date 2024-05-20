@@ -238,6 +238,8 @@ object Commands {
     }
 
     object RegionCommand {
+        val NOT_IN_ANY_REGION: Text = Text.literal("You are not in any region!")
+
         fun AddRegion(S: ServerCommandSource, W: World, Name: String, From: BlockPos, To: BlockPos): Int {
             if (From == To) {
                 S.sendError(Text.literal("Refusing to create empty region!"))
@@ -281,23 +283,38 @@ object Commands {
             return 1
         }
 
+        fun AppendRegionBounds(MT: MutableText, R:Region): MutableText = MT.append(Text.literal(" ["))
+            .append(Text.literal("${R.MinX}").formatted(Formatting.GRAY))
+            .append(", ")
+            .append(Text.literal("${R.MinZ}").formatted(Formatting.GRAY))
+            .append("] → [")
+            .append(Text.literal("${R.MaxX}").formatted(Formatting.GRAY))
+            .append(", ")
+            .append(Text.literal("${R.MaxZ}").formatted(Formatting.GRAY))
+            .append("]")
+
+        fun AppendWorldAndRegionName(MT: MutableText, W: World, Name: String): MutableText = MT
+            .append(Text.literal(W.registryKey.value.path.toString()).withColor(Constants.Lavender))
+            .append("::")
+            .append(Text.literal(Name).formatted(Formatting.AQUA))
+
         fun DeleteRegion(S: ServerCommandSource, W: World, Name: String): Int {
             if (!ProtectionManager.DeleteRegionFromWorld(W, Name)) {
-                S.sendError(Text.literal("No region found with name ")
-                    .append(Text.literal(Name).formatted(Formatting.AQUA))
-                    .append(" in world ")
-                    .append(Text.literal(W.registryKey.value.path.toString()).withColor(Constants.Lavender))
-                )
+                S.sendError(AppendWorldAndRegionName(Text.literal("No such region: "), W, Name))
                 return 0
             }
 
-            S.sendMessage(Text.literal("Deleted region ")
-                .append(Text.literal(Name).formatted(Formatting.AQUA))
-                .append(" in world ")
-                .append(Text.literal(W.registryKey.value.path.toString()).withColor(Constants.Lavender))
+            S.sendMessage(AppendWorldAndRegionName(Text.literal("Deleted region "), W, Name)
                 .formatted(Formatting.GREEN)
             )
             return 1
+        }
+
+        fun GetRegionByName(S: ServerCommandSource, W: World, Name: String): Region? {
+            val Regions = ProtectionManager.GetRegions(W)
+            val R = Regions.find { it.Name == Name }
+            if (R == null) S.sendError(AppendWorldAndRegionName(Text.literal("No such region: "), W, Name))
+            return R
         }
 
         fun ListRegions(S: ServerCommandSource, W: World): Int {
@@ -317,18 +334,58 @@ object Commands {
             for (R in Regions) {
                 List.append(Text.literal("\n  - "))
                     .append(Text.literal(R.Name).formatted(Formatting.AQUA))
-                    .append(Text.literal(" ["))
-                    .append(Text.literal("${R.MinX}").formatted(Formatting.GRAY))
-                    .append(", ")
-                    .append(Text.literal("${R.MinZ}").formatted(Formatting.GRAY))
-                    .append("] → [")
-                    .append(Text.literal("${R.MaxX}").formatted(Formatting.GRAY))
-                    .append(", ")
-                    .append(Text.literal("${R.MaxZ}").formatted(Formatting.GRAY))
-                    .append("]")
+                AppendRegionBounds(List, R)
             }
 
             S.sendMessage(List.formatted(Formatting.YELLOW))
+            return 1
+        }
+
+        fun PrintRegionInfo(S: ServerCommandSource, W: World, R: Region): Int {
+            val Stats = AppendWorldAndRegionName(Text.literal("Region "), W, R.Name)
+            AppendRegionBounds(Stats, R)
+            Stats.append("\n").append(R.Stats)
+            S.sendMessage(Stats.formatted(Formatting.YELLOW))
+            return 1
+        }
+
+        fun PrintRegionInfo(S: ServerCommandSource, SP: ServerPlayerEntity): Int {
+            val W = SP.world
+            val Regions = ProtectionManager.GetRegions(W)
+            val R = Regions.find { it.Contains(SP.blockPos) }
+            if (R == null) {
+                S.sendError(NOT_IN_ANY_REGION)
+                return 0
+            }
+
+            return PrintRegionInfo(S, W, R)
+        }
+
+        fun PrintRegionInfo(S: ServerCommandSource, W: World, Name: String): Int {
+            val R = GetRegionByName(S, W, Name) ?: return 0
+            return PrintRegionInfo(S, W, R)
+        }
+
+        fun SetFlag(
+            S: ServerCommandSource,
+            W: World,
+            Name: String,
+            Flag: Region.Flags,
+            Allow: Boolean
+        ): Int {
+            val R = GetRegionByName(S, W, Name) ?: return 0
+            R.SetFlag(Flag, Allow)
+            val Mess = Text.literal("Set region flag ")
+                .append(Text.literal(Flag.name.lowercase()).withColor(Constants.Orange))
+                .append(" to ")
+                .append(
+                    if (Allow) Text.literal("allow").formatted(Formatting.GREEN)
+                    else Text.literal("deny").formatted(Formatting.RED)
+                )
+                .append(" for region ")
+
+            AppendWorldAndRegionName(Mess, W, Name)
+            S.sendMessage(Mess.formatted(Formatting.YELLOW))
             return 1
         }
     }
@@ -449,40 +506,82 @@ object Commands {
             )
         )
 
-    private fun RegionCommand(): LiteralArgumentBuilder<ServerCommandSource> = literal("region")
-        .requires { it.hasPermissionLevel(4) }
-        .then(literal("list")
-            .then(argument("world", DimensionArgumentType.dimension())
-                .executes { RegionCommand.ListRegions(it.source, DimensionArgumentType.getDimensionArgument(it, "world")) }
+    private fun RegionCommand(): LiteralArgumentBuilder<ServerCommandSource> {
+        val RegionFlagsNameNode = argument("name", StringArgumentType.word())
+        Region.Flags.entries.forEach { flag ->
+            RegionFlagsNameNode.then(literal(flag.name.lowercase())
+                .then(literal("allow").executes {
+                    RegionCommand.SetFlag(
+                        it.source,
+                        it.source.world,
+                        StringArgumentType.getString(it, "name"),
+                        flag,
+                        true
+                    )
+                })
+                .then(literal("deny").executes {
+                    RegionCommand.SetFlag(
+                        it.source,
+                        it.source.world,
+                        StringArgumentType.getString(it, "name"),
+                        flag,
+                        false
+                    )
+                })
             )
-            .executes { RegionCommand.ListRegions(it.source, it.source.world) }
-        )
-        .then(literal("add")
-            .then(argument("name", StringArgumentType.word())
-                .then(argument("from", BlockPosArgumentType.blockPos())
-                    .then(argument("to", BlockPosArgumentType.blockPos())
-                        .executes { RegionCommand.AddRegion(
+        }
+
+        return literal("region")
+            .requires { it.hasPermissionLevel(4) }
+            .then(literal("list")
+                .then(argument("world", DimensionArgumentType.dimension())
+                    .executes {
+                        RegionCommand.ListRegions(
                             it.source,
-                            it.source.world,
+                            DimensionArgumentType.getDimensionArgument(it, "world")
+                        )
+                    }
+                )
+                .executes { RegionCommand.ListRegions(it.source, it.source.world) }
+            )
+            .then(literal("add")
+                .then(argument("name", StringArgumentType.word())
+                    .then(argument("from", BlockPosArgumentType.blockPos())
+                        .then(argument("to", BlockPosArgumentType.blockPos())
+                            .executes { RegionCommand.AddRegion(
+                                it.source,
+                                it.source.world,
+                                StringArgumentType.getString(it, "name"),
+                                BlockPosArgumentType.getValidBlockPos(it, "from"),
+                                BlockPosArgumentType.getValidBlockPos(it, "to"),
+                            ) }
+                        )
+                    )
+                )
+            )
+            .then(literal("del")
+                .then(argument("name", StringArgumentType.word())
+                    .then(argument("world", DimensionArgumentType.dimension())
+                        .executes { RegionCommand.DeleteRegion(
+                            it.source,
+                            DimensionArgumentType.getDimensionArgument(it, "world"),
                             StringArgumentType.getString(it, "name"),
-                            BlockPosArgumentType.getValidBlockPos(it, "from"),
-                            BlockPosArgumentType.getValidBlockPos(it, "to"),
                         ) }
                     )
                 )
             )
-        )
-        .then(literal("del")
-            .then(argument("name", StringArgumentType.word())
-                .then(argument("world", DimensionArgumentType.dimension())
-                    .executes { RegionCommand.DeleteRegion(
+            .then(literal("info")
+                .then(argument("name", StringArgumentType.word())
+                    .executes { RegionCommand.PrintRegionInfo(
                         it.source,
-                        DimensionArgumentType.getDimensionArgument(it, "world"),
-                        StringArgumentType.getString(it, "name"),
+                        it.source.playerOrThrow.world,
+                        StringArgumentType.getString(it, "name")
                     ) }
                 )
+                .executes { RegionCommand.PrintRegionInfo(it.source, it.source.playerOrThrow) }
             )
-        )
+            .then(literal("flags").then(RegionFlagsNameNode))
+    }
 
     private fun RuleCommand(): LiteralArgumentBuilder<ServerCommandSource> {
         var Command = literal("rule").requires { it.hasPermissionLevel(4) }

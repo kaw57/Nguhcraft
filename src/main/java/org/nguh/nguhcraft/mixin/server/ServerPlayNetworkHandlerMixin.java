@@ -1,5 +1,7 @@
 package org.nguh.nguhcraft.mixin.server;
 
+import com.llamalad7.mixinextras.sugar.Local;
+import net.minecraft.entity.Entity;
 import net.minecraft.network.ClientConnection;
 import net.minecraft.network.packet.c2s.play.*;
 import net.minecraft.server.MinecraftServer;
@@ -9,6 +11,7 @@ import net.minecraft.server.network.ServerPlayNetworkHandler;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 import org.jetbrains.annotations.NotNull;
+import org.nguh.nguhcraft.protect.ProtectionManager;
 import org.nguh.nguhcraft.server.Discord;
 import org.nguh.nguhcraft.server.NetworkHandler;
 import org.nguh.nguhcraft.server.ServerUtils;
@@ -59,6 +62,22 @@ public abstract class ServerPlayNetworkHandlerMixin extends ServerCommonNetworkH
             LOGGER.warn("Player {} tried to use an item while in hypershot context", player.getDisplayName());
             CI.cancel();
         }
+    }
+
+
+    /** Prevent interactions within a region. */
+    @Inject(
+        method = "onPlayerInteractEntity",
+        cancellable = true,
+        at = @At(
+            value = "INVOKE",
+            target = "net/minecraft/server/network/ServerPlayerEntity.canInteractWithEntityIn (Lnet/minecraft/util/math/Box;D)Z",
+            ordinal = 0
+        )
+    )
+    private void inject$onPlayerInteractEntity(PlayerInteractEntityC2SPacket Packet, CallbackInfo CI, @Local Entity E) {
+        if (!ProtectionManager.AllowEntityInteract(player, E))
+            CI.cancel();
     }
 
     /**

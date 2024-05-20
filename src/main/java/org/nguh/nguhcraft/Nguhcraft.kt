@@ -44,13 +44,18 @@ import org.nguh.nguhcraft.packets.*
 //     - [x] Special case: editing signs
 //   - [ ] Entity interactions
 //     - [x] Attacking entities
-//     - [ ] Using boats/minecarts
+//     - [ ] Using boats/minecarts -> ACTUALLY TEST THIS
+//     - [ ] Using beds
+//     - [ ] Interacting w/ villagers
+//     - [ ] Ender pearls / chorus fruits
+
 //   - [ ] Disable enderman griefing entirely.
 //   - [x] TNT
 //   - [ ] Pistons that extend into protected areas
 //   - [ ] Fire spread, lava flow and placement, flint and steel.
+//   - [ ] Vine spread & snow
 //   - [x] Creepers
-//   - [ ] Ranged weapons (bows, crossbows, tridents, fire charges)
+//   - [ ] Ranged weapons (bows, crossbows, tridents, fire charges, fireworks)
 
 class Nguhcraft : ModInitializer {
     override fun onInitialize() {

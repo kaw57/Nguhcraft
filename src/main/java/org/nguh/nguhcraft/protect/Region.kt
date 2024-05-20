@@ -2,7 +2,10 @@ package org.nguh.nguhcraft.protect
 
 import net.minecraft.nbt.NbtCompound
 import net.minecraft.network.RegistryByteBuf
+import net.minecraft.text.Text
+import net.minecraft.util.Formatting
 import net.minecraft.util.math.BlockPos
+import org.nguh.nguhcraft.Constants
 import kotlin.math.max
 import kotlin.math.min
 
@@ -21,14 +24,30 @@ class Region(
     * These dictate what is allowed. Unset means deny.
     */
     enum class Flags {
-        /** Allow breaking and placing blocks. */
-        CHANGE_BLOCKS,
-
         /** Allow attacking non-hostile entities. */
         ATTACK_FRIENDLY,
 
         /** Allow attacking players. */
-        ATTACK_PLAYERS;
+        ATTACK_PLAYERS,
+
+        /** Allow breaking and placing blocks. */
+        CHANGE_BLOCKS,
+
+        /**
+        * Allow interacting with entities.
+        *
+        * Entity-specific permissions (e.g. USE_VEHICLES) take precedence
+        * over this flag. This flag is never tested for such entities.
+        */
+        ENTITY_INTERACT,
+
+        /**
+        * Allow using and destroying vehicles.
+        *
+        * This is one permission because e.g. using minecarts without
+        * being able to place or destroy them is fairly useless.
+        */
+        USE_VEHICLES;
 
         /** Get the bit mask for this flag. */
         fun Bit() = 1L shl ordinal
@@ -42,6 +61,20 @@ class Region(
     var MinZ: Int = min(FromZ, ToZ); private set
     var MaxX: Int = max(FromX, ToX); private set
     var MaxZ: Int = max(FromZ, ToZ); private set
+
+    /** Display this region’s stats. */
+    val Stats: Text get() {
+        val S = Text.empty()
+        Flags.entries.forEach {
+            val Status = if (Test(it)) Text.literal("allow").formatted(Formatting.GREEN)
+            else Text.literal("deny").formatted(Formatting.RED)
+            S.append("\n -")
+                .append(Text.literal(it.name.lowercase()).withColor(Constants.Orange))
+                .append(": ")
+                .append(Status)
+        }
+        return S
+    }
 
     /** Deserialise a region. */
     constructor(Tag: NbtCompound) : this(
@@ -73,8 +106,14 @@ class Region(
     /** Check if this region allows block breaking. */
     fun AllowsBlockModification() = Test(Flags.CHANGE_BLOCKS)
 
+    /** Check if this region allows entity interaction. */
+    fun AllowsEntityInteraction() = Test(Flags.ENTITY_INTERACT)
+
     /** Check if this region allows players to be attacked. */
     fun AllowsPvP() = Test(Flags.ATTACK_PLAYERS)
+
+    /** Check if this region allows vehicle use. */
+    fun AllowsVehicleUse() = Test(Flags.USE_VEHICLES)
 
     /** Check if this region contains a block. */
     fun Contains(Pos: BlockPos): Boolean {
@@ -98,6 +137,13 @@ class Region(
         Tag.put(TAG_FLAGS, FlagsTag)
 
         return Tag
+    }
+
+    /** Set a region flag. */
+    fun SetFlag(Flag: Flags, Allow: Boolean) {
+        val OldFlags = RegionFlags
+        RegionFlags = if (Allow) OldFlags or Flag.Bit() else OldFlags and Flag.Bit().inv()
+        if (OldFlags != RegionFlags) ProtectionManager.Sync()
     }
 
     /** Helper to simplify testing flags. */
