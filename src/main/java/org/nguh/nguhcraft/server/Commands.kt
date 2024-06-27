@@ -18,6 +18,7 @@ import net.minecraft.command.argument.EntityArgumentType
 import net.minecraft.command.argument.RegistryEntryReferenceArgumentType
 import net.minecraft.enchantment.Enchantment
 import net.minecraft.registry.RegistryKeys
+import net.minecraft.registry.entry.RegistryEntry
 import net.minecraft.server.command.CommandManager.*
 import net.minecraft.server.command.ServerCommandSource
 import net.minecraft.server.network.ServerPlayerEntity
@@ -217,7 +218,7 @@ object Commands {
         fun Enchant(
             S: ServerCommandSource,
             SP: ServerPlayerEntity,
-            E: Enchantment,
+            E: RegistryEntry<Enchantment>,
             Lvl: Int
         ): Int {
             // This *does* work for books. Fabric’s documentation says otherwise,
@@ -228,7 +229,7 @@ object Commands {
             S.sendMessage(
                 Text.translatable(
                     "commands.enchant.success.single", *arrayOf<Any>(
-                        E.getName(Lvl),
+                        Enchantment.getName(E, Lvl),
                         SP.displayName!!,
                     )
                 )
@@ -479,7 +480,7 @@ object Commands {
                         EnchantCommand.Enchant(
                             it.source,
                             it.source.playerOrThrow,
-                            RegistryEntryReferenceArgumentType.getEnchantment(it, "enchantment").value(),
+                            RegistryEntryReferenceArgumentType.getEnchantment(it, "enchantment"),
                             IntegerArgumentType.getInteger(it, "level")
                         )
                     }
@@ -488,7 +489,7 @@ object Commands {
                     EnchantCommand.Enchant(
                         it.source,
                         it.source.playerOrThrow,
-                        RegistryEntryReferenceArgumentType.getEnchantment(it, "enchantment").value(),
+                        RegistryEntryReferenceArgumentType.getEnchantment(it, "enchantment"),
                         1
                     )
                 }

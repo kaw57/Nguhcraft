@@ -20,7 +20,7 @@ import org.nguh.nguhcraft.server.ServerUtils
 import org.nguh.nguhcraft.server.isLinked
 
 object ProtectionManager {
-    private val TAG_REGIONS = "Regions"
+    private const val TAG_REGIONS = "Regions"
 
     /** Current manager state. */
     @Volatile private var S = State()

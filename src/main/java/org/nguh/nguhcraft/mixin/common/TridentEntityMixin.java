@@ -1,23 +1,16 @@
 package org.nguh.nguhcraft.mixin.common;
 
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
-import net.minecraft.enchantment.Enchantments;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.data.TrackedData;
 import net.minecraft.entity.projectile.PersistentProjectileEntity;
 import net.minecraft.entity.projectile.TridentEntity;
 import net.minecraft.item.ItemStack;
-import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.EntityHitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
+import org.nguh.nguhcraft.TridentUtils;
 import org.nguh.nguhcraft.accessors.TridentEntityAccessor;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -26,8 +19,6 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-
-import static org.nguh.nguhcraft.Utils.EnchantLvl;
 
 @Mixin(TridentEntity.class)
 public abstract class TridentEntityMixin extends PersistentProjectileEntity implements TridentEntityAccessor {
@@ -41,22 +32,12 @@ public abstract class TridentEntityMixin extends PersistentProjectileEntity impl
 
     /** Mark this as a copy. */
     @Override
+    @Unique
     public void SetCopy() {
         Copy = true;
         pickupType = PickupPermission.CREATIVE_ONLY;
         dataTracker.set(LOYALTY, (byte) 0);
         setOwner(null);
-    }
-
-    /** Unconditionally strike lightning. */
-    @Environment(EnvType.SERVER)
-    @Unique void StrikeLighting(ServerWorld W, BlockPos Where) {
-        var Lightning = EntityType.LIGHTNING_BOLT.create(W);
-        if (Lightning != null) {
-            Lightning.refreshPositionAfterTeleport(Vec3d.ofBottomCenter(Where));
-            Lightning.setChanneler(getOwner() instanceof ServerPlayerEntity SP ? SP : null);
-            W.spawnEntity(Lightning);
-        }
     }
 
     /** Disable pickup in the constructor. */
@@ -77,23 +58,7 @@ public abstract class TridentEntityMixin extends PersistentProjectileEntity impl
         )
     )
     private void inject$onEntityHit(EntityHitResult EHR, CallbackInfo CI) {
-        SoundEvent SE = SoundEvents.ITEM_TRIDENT_HIT;
-        float Volume = 1.0F;
-
-        // Check if it’s thundering or if we have Channeling II.
-        var Thunder = getWorld().isThundering();
-        var Lvl = EnchantLvl(getItemStack(), Enchantments.CHANNELING);
-        if (getWorld() instanceof ServerWorld W && Lvl > 0 && (Thunder || Lvl >= 2)) {
-            EHR.getEntity().timeUntilRegen = 0;
-            BlockPos Where = EHR.getEntity().getBlockPos();
-            if (Lvl >= 2 || W.isSkyVisible(Where)) {
-                StrikeLighting(W, Where);
-                SE = SoundEvents.ITEM_TRIDENT_THUNDER;
-                Volume = 5.0F;
-            }
-        }
-
-        this.playSound(SE, Volume, 1.0F);
+        TridentUtils.ActOnEntityHit((TridentEntity) (Object) this, EHR);
         CI.cancel();
     }
 
@@ -118,10 +83,6 @@ public abstract class TridentEntityMixin extends PersistentProjectileEntity impl
     /** Implement Channeling II. */
     @Override
     protected void onBlockHit(BlockHitResult BHR) {
-        var Lvl = EnchantLvl(getItemStack(), Enchantments.CHANNELING);
-        if (getWorld() instanceof ServerWorld W && Lvl >= 2) {
-            StrikeLighting(W, BHR.getBlockPos());
-            this.playSound(SoundEvents.ITEM_TRIDENT_THUNDER, 5.F, 1.0F);
-        }
+        TridentUtils.ActOnBlockHit((TridentEntity) (Object) this, BHR);
     }
 }

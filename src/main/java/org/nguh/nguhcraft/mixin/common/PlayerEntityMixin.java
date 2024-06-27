@@ -31,21 +31,6 @@ public abstract class PlayerEntityMixin extends LivingEntity {
             CI.cancel();
     }
 
-    /** Fix bug in Sweeping Edge damage calculation. */
-    @Redirect(
-        method = "attack",
-        at = @At(
-            value = "INVOKE",
-            target = "net/minecraft/enchantment/EnchantmentHelper.getSweepingMultiplier (Lnet/minecraft/entity/LivingEntity;)F",
-            ordinal = 0
-        )
-    )
-    private float inject$attack$1(LivingEntity LE) {
-        // This may end up multiplied with infinity, so avoid creating a NaN here.
-        var Base = EnchantmentHelper.getSweepingMultiplier(LE);
-        return Base == 0 ? Float.MIN_VALUE : Base;
-    }
-
     /** Prevent interactions within a region. */
     @Inject(method = "canInteractWithBlockAt", at = @At("HEAD"), cancellable = true)
     private void inject$canInteractWithBlockAt(

@@ -3,16 +3,13 @@ package org.nguh.nguhcraft.mixin.server;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 import org.nguh.nguhcraft.server.HypershotContext;
 import org.nguh.nguhcraft.server.ServerUtils;
 import org.nguh.nguhcraft.server.accessors.LivingEntityAccessor;
-import org.slf4j.Logger;
-import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -20,8 +17,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(LivingEntity.class)
 public abstract class LivingEntityMixin extends Entity implements LivingEntityAccessor {
-    @Shadow @Final private static Logger LOGGER;
-
     public LivingEntityMixin(EntityType<?> type, World world) {
         super(type, world);
     }
@@ -38,9 +33,7 @@ public abstract class LivingEntityMixin extends Entity implements LivingEntityAc
     /** Checks that need to run when an entity is ticked. */
     @Inject(method = "baseTick()V", at = @At("HEAD"))
     private void inject$baseTick(CallbackInfo CI) {
-        var Self = This();
-        if (Self.getWorld().isClient) return;
-        ServerUtils.ActOnLivingEntityBaseTick(Self);
+        ServerUtils.ActOnLivingEntityBaseTick(This());
     }
 
     /** Tick Hypershot. */
@@ -48,7 +41,7 @@ public abstract class LivingEntityMixin extends Entity implements LivingEntityAc
     private void inject$tickActiveItemStack(CallbackInfo CI) {
         if (
             HSContext != null &&
-            HSContext.Tick(getWorld(), This()) != HypershotContext.EXPIRED
+            HSContext.Tick((ServerWorld) getWorld(), This()) != HypershotContext.EXPIRED
         ) CI.cancel();
     }
 }

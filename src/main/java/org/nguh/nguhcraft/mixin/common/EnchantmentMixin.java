@@ -1,20 +1,34 @@
 package org.nguh.nguhcraft.mixin.common;
 
+import com.llamalad7.mixinextras.sugar.Local;
+import com.llamalad7.mixinextras.sugar.Share;
+import com.llamalad7.mixinextras.sugar.ref.LocalRef;
 import net.minecraft.enchantment.Enchantment;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.damage.DamageSource;
+import net.minecraft.item.ItemStack;
+import net.minecraft.registry.entry.RegistryEntry;
+import net.minecraft.registry.tag.EnchantmentTags;
 import net.minecraft.screen.ScreenTexts;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
+import org.apache.commons.lang3.mutable.MutableFloat;
+import org.nguh.nguhcraft.Constants;
 import org.nguh.nguhcraft.Utils;
-import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
-import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.*;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(Enchantment.class)
 public abstract class EnchantmentMixin {
-    @Shadow public abstract String getTranslationKey();
-    @Shadow public abstract boolean isCursed();
+    @Shadow @Final public static int MAX_LEVEL;
 
-    @Shadow public abstract int getMaxLevel();
+    @Unique
+    private static Text FormatLevel(int Lvl) {
+        return Text.literal(Lvl >= 255 || Lvl < 0 ? "∞" : Utils.RomanNumeral(Lvl));
+    }
 
     /**
      * Render large enchantment levels properly.
@@ -23,11 +37,43 @@ public abstract class EnchantmentMixin {
      * @reason Easier to rewrite the entire thing.
      */
     @Overwrite
-    public Text getName(int level) {
-        var Lvl = level >= 255 || level < 0 ? "∞" : Utils.RomanNumeral(level);
-        return Text.translatable(getTranslationKey())
+    public static Text getName(RegistryEntry<Enchantment> Key, int Lvl) {
+        var E = Key.value();
+        return E.description().copy()
             .append(ScreenTexts.SPACE)
-            .append(getMaxLevel() > 1 || level > 1 ? Text.literal(Lvl) : ScreenTexts.EMPTY)
-            .formatted(isCursed() ? Formatting.RED : Formatting.GRAY);
+            .append(E.getMaxLevel() > 1 || Lvl > 1 ? FormatLevel(Lvl) : ScreenTexts.EMPTY)
+            .formatted(Key.isIn(EnchantmentTags.CURSE) ? Formatting.RED : Formatting.GRAY);
+    }
+
+    /** Save the initial damage so we can check whether it was modified. */
+    @Inject(method = "modifyDamage", at = @At("HEAD"))
+    private void inject$modifyDamage$0(
+        ServerWorld W,
+        int Lvl,
+        ItemStack S,
+        Entity User,
+        DamageSource DS,
+        MutableFloat Damage,
+        CallbackInfo CI,
+        @Share("BaseDamage") LocalRef<Float> BaseDamage
+    ) {
+        BaseDamage.set(Damage.floatValue());
+    }
+
+    /** And set it to ∞ if it was and we’re at max level. */
+    @Inject(method = "modifyDamage", at = @At("TAIL"))
+    private void inject$modifyDamage$1(
+        ServerWorld W,
+        int Lvl,
+        ItemStack S,
+        Entity User,
+        DamageSource DS,
+        MutableFloat Damage,
+        CallbackInfo CI,
+        @Share("BaseDamage") LocalRef<Float> BaseDamage
+    ) {
+        // The damage was modified; apply our override.
+        if (Damage.floatValue() > BaseDamage.get() && Lvl == MAX_LEVEL)
+            Damage.setValue(Constants.BIG_VALUE_FLOAT);
     }
 }

@@ -15,7 +15,6 @@ import net.minecraft.entity.passive.VillagerEntity
 import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.entity.projectile.ProjectileUtil
 import net.minecraft.entity.projectile.TridentEntity
-import net.minecraft.inventory.SimpleInventory
 import net.minecraft.item.ItemStack
 import net.minecraft.nbt.NbtCompound
 import net.minecraft.nbt.NbtIo
@@ -24,6 +23,7 @@ import net.minecraft.network.packet.CustomPayload
 import net.minecraft.network.packet.s2c.play.SubtitleS2CPacket
 import net.minecraft.network.packet.s2c.play.TitleS2CPacket
 import net.minecraft.recipe.RecipeType
+import net.minecraft.recipe.input.SingleStackRecipeInput
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.network.ServerPlayerEntity
 import net.minecraft.server.world.ServerWorld
@@ -34,7 +34,9 @@ import net.minecraft.util.WorldSavePath
 import net.minecraft.util.hit.HitResult
 import net.minecraft.util.math.Box
 import net.minecraft.util.math.MathHelper
+import net.minecraft.util.math.Vec3d
 import net.minecraft.world.RaycastContext
+import net.minecraft.world.TeleportTarget
 import net.minecraft.world.World
 import org.nguh.nguhcraft.Constants.MAX_HOMING_DISTANCE
 import org.nguh.nguhcraft.Utils.EnchantLvl
@@ -46,7 +48,6 @@ import org.nguh.nguhcraft.protect.ProtectionManager
 import org.nguh.nguhcraft.server.accessors.LivingEntityAccessor
 import org.slf4j.Logger
 import java.util.*
-
 
 @Environment(EnvType.SERVER)
 object ServerUtils {
@@ -82,8 +83,9 @@ object ServerUtils {
     fun ActOnPlayerTick(SP: ServerPlayerEntity) {
         val SW = SP.serverWorld
         if (!SP.hasPermissionLevel(4) && !SW.worldBorder.contains(SP.boundingBox)) {
-            val Spawn = SW.spawnPos
-            SP.teleport(Spawn.x.toDouble(), Spawn.y.toDouble(), Spawn.z.toDouble())
+            val Spawn = SW.spawnPos.toBottomCenterPos()
+            val Vec = Vec3d(Spawn.x, Spawn.y + 1, Spawn.z)
+            SP.teleportTo(TeleportTarget(SW, Vec, Vec3d.ZERO, 0F, 0F, TeleportTarget.NO_OP))
             SendTitle(SP, BORDER_TITLE, BORDER_SUBTITLE)
             LOGGER.warn("Player {} tried to leave the border.", SP.displayName!!.string)
         }
@@ -92,7 +94,7 @@ object ServerUtils {
     /** Handle multishot tridents. */
     @JvmStatic
     fun ActOnTridentThrown(W: World, PE: PlayerEntity, S: ItemStack, Extra: Int = 0) {
-        val Lvl = EnchantLvl(S, Enchantments.MULTISHOT)
+        val Lvl = EnchantLvl(W, S, Enchantments.MULTISHOT)
         val K = W.getRandom().nextFloat() / 10f // ADDED WITHOUT TESTING; WAS ALWAYS 0 BEFORE.
         val Yaw = PE.yaw
         val Pitch = PE.pitch
@@ -160,7 +162,7 @@ object ServerUtils {
         if (NLE.hypershotContext != null) return true
 
         // Stack does not have hypershot.
-        val HSLvl = EnchantLvl(Weapon, NguhcraftEnchantments.HYPERSHOT)
+        val HSLvl = EnchantLvl(Shooter.world, Weapon, NguhcraftEnchantments.HYPERSHOT)
         if (HSLvl == 0) return false
 
         // Enter hypershot context.
@@ -302,7 +304,7 @@ object ServerUtils {
         val I = ItemStack(Block.block.asItem())
         if (I.isEmpty) return null
 
-        val optional = W.recipeManager.getFirstMatch(RecipeType.SMELTING, SimpleInventory(I), W)
+        val optional = W.recipeManager.getFirstMatch(RecipeType.SMELTING, SingleStackRecipeInput(I), W)
         if (optional.isEmpty) return null
 
         val Recipe = optional.get().value()

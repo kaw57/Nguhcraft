@@ -45,7 +45,7 @@ public abstract class BlockMixin {
         if (!(World instanceof ServerWorld SW)) return;
 
         // Try to smelt the block if the tool has smelting.
-        var Smelting = EnchantLvl(T, NguhcraftEnchantments.SMELTING);
+        var Smelting = EnchantLvl(World, T, NguhcraftEnchantments.SMELTING);
         ServerUtils.SmeltingResult SR = null;
         if (Smelting != 0) SR = ServerUtils.TrySmeltBlock(SW, State);
         if (SR != null) {

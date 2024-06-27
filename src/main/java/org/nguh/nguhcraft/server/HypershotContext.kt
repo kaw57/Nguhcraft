@@ -8,14 +8,13 @@ import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.item.ItemStack
 import net.minecraft.item.TridentItem
 import net.minecraft.server.network.ServerPlayerEntity
+import net.minecraft.server.world.ServerWorld
 import net.minecraft.sound.SoundCategory
 import net.minecraft.sound.SoundEvents
 import net.minecraft.util.Hand
-import net.minecraft.world.World
 import org.nguh.nguhcraft.mixin.server.RangedWeaponItemAccessor
 import org.nguh.nguhcraft.packets.ClientboundSyncHypershotStatePacket
 import org.nguh.nguhcraft.server.accessors.LivingEntityAccessor
-
 
 @Environment(EnvType.SERVER)
 data class HypershotContext(
@@ -45,8 +44,8 @@ data class HypershotContext(
     *
     * @return `true` if we should remove the context, `false` otherwise.
     */
-    fun Tick(W: World, Shooter: LivingEntity): Boolean {
-        if (TickImpl(W, Shooter) == EXPIRED) {
+    fun Tick(SW: ServerWorld, Shooter: LivingEntity): Boolean {
+        if (TickImpl(SW, Shooter) == EXPIRED) {
             (Shooter as LivingEntityAccessor).hypershotContext = null
             if (Shooter is ServerPlayerEntity) ServerPlayNetworking.send(
                 Shooter,
@@ -59,7 +58,7 @@ data class HypershotContext(
         return !EXPIRED
     }
 
-    private fun TickImpl(W: World, Shooter: LivingEntity): Boolean {
+    private fun TickImpl(SW: ServerWorld, Shooter: LivingEntity): Boolean {
         // Cancel if we should stop or are dead.
         if (Ticks-- < 1 || Shooter.isDead || Shooter.isRemoved) return EXPIRED
 
@@ -73,7 +72,7 @@ data class HypershotContext(
         val I = Weapon.item
         if (I is RangedWeaponItemAccessor) {
             I.InvokeShootAll(
-                W,
+                SW,
                 Shooter,
                 Hand,
                 Weapon,
@@ -85,7 +84,7 @@ data class HypershotContext(
             )
 
             // Also play a sound effect.
-            if (Shooter is PlayerEntity) W.playSound(
+            if (Shooter is PlayerEntity) SW.playSound(
                 null,
                 Shooter.getX(),
                 Shooter.getY(),
@@ -93,14 +92,14 @@ data class HypershotContext(
                 SoundEvents.ENTITY_ARROW_SHOOT,
                 SoundCategory.PLAYERS,
                 1.0f,
-                1.0f / (W.getRandom().nextFloat() * 0.4f + 1.2f)
+                1.0f / (SW.getRandom().nextFloat() * 0.4f + 1.2f)
             )
         }
 
         // We also support tridents here.
         else if (I is TridentItem && Shooter is PlayerEntity) {
             ServerUtils.ActOnTridentThrown(
-                W,
+                SW,
                 Shooter,
                 Weapon,
                 1

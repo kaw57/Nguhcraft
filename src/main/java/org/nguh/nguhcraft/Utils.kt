@@ -4,8 +4,11 @@ import com.mojang.logging.LogUtils
 import net.minecraft.enchantment.Enchantment
 import net.minecraft.enchantment.EnchantmentHelper
 import net.minecraft.item.ItemStack
+import net.minecraft.registry.RegistryKey
+import net.minecraft.registry.RegistryKeys
 import net.minecraft.text.Text
 import net.minecraft.util.Formatting
+import net.minecraft.world.World
 import java.text.Normalizer
 import java.util.*
 
@@ -62,7 +65,10 @@ object Utils {
 
     /** Get the level of an enchantment on an item stack. */
     @JvmStatic
-    fun EnchantLvl(Stack: ItemStack, E: Enchantment): Int = EnchantmentHelper.getLevel(E, Stack)
+    fun EnchantLvl(W: World, Stack: ItemStack, E: RegistryKey<Enchantment>): Int {
+        val R = W.registryManager.get(RegistryKeys.ENCHANTMENT)
+        return EnchantmentHelper.getLevel(R.entryOf(E), Stack)
+    }
 
     /** Normalise a string for fuzzy matching against another string  */
     fun Normalised(S: String) = Normalizer.normalize(S, Normalizer.Form.NFKC).lowercase(Locale.getDefault())

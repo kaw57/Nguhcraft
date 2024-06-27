@@ -8,6 +8,7 @@ import net.minecraft.entity.projectile.PersistentProjectileEntity;
 import net.minecraft.entity.projectile.ProjectileEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.RangedWeaponItem;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Hand;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
@@ -29,7 +30,7 @@ public abstract class RangedWeaponItemMixin {
     /** At the start of the function, compute homing and hypershot info. */
     @Inject(method = "shootAll", at = @At("HEAD"))
     private void inject$shootAll$0(
-        World W,
+        ServerWorld W,
         LivingEntity Shooter,
         Hand Hand,
         ItemStack Weapon,
@@ -46,7 +47,7 @@ public abstract class RangedWeaponItemMixin {
         if (W.isClient) return;
 
         // Apply homing.
-        if (EnchantLvl(Weapon, NguhcraftEnchantments.HOMING) != 0) {
+        if (EnchantLvl(W, Weapon, NguhcraftEnchantments.HOMING) != 0) {
             W.getProfiler().push("homingArrows");
             HomingTarget.set(ServerUtils.MaybeMakeHomingArrow(W, Shooter));
             W.getProfiler().pop();
@@ -75,20 +76,20 @@ public abstract class RangedWeaponItemMixin {
         )
     )
     private void inject$shootAll$1(
-            World W,
-            LivingEntity Shooter,
-            Hand Hand,
-            ItemStack Weapon,
-            List<ItemStack> Projectiles,
-            float Speed,
-            float Div,
-            boolean Crit,
-            @Nullable LivingEntity Tgt,
-            CallbackInfo CI,
-            @Local ProjectileEntity Proj,
-            @Share("HomingTarget") LocalRef<LivingEntity> HomingTarget,
-            @Share("Hypershot") LocalRef<Boolean> IsHypershot,
-            @Share("DisallowItemPickup") LocalRef<Boolean> DisallowItemPickup
+        ServerWorld W,
+        LivingEntity Shooter,
+        Hand Hand,
+        ItemStack Weapon,
+        List<ItemStack> Projectiles,
+        float Speed,
+        float Div,
+        boolean Crit,
+        @Nullable LivingEntity Tgt,
+        CallbackInfo CI,
+        @Local ProjectileEntity Proj,
+        @Share("HomingTarget") LocalRef<LivingEntity> HomingTarget,
+        @Share("Hypershot") LocalRef<Boolean> IsHypershot,
+        @Share("DisallowItemPickup") LocalRef<Boolean> DisallowItemPickup
     ) {
         if (W.isClient) return;
 

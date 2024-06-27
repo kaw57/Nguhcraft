@@ -3,7 +3,6 @@ package org.nguh.nguhcraft.client
 import net.fabricmc.api.ClientModInitializer
 import net.fabricmc.api.EnvType
 import net.fabricmc.api.Environment
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents
 import net.minecraft.item.ItemGroup
 import net.minecraft.item.ItemStack
@@ -11,17 +10,13 @@ import net.minecraft.item.Items
 import net.minecraft.registry.Registries
 import net.minecraft.registry.Registry
 import net.minecraft.text.Text
-import net.minecraft.util.Identifier
 import net.minecraft.util.hit.HitResult
 import net.minecraft.world.RaycastContext
 import org.lwjgl.glfw.GLFW
 import org.nguh.nguhcraft.Constants.MAX_HOMING_DISTANCE
+import org.nguh.nguhcraft.Nguhcraft.Companion.Id
 import org.nguh.nguhcraft.Utils.Debug
 import org.nguh.nguhcraft.client.ClientUtils.Client
-import org.nguh.nguhcraft.packets.ClientboundChatPacket
-import org.nguh.nguhcraft.packets.ClientboundLinkUpdatePacket
-import org.nguh.nguhcraft.packets.ClientboundSyncGameRulesPacket
-import org.nguh.nguhcraft.packets.ClientboundSyncHypershotStatePacket
 
 
 @Environment(EnvType.CLIENT)
@@ -31,7 +26,7 @@ class NguhcraftClient : ClientModInitializer {
 
         WorldRenderEvents.LAST.register { Renderer.DebugRender(it) }
 
-        Registry.register(Registries.ITEM_GROUP, Identifier("nguhcraft", "treasures"), TREASURES_ITEM_GROUP)
+        Registry.register(Registries.ITEM_GROUP, Id("treasures"), TREASURES_ITEM_GROUP)
     }
 
     companion object {

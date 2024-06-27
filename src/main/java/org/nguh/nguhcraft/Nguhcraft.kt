@@ -5,6 +5,8 @@ import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry
 import net.minecraft.enchantment.Enchantment
 import net.minecraft.registry.Registries
 import net.minecraft.registry.Registry
+import net.minecraft.registry.RegistryKey
+import net.minecraft.registry.RegistryKeys
 import net.minecraft.util.Identifier
 import org.nguh.nguhcraft.enchantment.NguhcraftEnchantments
 import org.nguh.nguhcraft.packets.*
@@ -36,6 +38,9 @@ import org.nguh.nguhcraft.packets.*
 //   - [x] Creative mode tab for treasures etc
 //   - [x] Render potion levels properly.
 //   - [ ] Make homing arrows target ‘Target Blocks’ if there are no valid entities (or if you target it directly)
+//   - [ ] Have a way of locking chests and make them unbreakable.
+//     - [ ] Disallowing hoppers/hopper minecarts, tnt, wither immune, dispensers, crafters, etc.
+//     - [ ] Maybe barrels too if they can be locked.
 // - [ ] World protection
 //       This is used both for protected areas and to prevent unlinked
 //       players from doing anything.
@@ -45,17 +50,23 @@ import org.nguh.nguhcraft.packets.*
 //   - [ ] Entity interactions
 //     - [x] Attacking entities
 //     - [ ] Using boats/minecarts -> ACTUALLY TEST THIS
-//     - [ ] Using beds
+//     - [ ] Using beds and respawn anchors
 //     - [ ] Interacting w/ villagers
 //     - [ ] Ender pearls / chorus fruits
+//     - [ ] Using ender chests (should always be allowed)
+//     - [ ] Using shulker boxes
+//     - [ ] Armour stands
 
 //   - [ ] Disable enderman griefing entirely.
 //   - [x] TNT
+//   - [ ] Wither explosions
 //   - [ ] Pistons that extend into protected areas
 //   - [ ] Fire spread, lava flow and placement, flint and steel.
 //   - [ ] Vine spread & snow
 //   - [x] Creepers
 //   - [ ] Ranged weapons (bows, crossbows, tridents, fire charges, fireworks)
+
+// Use Entity#teleportTo() to move players back to spawn.
 
 class Nguhcraft : ModInitializer {
     override fun onInitialize() {
@@ -68,16 +79,11 @@ class Nguhcraft : ModInitializer {
 
         // Serverbound packets.
         PayloadTypeRegistry.playC2S().register(ServerboundChatPacket.ID, ServerboundChatPacket.CODEC)
-
-        // Enchantments.
-        Register("homing", NguhcraftEnchantments.HOMING)
-        Register("hypershot", NguhcraftEnchantments.HYPERSHOT)
-        Register("smelting", NguhcraftEnchantments.SMELTING)
     }
 
     companion object {
-        private fun Register(Name: String, E: Enchantment) {
-            Registry.register(Registries.ENCHANTMENT, Identifier("nguhcraft", Name), E)
-        }
+        val MOD_ID = "nguhcraft"
+
+        fun Id(S: String) = Identifier.of(MOD_ID, S)
     }
 }

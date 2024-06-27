@@ -7,6 +7,7 @@ import net.minecraft.world.BlockView;
 import net.minecraft.world.World;
 import net.minecraft.world.explosion.Explosion;
 import net.minecraft.world.explosion.ExplosionBehavior;
+import org.nguh.nguhcraft.Constants;
 import org.nguh.nguhcraft.protect.ProtectionManager;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -35,7 +36,7 @@ public abstract class ExplosionMixin {
     ) {
         // Setting the blast resistance to infinity will prevent the block from being destroyed.
         if (View instanceof World W && ProtectionManager.IsProtectedBlock(W, Pos))
-            return Optional.of(Float.POSITIVE_INFINITY);
+            return Optional.of(Constants.BIG_VALUE_FLOAT);
         return EB.getBlastResistance(E, View, Pos, St, FSt);
     }
 }

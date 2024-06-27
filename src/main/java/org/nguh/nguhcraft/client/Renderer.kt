@@ -17,7 +17,7 @@ object Renderer {
     @JvmStatic
     fun DebugRender(WRC: WorldRenderContext) {
         // Draw the lines.
-        GlStateManager._disableCull()
+        /*GlStateManager._disableCull()
         GlStateManager._depthMask(false)
         RenderSystem.setShader(GameRenderer::getRenderTypeLinesProgram)
         RenderSystem.lineWidth(4F)
@@ -37,7 +37,7 @@ object Renderer {
         MS?.pop()
         RenderSystem.lineWidth(1F)
         GlStateManager._enableCull()
-        GlStateManager._depthMask(true)
+        GlStateManager._depthMask(true)*/
 
 /*
         // Search for an entity to target. Extend the arrow’s bounding box to

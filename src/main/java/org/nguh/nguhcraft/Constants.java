@@ -22,4 +22,14 @@ public interface Constants {
 
     /** Build version. Needs to be compatible between server and client. */
     int NGUHCRAFT_VERSION = 1;
+
+    /**
+    * Used to represent ‘infinity’.
+    * <p>
+    * Actual Infinity is a very problematic value in that e.g. multiplying
+    * it by 0 produces NaN, and so on. To avoid that, we use a very large
+    * value instead.
+    */
+    float BIG_VALUE_FLOAT = 1e15f;
+    double BIG_VALUE = 1e15;
 }

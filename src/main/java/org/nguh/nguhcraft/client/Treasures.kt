@@ -1,6 +1,8 @@
 package org.nguh.nguhcraft.client
 
-import net.minecraft.component.DataComponentType
+import net.fabricmc.api.EnvType
+import net.fabricmc.api.Environment
+import net.minecraft.component.ComponentType
 import net.minecraft.component.DataComponentTypes
 import net.minecraft.component.type.*
 import net.minecraft.enchantment.Enchantment
@@ -13,14 +15,18 @@ import net.minecraft.item.Item
 import net.minecraft.item.ItemGroup
 import net.minecraft.item.ItemStack
 import net.minecraft.item.Items
+import net.minecraft.registry.RegistryKey
+import net.minecraft.registry.RegistryKeys
 import net.minecraft.registry.entry.RegistryEntry
 import net.minecraft.text.Style
 import net.minecraft.text.Text
 import net.minecraft.util.Formatting
+import org.nguh.nguhcraft.client.ClientUtils.Client
 import org.nguh.nguhcraft.enchantment.NguhcraftEnchantments.HYPERSHOT
 import org.nguh.nguhcraft.enchantment.NguhcraftEnchantments.SMELTING
 import java.util.*
 
+@Environment(EnvType.CLIENT)
 object Treasures {
     private val LORE_STYLE = Style.EMPTY.withItalic(false).withFormatting(Formatting.GRAY)
 
@@ -112,8 +118,11 @@ object Treasures {
         fun build() = S
 
         /** Enchant the item stack. */
-        fun enchant(Enchantment: Enchantment, Level: Int = 1)
-            = apply { S.addEnchantment(Enchantment, Level) }
+        fun enchant(Enchantment: RegistryKey<Enchantment>, Level: Int = 1): Builder {
+            val R = Client().networkHandler!!.registryManager.get(RegistryKeys.ENCHANTMENT)
+            val Entry = R.entryOf(Enchantment)
+            return apply { S.addEnchantment(Entry, Level) }
+        }
 
         /** Add lore to the stack. */
         fun lore(LoreText: String): Builder {
@@ -139,7 +148,7 @@ object Treasures {
         )
 
         /** Set a component on this item stack. */
-        fun <T> set(type: DataComponentType<in T>, value: T? = null)
+        fun <T> set(type: ComponentType<in T>, value: T? = null)
             = apply { it.set(type, value) }
 
         /** Make this item stack unbreakable. */

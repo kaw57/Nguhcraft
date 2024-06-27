@@ -3,6 +3,7 @@ package org.nguh.nguhcraft.mixin.server;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.RangedWeaponItem;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Hand;
 import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;
@@ -14,7 +15,7 @@ import java.util.List;
 public interface RangedWeaponItemAccessor {
     @Invoker("shootAll")
     void InvokeShootAll(
-        World W,
+        ServerWorld SW,
         LivingEntity Shooter,
         Hand Hand,
         ItemStack Weapon,
