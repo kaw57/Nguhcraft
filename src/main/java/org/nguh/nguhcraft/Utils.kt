@@ -3,6 +3,7 @@ package org.nguh.nguhcraft
 import com.mojang.logging.LogUtils
 import net.minecraft.enchantment.Enchantment
 import net.minecraft.enchantment.EnchantmentHelper
+import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.item.ItemStack
 import net.minecraft.network.packet.CustomPayload
 import net.minecraft.registry.RegistryKey
@@ -10,6 +11,7 @@ import net.minecraft.registry.RegistryKeys
 import net.minecraft.text.Text
 import net.minecraft.util.Formatting
 import net.minecraft.world.World
+import org.nguh.nguhcraft.enchantment.NguhcraftEnchantments
 import java.text.Normalizer
 import java.util.*
 
@@ -41,6 +43,9 @@ object Utils {
     private val X = arrayOf("", "X", "XX", "XXX", "XL", "L", "LX", "LXX", "LXXX", "XC")
     private val I = arrayOf("", "I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX")
 
+    /** The weighted value at which the saturation enchantment is considered maxed out. */
+    const val MAX_SATURATION_ENCHANTMENT_VALUE = 8
+
     /**
      * Get a component enclosed in brackets, optionally followed by a space
      * <p>
@@ -50,6 +55,30 @@ object Utils {
     fun BracketedLiteralComponent(Content: String, SpaceAfter: Boolean = true): Text = LBRACK_COMPONENT.copy()
         .append(Text.literal(Content).withColor(Constants.Lavender))
         .append(if (SpaceAfter) RBRACK_COMPONENT else RBRACK_COMPONENT_NO_SPACE)
+
+    /** Calculate a player’s total saturation enchantment value. */
+    @JvmStatic
+    fun CalculateWeightedSaturationEnchantmentValue(P: PlayerEntity): Int {
+        // Accumulate the total saturation level across all armour pieces.
+        //
+        // The formula for this is weighted, i.e. one armour piece with
+        // saturation 4 is enough to prevent all hunger loss; but with
+        // saturation 3, you need two pieces, and so on. In other words
+        // we can model this as
+        //
+        //    Level 1 = 1 point,
+        //    Level 2 = 2 points,
+        //    Level 3 = 4 points,
+        //    Level 4 = 8 points,
+        //
+        // where 8 points = 100%. This means the formula to map an enchantment
+        // level to how many points it adds is 2^(L-1).
+        val W = P.world
+        return P.armorItems.sumOf {
+            val Lvl = EnchantLvl(W, it, NguhcraftEnchantments.SATURATION)
+            if (Lvl == 0) 0 else 1 shl (Lvl - 1)
+        }
+    }
 
     /** Compute the name of a (linked) player. */
     fun ComputePlayerName(

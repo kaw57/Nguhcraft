@@ -19,6 +19,7 @@
 		"client.ClientPlayerInteractionManagerMixin",
 		"client.ClientPlayNetworkHandlerMixin",
 		"client.GameRendererMixin",
+		"client.InGameHudMixin",
 		"client.KeyboardMixin",
 		"client.MessageIndicatorMixin",
 		"client.MinecraftClientMixin",

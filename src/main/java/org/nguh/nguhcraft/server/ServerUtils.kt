@@ -39,6 +39,7 @@ import net.minecraft.world.RaycastContext
 import net.minecraft.world.TeleportTarget
 import net.minecraft.world.World
 import org.nguh.nguhcraft.Constants.MAX_HOMING_DISTANCE
+import org.nguh.nguhcraft.Utils
 import org.nguh.nguhcraft.Utils.EnchantLvl
 import org.nguh.nguhcraft.accessors.ProjectileEntityAccessor
 import org.nguh.nguhcraft.accessors.TridentEntityAccessor
@@ -131,40 +132,6 @@ object ServerUtils {
     fun Broadcast(P: CustomPayload) {
         for (Player in Server().playerManager.playerList)
             ServerPlayNetworking.send(Player, P)
-    }
-
-    /** Implement the saturation enchantment. */
-    @JvmStatic
-    fun HandleSaturationEnchantment(P: PlayerEntity) {
-        // If the player’s exhaustion is not yet at the point where they
-        // would start losing hunger, don’t bother checking anything else.
-        if (P.hungerManager.exhaustion < 4F) return
-
-        // Accumulate the total saturation level across all armour pieces.
-        //
-        // The formula for this is weighted, i.e. one armour piece with
-        // saturation 4 is enough to prevent all hunger loss; but with
-        // saturation 3, you need two pieces, and so on. In other words
-        // we can model this as
-        //
-        //    Level 1 = 1 point,
-        //    Level 2 = 2 points,
-        //    Level 3 = 4 points,
-        //    Level 4 = 8 points,
-        //
-        // where 8 points = 100%. This means the formula to map an enchantment
-        // level to how many points it adds is 2^(L-1).
-        val W = P.world
-        val Total = P.armorItems.sumOf {
-            val Lvl = EnchantLvl(W, it, NguhcraftEnchantments.SATURATION)
-            if (Lvl == 0) 0 else 1 shl (Lvl - 1)
-        }
-
-        // Prevent hunger loss with a probability proportional to the total
-        // weighted saturation level. Don’t bother rolling if the total is 0
-        // or 8 (= 100%).
-        if (Total == 0) return
-        if (Total >= 8 || W.random.nextFloat() < Total * .125F) P.hungerManager.exhaustion = 0F
     }
 
     @JvmStatic
