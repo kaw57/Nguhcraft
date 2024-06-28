@@ -35,6 +35,7 @@
 		"server.EndermanEntityMixin",
 		"server.EndPortalBlockMixin",
 		"server.EntityMixin",
+		"server.HungerManagerMixin",
 		"server.LivingEntityMixin",
 		"server.MeCommandMixin",
 		"server.MinecraftServerAccessor",

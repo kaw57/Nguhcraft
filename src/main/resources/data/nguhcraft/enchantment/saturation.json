@@ -1,0 +1,21 @@
+{
+	"anvil_cost": 8,
+	"description": {
+		"translate": "enchantment.nguhcraft.saturation"
+	},
+	"effects": {},
+	"max_cost": {
+		"base": 50,
+		"per_level_above_first": 0
+	},
+	"max_level": 4,
+	"min_cost": {
+		"base": 50,
+		"per_level_above_first": 0
+	},
+	"slots": [
+		"mainhand"
+	],
+	"supported_items": "#minecraft:enchantable/armor",
+	"weight": 1
+}

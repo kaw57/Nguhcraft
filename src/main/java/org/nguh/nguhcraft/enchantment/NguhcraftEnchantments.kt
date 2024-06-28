@@ -9,6 +9,14 @@ object NguhcraftEnchantments {
     private fun Key(S: String): RegistryKey<Enchantment> = RegistryKey.of(RegistryKeys.ENCHANTMENT, Id(S))
 
     /**
+    * The health enchantment increases an entity’s maximum health.
+    *
+    * Per level, this adds 2 health points (= 1 heart) to the entity’s
+    * maximum health. This works for any armour slot.
+    */
+    @JvmField val HEALTH = Key("health")
+
+    /**
      * The homing enchantment causes projectiles to home in on a target.
      *
      * When a projectile is fired, the game will attempt to find a target
@@ -47,6 +55,13 @@ object NguhcraftEnchantments {
      * tick; the counter is still only decremented once per tick.
      */
     @JvmField val HYPERSHOT = Key("hypershot")
+
+    /**
+    * The saturation enchantment reduces hunger.
+    *
+    * For the exact formula, see ServerUtils#HandleSaturationEnchantment.
+    */
+    @JvmField val SATURATION = Key("saturation")
 
     /**
      * The smelting enchantment causes any blocks mined to be smelted.

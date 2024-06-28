@@ -2,22 +2,16 @@ package org.nguh.nguhcraft
 
 import net.fabricmc.api.ModInitializer
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry
-import net.minecraft.enchantment.Enchantment
-import net.minecraft.registry.Registries
-import net.minecraft.registry.Registry
-import net.minecraft.registry.RegistryKey
-import net.minecraft.registry.RegistryKeys
 import net.minecraft.util.Identifier
-import org.nguh.nguhcraft.enchantment.NguhcraftEnchantments
 import org.nguh.nguhcraft.packets.*
 
 // TODO: Port all patches.
 // - [ ] 1. Big Chungus
 //   - [ ] Enchantments
-//     - [ ] Health
+//     - [x] Health
 //     - [x] Homing
 //     - [x] Hypershot
-//     - [ ] Saturation
+//     - [x] Saturation
 //     - [x] Smelting
 //     - [x] Channeling II
 //       - [x] On entity hit
@@ -66,6 +60,7 @@ import org.nguh.nguhcraft.packets.*
 //   - [ ] Vine spread & snow
 //   - [x] Creepers
 //   - [ ] Ranged weapons (bows, crossbows, tridents, fire charges, fireworks)
+// - [ ] Disable the single-player button since this always need a dedicated server (because bot, linking, etc.)
 
 // Use Entity#teleportTo() to move players back to spawn.
 
