@@ -15,9 +15,6 @@
 	"icon": "assets/nguhcraft/icon.png",
 	"environment": "*",
 	"entrypoints": {
-		"fabric-datagen": [
-			"org.nguh.nguhcraft.data.NguhcraftDataGenerator"
-		],
 		"main": [
 			"org.nguh.nguhcraft.Nguhcraft"
 		],

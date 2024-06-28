@@ -6,6 +6,7 @@ import net.minecraft.network.codec.PacketCodecs
 import net.minecraft.network.packet.CustomPayload
 import net.minecraft.text.Text
 import net.minecraft.text.TextCodecs
+import org.nguh.nguhcraft.Utils
 
 /**
 * Chat message sent from the server to the client.
@@ -34,9 +35,7 @@ data class ClientboundChatPacket (
         const val MK_OUTGOING_DM: Byte = 1
         const val MK_INCOMING_DM: Byte = 2
 
-        val ID: CustomPayload.Id<ClientboundChatPacket>
-            = CustomPayload.id("nguhcraft:clientbound/chat_message")
-
+        val ID = Utils.PacketId<ClientboundChatPacket>("clientbound/chat")
         val CODEC: PacketCodec<RegistryByteBuf, ClientboundChatPacket> = PacketCodec.tuple(
             TextCodecs.UNLIMITED_REGISTRY_PACKET_CODEC, ClientboundChatPacket::PlayerName,
             PacketCodecs.STRING, ClientboundChatPacket::Content,

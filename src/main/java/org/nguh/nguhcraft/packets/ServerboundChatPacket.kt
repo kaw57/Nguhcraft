@@ -4,6 +4,7 @@ import io.netty.buffer.ByteBuf
 import net.minecraft.network.codec.PacketCodec
 import net.minecraft.network.codec.PacketCodecs
 import net.minecraft.network.packet.CustomPayload
+import org.nguh.nguhcraft.Utils
 
 /**
 * This is a chat message packet. It contains a chat message. That’s
@@ -16,11 +17,7 @@ data class ServerboundChatPacket(
 ) : CustomPayload {
     override fun getId() = ID
     companion object {
-        @JvmField
-        val ID: CustomPayload.Id<ServerboundChatPacket>
-            = CustomPayload.id("nguhcraft:serverbound/packet_chat")
-
-        @JvmField
+        val ID = Utils.PacketId<ServerboundChatPacket>("serverbound/chat")
         val CODEC: PacketCodec<ByteBuf, ServerboundChatPacket>
             = PacketCodecs.STRING.xmap(::ServerboundChatPacket, ServerboundChatPacket::Message)
     }

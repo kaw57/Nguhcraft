@@ -4,6 +4,7 @@ import com.mojang.logging.LogUtils
 import net.minecraft.enchantment.Enchantment
 import net.minecraft.enchantment.EnchantmentHelper
 import net.minecraft.item.ItemStack
+import net.minecraft.network.packet.CustomPayload
 import net.minecraft.registry.RegistryKey
 import net.minecraft.registry.RegistryKeys
 import net.minecraft.text.Text
@@ -72,6 +73,9 @@ object Utils {
 
     /** Normalise a string for fuzzy matching against another string  */
     fun Normalised(S: String) = Normalizer.normalize(S, Normalizer.Form.NFKC).lowercase(Locale.getDefault())
+
+    /** Create a packet id. */
+    fun <T : CustomPayload> PacketId(Name: String) = CustomPayload.Id<T>(Nguhcraft.Id(Name))
 
     /** Format a number as a Roman numeral */
     @JvmStatic

@@ -5,9 +5,7 @@
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [
 		"common.BlockItemMixin",
-		"common.EnchantmentHelperMixin",
 		"common.EnchantmentMixin",
-		"common.EnchantmentsMixin",
 		"common.EnderEyeItemMixin",
 		"common.ExplosionMixin",
 		"common.PlayerEntityMixin",
@@ -20,7 +18,6 @@
 		"client.ChatScreenMixin",
 		"client.ClientPlayerInteractionManagerMixin",
 		"client.ClientPlayNetworkHandlerMixin",
-		"client.GameOptionsMixin",
 		"client.GameRendererMixin",
 		"client.KeyboardMixin",
 		"client.MessageIndicatorMixin",

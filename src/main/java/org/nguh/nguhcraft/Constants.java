@@ -20,7 +20,12 @@ public interface Constants {
     int Black = 0;
     int Purple = 0xAA00AA;
 
-    /** Build version. Needs to be compatible between server and client. */
+    /**
+    * Build version.
+    * <p>
+    * Needs to be compatible between server and client. Increment this
+    * whenever there are breaking changes in client/server communication.
+    */
     int NGUHCRAFT_VERSION = 1;
 
     /**

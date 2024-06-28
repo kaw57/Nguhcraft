@@ -6,6 +6,7 @@ import net.minecraft.network.RegistryByteBuf
 import net.minecraft.network.codec.PacketCodec
 import net.minecraft.network.packet.CustomPayload
 import net.minecraft.server.network.ServerPlayerEntity
+import org.nguh.nguhcraft.Utils
 import org.nguh.nguhcraft.server.discordColour
 import org.nguh.nguhcraft.server.discordName
 import org.nguh.nguhcraft.server.isLinked
@@ -55,11 +56,7 @@ data class ClientboundLinkUpdatePacket(
     }
 
     companion object {
-        @JvmField
-        val ID: CustomPayload.Id<ClientboundLinkUpdatePacket>
-            = CustomPayload.id("nguhcraft:clientbound/packet_link_update")
-
-        @JvmField
+        val ID = Utils.PacketId<ClientboundLinkUpdatePacket>("clientbound/link_update")
         val CODEC: PacketCodec<RegistryByteBuf, ClientboundLinkUpdatePacket> = PacketCodec.of(
             { obj: ClientboundLinkUpdatePacket, buf: RegistryByteBuf -> obj.write(buf) },
             { buf: RegistryByteBuf -> ClientboundLinkUpdatePacket(buf) })

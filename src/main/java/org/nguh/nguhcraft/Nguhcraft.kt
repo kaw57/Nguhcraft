@@ -49,6 +49,7 @@ import org.nguh.nguhcraft.packets.*
 //     - [x] Special case: editing signs
 //   - [ ] Entity interactions
 //     - [x] Attacking entities
+//     - [ ] TNT should not damage entities in protected regions.
 //     - [ ] Using boats/minecarts -> ACTUALLY TEST THIS
 //     - [ ] Using beds and respawn anchors
 //     - [ ] Interacting w/ villagers
@@ -56,8 +57,8 @@ import org.nguh.nguhcraft.packets.*
 //     - [ ] Using ender chests (should always be allowed)
 //     - [ ] Using shulker boxes
 //     - [ ] Armour stands
-
-//   - [ ] Disable enderman griefing entirely.
+//   - [ ] Reading books on lecterns (but not taking them)
+//   - [x] Disable enderman griefing entirely.
 //   - [x] TNT
 //   - [ ] Wither explosions
 //   - [ ] Pistons that extend into protected areas

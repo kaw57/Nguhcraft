@@ -345,7 +345,7 @@ object Commands {
         fun PrintRegionInfo(S: ServerCommandSource, W: World, R: Region): Int {
             val Stats = AppendWorldAndRegionName(Text.literal("Region "), W, R.Name)
             AppendRegionBounds(Stats, R)
-            Stats.append("\n").append(R.Stats)
+            Stats.append(R.Stats)
             S.sendMessage(Stats.formatted(Formatting.YELLOW))
             return 1
         }
