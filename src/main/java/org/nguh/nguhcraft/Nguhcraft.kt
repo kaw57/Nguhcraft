@@ -3,7 +3,7 @@ package org.nguh.nguhcraft
 import net.fabricmc.api.ModInitializer
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry
 import net.minecraft.util.Identifier
-import org.nguh.nguhcraft.packets.*
+import org.nguh.nguhcraft.network.*
 
 // TODO: Port all patches.
 // - [ ] 1. Big Chungus
@@ -110,8 +110,7 @@ class Nguhcraft : ModInitializer {
     }
 
     companion object {
-        val MOD_ID = "nguhcraft"
-
-        fun Id(S: String) = Identifier.of(MOD_ID, S)
+        const val MOD_ID = "nguhcraft"
+        fun Id(S: String): Identifier = Identifier.of(MOD_ID, S)
     }
 }

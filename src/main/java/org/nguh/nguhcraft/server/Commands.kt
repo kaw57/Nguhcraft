@@ -32,7 +32,7 @@ import org.nguh.nguhcraft.Constants
 import org.nguh.nguhcraft.Commands.Exn
 import org.nguh.nguhcraft.SyncedGameRule
 import org.nguh.nguhcraft.Utils.Normalised
-import org.nguh.nguhcraft.packets.ClientboundSyncProtectionBypassPacket
+import org.nguh.nguhcraft.network.ClientboundSyncProtectionBypassPacket
 import org.nguh.nguhcraft.protect.ProtectionManager
 import org.nguh.nguhcraft.protect.Region
 import org.nguh.nguhcraft.server.accessors.ServerPlayerAccessor

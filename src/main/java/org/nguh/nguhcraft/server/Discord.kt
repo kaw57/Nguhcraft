@@ -38,7 +38,7 @@ import org.jetbrains.annotations.Contract
 import org.nguh.nguhcraft.Constants
 import org.nguh.nguhcraft.Commands
 import org.nguh.nguhcraft.Utils
-import org.nguh.nguhcraft.packets.ClientboundLinkUpdatePacket
+import org.nguh.nguhcraft.network.ClientboundLinkUpdatePacket
 import org.nguh.nguhcraft.server.PlayerList.Companion.UpdateCacheEntry
 import org.nguh.nguhcraft.server.ServerUtils.Server
 import org.nguh.nguhcraft.server.accessors.ServerPlayerAccessor

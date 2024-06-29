@@ -2,7 +2,13 @@ package org.nguh.nguhcraft.client
 
 import net.fabricmc.api.EnvType
 import net.fabricmc.api.Environment
+import net.fabricmc.fabric.api.client.networking.v1.ClientConfigurationNetworking
+import net.fabricmc.fabric.api.client.networking.v1.ClientLoginNetworking
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking
+import net.minecraft.client.MinecraftClient
+import net.minecraft.client.network.ClientLoginNetworkHandler
+import net.minecraft.network.PacketByteBuf
+import net.minecraft.network.PacketCallbacks
 import net.minecraft.network.packet.CustomPayload
 import net.minecraft.text.Text
 import net.minecraft.util.Formatting
@@ -12,10 +18,11 @@ import org.nguh.nguhcraft.Utils
 import org.nguh.nguhcraft.Utils.LBRACK_COMPONENT
 import org.nguh.nguhcraft.Utils.RBRACK_COMPONENT
 import org.nguh.nguhcraft.client.ClientUtils.Client
-import org.nguh.nguhcraft.client.accessors.AbstractClientPlayerEntityAccessor
 import org.nguh.nguhcraft.client.accessors.ClientPlayerListEntryAccessor
-import org.nguh.nguhcraft.packets.*
+import org.nguh.nguhcraft.network.*
 import org.nguh.nguhcraft.protect.ProtectionManager
+import java.util.concurrent.CompletableFuture
+import java.util.function.Consumer
 
 /** This runs on the network thread. */
 @Environment(EnvType.CLIENT)
@@ -112,6 +119,10 @@ object NetworkHandler {
 
     /** Initialise packet handlers. */
     fun Init() {
+        ClientLoginNetworking.registerGlobalReceiver(VersionCheck.ID) { _, _, _, _ ->
+            CompletableFuture.completedFuture(VersionCheck.Packet)
+        }
+
         Register(ClientboundLinkUpdatePacket.ID, ::HandleLinkUpdatePacket)
         Register(ClientboundChatPacket.ID, ::HandleChatPacket)
         Register(ClientboundSyncGameRulesPacket.ID, ::HandleSyncGameRulesPacket)

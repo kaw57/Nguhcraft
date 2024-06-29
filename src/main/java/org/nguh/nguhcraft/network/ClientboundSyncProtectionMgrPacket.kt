@@ -1,4 +1,4 @@
-package org.nguh.nguhcraft.packets
+package org.nguh.nguhcraft.network
 
 import net.minecraft.network.RegistryByteBuf
 import net.minecraft.network.codec.PacketCodec

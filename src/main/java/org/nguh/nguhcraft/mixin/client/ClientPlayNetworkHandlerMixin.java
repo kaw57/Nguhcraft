@@ -8,7 +8,7 @@ import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.network.ClientConnection;
 import net.minecraft.network.packet.c2s.play.CommandExecutionC2SPacket;
 import org.nguh.nguhcraft.client.NguhcraftClient;
-import org.nguh.nguhcraft.packets.ServerboundChatPacket;
+import org.nguh.nguhcraft.network.ServerboundChatPacket;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;

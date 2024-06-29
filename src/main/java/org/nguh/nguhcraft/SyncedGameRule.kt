@@ -5,7 +5,7 @@ import net.fabricmc.api.Environment
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
 import net.minecraft.nbt.NbtCompound
 import net.minecraft.server.network.ServerPlayerEntity
-import org.nguh.nguhcraft.packets.ClientboundSyncGameRulesPacket
+import org.nguh.nguhcraft.network.ClientboundSyncGameRulesPacket
 import org.nguh.nguhcraft.server.ServerUtils
 
 /**

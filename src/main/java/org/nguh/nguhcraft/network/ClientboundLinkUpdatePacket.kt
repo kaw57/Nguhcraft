@@ -1,4 +1,4 @@
-package org.nguh.nguhcraft.packets
+package org.nguh.nguhcraft.network
 
 import net.fabricmc.api.EnvType
 import net.fabricmc.api.Environment

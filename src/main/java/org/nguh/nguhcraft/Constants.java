@@ -21,14 +21,6 @@ public interface Constants {
     int Purple = 0xAA00AA;
 
     /**
-    * Build version.
-    * <p>
-    * Needs to be compatible between server and client. Increment this
-    * whenever there are breaking changes in client/server communication.
-    */
-    int NGUHCRAFT_VERSION = 1;
-
-    /**
     * Used to represent ‘infinity’.
     * <p>
     * Actual Infinity is a very problematic value in that e.g. multiplying

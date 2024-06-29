@@ -3,15 +3,24 @@ package org.nguh.nguhcraft.server
 
 import net.fabricmc.api.EnvType
 import net.fabricmc.api.Environment
+import net.fabricmc.fabric.api.networking.v1.*
+import net.fabricmc.fabric.api.networking.v1.ServerLoginNetworking.LoginSynchronizer
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.Context
+import net.minecraft.network.PacketByteBuf
 import net.minecraft.network.message.ChatVisibility
 import net.minecraft.network.packet.s2c.play.GameMessageS2CPacket
+import net.minecraft.server.MinecraftServer
+import net.minecraft.server.network.ServerLoginNetworkHandler
 import net.minecraft.server.network.ServerPlayNetworkHandler
 import net.minecraft.server.network.ServerPlayerEntity
 import net.minecraft.text.Text
 import net.minecraft.util.Formatting
 import net.minecraft.util.StringHelper
+import org.nguh.nguhcraft.network.ServerboundChatPacket
+import org.nguh.nguhcraft.network.VersionCheck
 import org.nguh.nguhcraft.server.ServerUtils.Server
+import java.util.concurrent.CompletableFuture
+
 
 /** This runs on the network thread. */
 @Environment(EnvType.SERVER)
@@ -19,6 +28,7 @@ object NetworkHandler {
     private val ERR_ILLEGAL_CHARS: Text = Text.translatable("multiplayer.disconnect.illegal_characters")
     private val ERR_CHAT_DISABLED: Text = Text.translatable("chat.disabled.options").formatted(Formatting.RED)
     private val ERR_EMPTY_MESSAGE: Text = Text.literal("Client attempted to send an empty message.")
+    private val ERR_NEEDS_CLIENT_MOD: Text = Text.literal("Sorry, the Nguhcraft client-side mod is required\nto play on the server!")
 
     private fun Execute(CB: () -> Unit) = Server().execute(CB)
 
@@ -30,6 +40,42 @@ object NetworkHandler {
     @JvmStatic fun HandleCommand(Handler: ServerPlayNetworkHandler, Command: String) {
         if (!ValidateIncomingMessage(Command, Handler.player)) return
         Execute { Chat.ProcessCommand(Handler, Command) }
+    }
+
+    private fun HandleVersionCheck(
+        Handler: ServerLoginNetworkHandler,
+        Understood: Boolean,
+        Buf: PacketByteBuf,
+    ) {
+        // Client doesn’t have the mod.
+        if (!Understood) {
+            Handler.disconnect(ERR_NEEDS_CLIENT_MOD)
+            return
+        }
+
+        // Client mod version is out of date.
+        val V = Buf.readInt()
+        if (V != VersionCheck.NGUHCRAFT_VERSION) {
+            Handler.disconnect(Text.literal("""
+                Sorry, your Nguhcraft client mod is out of date!
+                Please update it to play on the server.
+                Yours: $V vs Server: ${VersionCheck.NGUHCRAFT_VERSION}""".trimIndent()
+            ))
+        }
+    }
+
+    fun Init() {
+        ServerLoginConnectionEvents.QUERY_START.register(ServerLoginConnectionEvents.QueryStart { _, _, Sender, Syn ->
+            Sender.sendPacket(VersionCheck.ID, PacketByteBufs.empty())
+        })
+
+        ServerLoginNetworking.registerGlobalReceiver(VersionCheck.ID) lambda@{ _, H, Understood, Buf, _, _ ->
+            HandleVersionCheck(H, Understood, Buf)
+        }
+
+        ServerPlayNetworking.registerGlobalReceiver(ServerboundChatPacket.ID) { Packet, Context ->
+            HandleChatMessage(Packet.Message, Context)
+        }
     }
 
     /** Validate an incoming chat message or command. */

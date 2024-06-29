@@ -4,13 +4,11 @@ import com.mojang.logging.LogUtils
 import net.fabricmc.api.DedicatedServerModInitializer
 import net.fabricmc.api.EnvType
 import net.fabricmc.api.Environment
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
 import net.minecraft.nbt.NbtCompound
 import net.minecraft.nbt.NbtIo
 import net.minecraft.nbt.NbtSizeTracker
 import net.minecraft.util.WorldSavePath
 import org.nguh.nguhcraft.SyncedGameRule
-import org.nguh.nguhcraft.packets.ServerboundChatPacket
 import org.nguh.nguhcraft.server.ServerUtils.Server
 import java.nio.file.Path
 import kotlin.io.path.inputStream
@@ -24,7 +22,7 @@ class NguhcraftServer : DedicatedServerModInitializer {
             LOGGER.info("Initialising server")
             Discord.Start()
             Commands.Register()
-            RegisterPacketHandlers()
+            NetworkHandler.Init()
         } catch (e: Exception) {
             e.printStackTrace()
             exitProcess(1)
@@ -33,12 +31,6 @@ class NguhcraftServer : DedicatedServerModInitializer {
 
     companion object {
         private val LOGGER = LogUtils.getLogger()
-
-        private fun RegisterPacketHandlers() {
-            ServerPlayNetworking.registerGlobalReceiver(ServerboundChatPacket.ID) { Packet, Context ->
-                NetworkHandler.HandleChatMessage(Packet.Message, Context)
-            }
-        }
 
         private fun LoadPersistentState() {
             try {

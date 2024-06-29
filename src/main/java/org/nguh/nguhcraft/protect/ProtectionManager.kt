@@ -20,7 +20,7 @@ import net.minecraft.util.math.BlockPos
 import net.minecraft.world.World
 import org.nguh.nguhcraft.BypassesRegionProtection
 import org.nguh.nguhcraft.client.accessors.AbstractClientPlayerEntityAccessor
-import org.nguh.nguhcraft.packets.ClientboundSyncProtectionMgrPacket
+import org.nguh.nguhcraft.network.ClientboundSyncProtectionMgrPacket
 import org.nguh.nguhcraft.server.ServerUtils
 import org.nguh.nguhcraft.server.isLinked
 

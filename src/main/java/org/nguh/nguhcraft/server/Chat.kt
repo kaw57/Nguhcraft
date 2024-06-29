@@ -12,7 +12,7 @@ import net.minecraft.text.Text
 import net.minecraft.util.Formatting
 import org.nguh.nguhcraft.Constants
 import org.nguh.nguhcraft.Utils
-import org.nguh.nguhcraft.packets.ClientboundChatPacket
+import org.nguh.nguhcraft.network.ClientboundChatPacket
 import org.nguh.nguhcraft.server.ServerUtils.Broadcast
 import org.nguh.nguhcraft.server.ServerUtils.Multicast
 

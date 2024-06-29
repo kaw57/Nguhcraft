@@ -1,16 +1,11 @@
 package org.nguh.nguhcraft.mixin.server;
 
 import com.llamalad7.mixinextras.sugar.Local;
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.ClientConnection;
 import net.minecraft.server.PlayerManager;
 import net.minecraft.server.network.ConnectedClientData;
 import net.minecraft.server.network.ServerPlayerEntity;
-import org.nguh.nguhcraft.SyncedGameRule;
-import org.nguh.nguhcraft.packets.ClientboundLinkUpdatePacket;
-import org.nguh.nguhcraft.packets.ClientboundSyncHypershotStatePacket;
-import org.nguh.nguhcraft.protect.ProtectionManager;
 import org.nguh.nguhcraft.server.Discord;
 import org.nguh.nguhcraft.server.accessors.ServerPlayerAccessor;
 import org.nguh.nguhcraft.server.ServerUtils;

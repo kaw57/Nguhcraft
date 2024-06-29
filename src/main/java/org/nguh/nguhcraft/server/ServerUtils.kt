@@ -6,7 +6,6 @@ import net.fabricmc.api.Environment
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
 import net.fabricmc.loader.api.FabricLoader
 import net.minecraft.block.BlockState
-import net.minecraft.command.argument.EntityArgumentType.players
 import net.minecraft.enchantment.Enchantments
 import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.mob.AbstractPiglinEntity
@@ -45,9 +44,9 @@ import org.nguh.nguhcraft.Utils.EnchantLvl
 import org.nguh.nguhcraft.accessors.ProjectileEntityAccessor
 import org.nguh.nguhcraft.accessors.TridentEntityAccessor
 import org.nguh.nguhcraft.enchantment.NguhcraftEnchantments
-import org.nguh.nguhcraft.packets.ClientboundLinkUpdatePacket
-import org.nguh.nguhcraft.packets.ClientboundSyncHypershotStatePacket
-import org.nguh.nguhcraft.packets.ClientboundSyncProtectionBypassPacket
+import org.nguh.nguhcraft.network.ClientboundLinkUpdatePacket
+import org.nguh.nguhcraft.network.ClientboundSyncHypershotStatePacket
+import org.nguh.nguhcraft.network.ClientboundSyncProtectionBypassPacket
 import org.nguh.nguhcraft.protect.ProtectionManager
 import org.nguh.nguhcraft.server.Discord.Companion.BroadcastJoinQuitMessage
 import org.nguh.nguhcraft.server.accessors.LivingEntityAccessor
