@@ -5,11 +5,13 @@
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [
 		"common.BlockItemMixin",
+		"common.ContainerLockMixin",
 		"common.EnchantmentMixin",
 		"common.EnderEyeItemMixin",
 		"common.Entity_ArmorStand_Warden_IsImmuneToExplosionMixin",
 		"common.EntityMixin",
 		"common.ExplosionMixin",
+		"common.LockableContainerBlockEntityAccessor",
 		"common.PlayerEntityMixin",
 		"common.PotionContentsComponent",
 		"common.TridentEntityMixin"

@@ -3,6 +3,7 @@ package org.nguh.nguhcraft
 import net.fabricmc.api.ModInitializer
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry
 import net.minecraft.util.Identifier
+import org.nguh.nguhcraft.item.NguhItems
 import org.nguh.nguhcraft.network.*
 
 // TODO: Port all patches.
@@ -35,6 +36,13 @@ import org.nguh.nguhcraft.network.*
 //   - [ ] Have a way of locking chests and make them unbreakable.
 //     - [ ] Disallowing hoppers/hopper minecarts, tnt, wither immune, dispensers, crafters, etc.
 //     - [ ] Maybe barrels too if they can be locked.
+//     - [ ] Left click with key to unlock (drops the lock).
+//     - [ ] Show key in the ‘Chest is locked’ message.
+//     - [ ] Recipe to duplicate keys.
+//     - [ ] Allow opening in /bypass mode.
+//     - [ ] Enforce region protection.
+//     - [ ] What happens when a locked chest becomes a double chest?
+//     - [ ] Add little lock icon to chest (custom texture like furnace).
 // - [ ] World protection
 //       This is used both for protected areas and to prevent unlinked
 //       players from doing anything.
@@ -116,6 +124,9 @@ class Nguhcraft : ModInitializer {
 
         // Serverbound packets.
         PayloadTypeRegistry.playC2S().register(ServerboundChatPacket.ID, ServerboundChatPacket.CODEC)
+
+        // Items.
+        NguhItems.Init()
     }
 
     companion object {

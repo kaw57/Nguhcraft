@@ -3,5 +3,8 @@
 	"enchantment.nguhcraft.hypershot": "Hypershot",
 	"enchantment.nguhcraft.smelting": "Smelting",
 	"enchantment.nguhcraft.health": "Health",
-	"enchantment.nguhcraft.saturation": "Saturation"
+	"enchantment.nguhcraft.saturation": "Saturation",
+
+	"item.nguhcraft.lock": "Lock",
+	"item.nguhcraft.key": "Key"
 }
