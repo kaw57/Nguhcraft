@@ -6,6 +6,7 @@ import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
 import net.minecraft.block.Blocks
 import net.minecraft.client.network.ClientPlayerEntity
 import net.minecraft.entity.Entity
+import net.minecraft.entity.damage.DamageSource
 import net.minecraft.entity.mob.Monster
 import net.minecraft.entity.passive.VillagerEntity
 import net.minecraft.entity.player.PlayerEntity
@@ -13,6 +14,7 @@ import net.minecraft.entity.vehicle.VehicleEntity
 import net.minecraft.nbt.NbtCompound
 import net.minecraft.nbt.NbtElement
 import net.minecraft.network.RegistryByteBuf
+import net.minecraft.registry.tag.DamageTypeTags
 import net.minecraft.server.network.ServerPlayerEntity
 import net.minecraft.util.math.BlockPos
 import net.minecraft.world.World
@@ -174,12 +176,26 @@ object ProtectionManager {
     /**
     * Check if this entity is protected from world effects.
     *
-    * This is used for explosions, lightning, etc.
+    * This is used for explosions, lightning, potion effects, etc.
     */
     @JvmStatic
     fun IsProtectedEntity(E: Entity): Boolean {
         val R = FindRegionContainingBlock(E.world, E.blockPos) ?: return false
         return !R.AllowsEnvironmentalHazards()
+    }
+
+    /** Check if this entity cannot be damaged by a damage source. */
+    @JvmStatic
+    fun IsProtectedEntity(E: Entity, DS: DamageSource): Boolean {
+        // First, damage that cannot be guarded against (e.g. out
+        // of world) is always allowed; this is so entities don’t
+        // end up 10000 blocks beneath protected areas...
+        if (DS.isIn(DamageTypeTags.BYPASSES_INVULNERABILITY)) return false
+
+        // Otherwise, use established protection rules, making sure
+        // that we forward the attacker if there is one.
+        val A = DS.attacker
+        return if (A is PlayerEntity) IsProtectedEntity(A, E) else IsProtectedEntity(E)
     }
 
     /**

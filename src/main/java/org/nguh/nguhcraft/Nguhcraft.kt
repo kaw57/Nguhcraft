@@ -51,8 +51,32 @@ import org.nguh.nguhcraft.packets.*
 //     - [x] Using shulker boxes
 //     - [T] Interacting w/ villagers
 //     - [T] Using boats/minecarts -> ACTUALLY TEST THIS
-//     - [ ] Wither skulls hitting entities.
-//     - [ ] Arrows, fireballs, snowballs, other projectiles, tridents.
+//     - [T] End crystals
+//       - [ ] Placing end crystals.
+//       - [ ] Destroying end crystals.
+//       - [ ] End crystal explosion effects.
+//     - [ ] AOEs (potions, dragon fireball)
+//     - [ ] Lightning.
+//       - [ ] Should not damage entities.
+//       - [ ] Should not ignite blocks.
+//         - [ ] In protected areas.
+//         - [ ] If caused by Channeling II (so I can smite people in the PoŊ).
+//   - [ ] Projectiles
+//     - [T] Investigate modifying LivingEntity#isInvulnerableTo() (check ALL projectiles)
+//     - [ ] #onCollision()
+//       - [ ] Eggs should not spawn chickens.
+//       - [x] Potions should not apply (negative) effects.
+//     - [ ] #onEntityHit()
+//       - [ ] Fishing hooks should not be allowed to hook anything.
+//     - [ ] #onBlockHit()
+//       - [ ] Water potions should not be able to extinguish fire.
+//       - [ ] Small fireballs should not spawn fire.
+//     - [x] Wither skulls hitting entities.
+//     - [x] Arrows, fireballs, snowballs, other projectiles, tridents.
+//   - [ ] Also enable protection for ops by default and add a `/bypass` command
+//         to toggle it on a per-player basis (so that Agma doesn’t accidentally
+//         destroy anything). Also only check that flag instead of the op permission
+//         when checking for protection.
 //   - [ ] Block interactions
 //     - [x] Using ender chests (should always be allowed)
 //     - [ ] Using crafting tables (should always be allowed)
@@ -67,6 +91,7 @@ import org.nguh.nguhcraft.packets.*
 //   - [x] Creepers
 //   - [ ] Ranged weapons (bows, crossbows, tridents, fire charges, fireworks)
 // - [ ] Disable the single-player button since this always need a dedicated server (because bot, linking, etc.)
+// - [ ] A /discard command that just outright removes an entity from the world without dropping loot etc.
 
 // Use Entity#teleportTo() to move players back to spawn.
 

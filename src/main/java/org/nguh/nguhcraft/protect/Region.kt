@@ -45,10 +45,9 @@ class Region(
         /**
         * Allow entities to be affected by the environment.
         *
-        * This includes explosions, lightning, etc and any other
-        * environmental hazards and everything that is not another
-        * entity (even if it is caused by an entity, e.g. a creeper
-        * exploding).
+        * This includes explosions, lightning, etc. and any other
+        * environmental hazards and everything that is not caused
+        * by a player.
         */
         ENVIRONMENTAL_HAZARDS,
 
