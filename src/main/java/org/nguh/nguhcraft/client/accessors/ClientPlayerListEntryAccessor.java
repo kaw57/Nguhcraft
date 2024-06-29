@@ -10,4 +10,6 @@ public interface ClientPlayerListEntryAccessor {
     Text getNameAboveHead();
     void setLinked(boolean linked);
     boolean isLinked();
+    void setBypassesRegionProtection(boolean bypassesProtection);
+    boolean getBypassesRegionProtection();
 }

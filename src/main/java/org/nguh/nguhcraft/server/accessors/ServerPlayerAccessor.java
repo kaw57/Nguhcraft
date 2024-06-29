@@ -11,6 +11,7 @@ public interface ServerPlayerAccessor {
     String TAG_ROOT = "Nguhcraft";
     String TAG_LAST_KNOWN_NAME = "LastKnownMinecraftName";
     String TAG_VANISHED = "Vanished";
+    String TAG_BYPASSES_REGION_PROTECTION = "BypassesRegionProtection";
     String TAG_DISCORD_ID = "DiscordID";
     String TAG_DISCORD_COLOUR = "DiscordRoleColour";
     String TAG_DISCORD_NAME = "DiscordName";
@@ -18,6 +19,9 @@ public interface ServerPlayerAccessor {
 
     boolean getVanished();
     void setVanished(boolean vanished);
+
+    boolean getBypassesRegionProtection();
+    void setBypassesRegionProtection(boolean bypassesProtection);
 
     long getDiscordId();
     void setDiscordId(long id);

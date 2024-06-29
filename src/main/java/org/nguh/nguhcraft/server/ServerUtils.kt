@@ -6,6 +6,7 @@ import net.fabricmc.api.Environment
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
 import net.fabricmc.loader.api.FabricLoader
 import net.minecraft.block.BlockState
+import net.minecraft.command.argument.EntityArgumentType.players
 import net.minecraft.enchantment.Enchantments
 import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.mob.AbstractPiglinEntity
@@ -39,16 +40,21 @@ import net.minecraft.world.RaycastContext
 import net.minecraft.world.TeleportTarget
 import net.minecraft.world.World
 import org.nguh.nguhcraft.Constants.MAX_HOMING_DISTANCE
-import org.nguh.nguhcraft.Utils
+import org.nguh.nguhcraft.SyncedGameRule
 import org.nguh.nguhcraft.Utils.EnchantLvl
 import org.nguh.nguhcraft.accessors.ProjectileEntityAccessor
 import org.nguh.nguhcraft.accessors.TridentEntityAccessor
 import org.nguh.nguhcraft.enchantment.NguhcraftEnchantments
+import org.nguh.nguhcraft.packets.ClientboundLinkUpdatePacket
 import org.nguh.nguhcraft.packets.ClientboundSyncHypershotStatePacket
+import org.nguh.nguhcraft.packets.ClientboundSyncProtectionBypassPacket
 import org.nguh.nguhcraft.protect.ProtectionManager
+import org.nguh.nguhcraft.server.Discord.Companion.BroadcastJoinQuitMessage
 import org.nguh.nguhcraft.server.accessors.LivingEntityAccessor
+import org.nguh.nguhcraft.server.accessors.ServerPlayerAccessor
 import org.slf4j.Logger
 import java.util.*
+
 
 @Environment(EnvType.SERVER)
 object ServerUtils {
@@ -73,6 +79,28 @@ object ServerUtils {
             LOGGER.warn("Living entity has NaN health, discarding: {}", LE)
             LE.discard()
         }
+    }
+
+    /** Sync data on join. */
+    @JvmStatic
+    fun ActOnPlayerJoin(SP: ServerPlayerEntity) {
+        BroadcastJoinQuitMessage(SP, true)
+
+        // Broadcast this player’s name to everyone.
+        Broadcast(ClientboundLinkUpdatePacket(SP))
+
+        // Send all other players’ names to this player.
+        for (P in Server().playerManager.playerList)
+            if (P != SP)
+                ServerPlayNetworking.send(SP, ClientboundLinkUpdatePacket(P))
+
+        // Sync data with the client.
+        val LEA = SP as LivingEntityAccessor
+        val SPA = SP as ServerPlayerAccessor
+        SyncedGameRule.Send(SP)
+        ProtectionManager.Send(SP)
+        ServerPlayNetworking.send(SP, ClientboundSyncHypershotStatePacket(LEA.hypershotContext != null))
+        ServerPlayNetworking.send(SP, ClientboundSyncProtectionBypassPacket(SPA.bypassesRegionProtection))
     }
 
     /**

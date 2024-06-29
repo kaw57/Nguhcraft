@@ -18,6 +18,7 @@ import net.minecraft.registry.tag.DamageTypeTags
 import net.minecraft.server.network.ServerPlayerEntity
 import net.minecraft.util.math.BlockPos
 import net.minecraft.world.World
+import org.nguh.nguhcraft.BypassesRegionProtection
 import org.nguh.nguhcraft.client.accessors.AbstractClientPlayerEntityAccessor
 import org.nguh.nguhcraft.packets.ClientboundSyncProtectionMgrPacket
 import org.nguh.nguhcraft.server.ServerUtils
@@ -54,8 +55,8 @@ object ProtectionManager {
     */
     @JvmStatic
     fun AllowBlockModify(PE: PlayerEntity, W: World, Pos: BlockPos) : Boolean {
-        // Player is operator. Always allow.
-        if (PE.hasPermissionLevel(4)) return true
+        // Player has bypass. Always allow.
+        if (PE.BypassesRegionProtection()) return true
 
         // Player is not linked. Always deny.
         if (!IsLinked(PE)) return false
@@ -70,8 +71,8 @@ object ProtectionManager {
     /** Check if a player is allowed to interact (= right-click) with a block. */
     @JvmStatic
     fun AllowBlockInteract(PE: PlayerEntity, W: World, Pos: BlockPos) : Boolean {
-        // Player is operator. Always allow.
-        if (PE.hasPermissionLevel(4)) return true
+        // Player has bypass. Always allow.
+        if (PE.BypassesRegionProtection()) return true
 
         // Player is not linked. Always deny.
         if (!IsLinked(PE)) return false
@@ -89,8 +90,8 @@ object ProtectionManager {
     /** Check if a player is allowed to interact (= right-click) with an entity. */
     @JvmStatic
     fun AllowEntityInteract(PE: PlayerEntity, E: Entity) : Boolean {
-        // Player is operator. Always allow.
-        if (PE.hasPermissionLevel(4)) return true
+        // Player has bypass. Always allow.
+        if (PE.BypassesRegionProtection()) return true
 
         // Player is not linked. Always deny.
         if (!IsLinked(PE)) return false
@@ -151,8 +152,8 @@ object ProtectionManager {
     /** Check if this entity is protected from attacks by a player. */
     @JvmStatic
     fun IsProtectedEntity(AttackingPlayer: PlayerEntity, AttackedEntity: Entity): Boolean {
-        // Player is operator. Always allow.
-        if (AttackingPlayer.hasPermissionLevel(4)) return false
+        // Player has bypass. Always allow.
+        if (AttackingPlayer.BypassesRegionProtection()) return false
 
         // Player is not linked. Always deny.
         if (!IsLinked(AttackingPlayer)) return true
@@ -190,6 +191,9 @@ object ProtectionManager {
         // First, damage that cannot be guarded against (e.g. out
         // of world) is always allowed; this is so entities don’t
         // end up 10000 blocks beneath protected areas...
+        //
+        // Conveniently, this also means that /kill works as expected
+        // for living entities.
         if (DS.isIn(DamageTypeTags.BYPASSES_INVULNERABILITY)) return false
 
         // Otherwise, use established protection rules, making sure

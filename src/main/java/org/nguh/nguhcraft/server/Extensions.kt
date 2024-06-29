@@ -5,6 +5,9 @@ import net.minecraft.text.Text
 import org.nguh.nguhcraft.server.accessors.ServerPlayerAccessor
 
 val ServerPlayerEntity.isLinked get() = (this as ServerPlayerAccessor).isLinked
+val ServerPlayerEntity.isOperator get() = hasPermissionLevel(4)
+val ServerPlayerEntity.isLinkedOrOperator get() = isLinked || isOperator
+
 var ServerPlayerEntity.discordId
     get() = (this as ServerPlayerAccessor).discordId
     set(value) { (this as ServerPlayerAccessor).discordId = value }
@@ -20,6 +23,3 @@ var ServerPlayerEntity.discordAvatarURL: String?
 var ServerPlayerEntity.discordDisplayName: Text?
     get() = (this as ServerPlayerAccessor).nguhcraftDisplayName
     set(value) { (this as ServerPlayerAccessor).nguhcraftDisplayName = value }
-
-val ServerPlayerEntity.isOperator get() = hasPermissionLevel(4)
-val ServerPlayerEntity.isLinkedOrOperator get() = isLinked || isOperator

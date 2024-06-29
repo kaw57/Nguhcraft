@@ -32,6 +32,7 @@ public abstract class ServerPlayerMixin extends PlayerEntity implements ServerPl
     }
 
     @Unique private boolean Vanished = false;
+    @Unique private boolean BypassesRegionProtection = false;
     @Unique private long DiscordId = 0;
     @Unique private int DiscordColour = 0;
     @Unique private String DiscordName = "";
@@ -44,6 +45,11 @@ public abstract class ServerPlayerMixin extends PlayerEntity implements ServerPl
 
     @Override public boolean getVanished() { return Vanished; }
     @Override public void setVanished(boolean vanished) { Vanished = vanished; }
+
+    @Override public boolean getBypassesRegionProtection() { return BypassesRegionProtection; }
+    @Override public void setBypassesRegionProtection(boolean bypassesProtection) {
+        BypassesRegionProtection = bypassesProtection;
+    }
 
     @Override public long getDiscordId() { return DiscordId; }
     @Override public void setDiscordId(long id) { DiscordId = id; }
@@ -79,6 +85,7 @@ public abstract class ServerPlayerMixin extends PlayerEntity implements ServerPl
         if (nbt.contains(TAG_ROOT)) {
             var nguh = nbt.getCompound(TAG_ROOT);
             Vanished = nguh.getBoolean(TAG_VANISHED);
+            BypassesRegionProtection = nguh.getBoolean(TAG_BYPASSES_REGION_PROTECTION);
             DiscordId = nguh.getLong(TAG_DISCORD_ID);
             DiscordColour = nguh.getInt(TAG_DISCORD_COLOUR);
             DiscordName = nguh.getString(TAG_DISCORD_NAME);
@@ -102,6 +109,7 @@ public abstract class ServerPlayerMixin extends PlayerEntity implements ServerPl
     private void inject$copyFrom(ServerPlayerEntity Old, boolean Alive, CallbackInfo CI) {
         var OldNSP = (ServerPlayerAccessor) Old;
         Vanished = OldNSP.getVanished();
+        BypassesRegionProtection = OldNSP.getBypassesRegionProtection();
         DiscordId = OldNSP.getDiscordId();
         DiscordColour = OldNSP.getDiscordColour();
         DiscordName = OldNSP.getDiscordName();
@@ -133,6 +141,7 @@ public abstract class ServerPlayerMixin extends PlayerEntity implements ServerPl
     private void inject$saveData(@NotNull NbtCompound nbt, CallbackInfo ci) {
         var tag = new NbtCompound();
         tag.putBoolean(TAG_VANISHED, Vanished);
+        tag.putBoolean(TAG_BYPASSES_REGION_PROTECTION, BypassesRegionProtection);
         tag.putLong(TAG_DISCORD_ID, DiscordId);
         tag.putInt(TAG_DISCORD_COLOUR, DiscordColour);
         tag.putString(TAG_DISCORD_NAME, DiscordName);

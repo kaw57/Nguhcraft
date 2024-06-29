@@ -36,9 +36,8 @@ class NguhcraftClient : ClientModInitializer {
             .entries {  _, Entries -> Treasures.AddAll(Entries) }
             .build()
 
-        @JvmField
-        @Volatile
-        var InHypershotContext = false
+        @JvmField @Volatile var InHypershotContext = false
+        @JvmField @Volatile var BypassesRegionProtection = false
 
         @JvmStatic
         fun ProcessF3(key: Int): Boolean {

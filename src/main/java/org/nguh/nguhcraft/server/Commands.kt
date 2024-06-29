@@ -11,6 +11,7 @@ import com.mojang.logging.LogUtils
 import net.fabricmc.api.EnvType
 import net.fabricmc.api.Environment
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
 import net.minecraft.command.CommandRegistryAccess
 import net.minecraft.command.argument.BlockPosArgumentType
 import net.minecraft.command.argument.DimensionArgumentType
@@ -31,8 +32,10 @@ import org.nguh.nguhcraft.Constants
 import org.nguh.nguhcraft.Commands.Exn
 import org.nguh.nguhcraft.SyncedGameRule
 import org.nguh.nguhcraft.Utils.Normalised
+import org.nguh.nguhcraft.packets.ClientboundSyncProtectionBypassPacket
 import org.nguh.nguhcraft.protect.ProtectionManager
 import org.nguh.nguhcraft.protect.Region
+import org.nguh.nguhcraft.server.accessors.ServerPlayerAccessor
 import org.nguh.nguhcraft.toUUID
 import org.slf4j.Logger
 import java.util.*
@@ -48,6 +51,7 @@ object Commands {
 
     fun Register() {
         CommandRegistrationCallback.EVENT.register { D, A, _ ->
+            D.register(BypassCommand())               // /bypass
             D.register(DiscordCommand())              // /discord
             D.register(EnchantCommand(A))             // /enchant
             val Msg = D.register(MessageCommand())    // /msg
@@ -62,6 +66,20 @@ object Commands {
     // =========================================================================
     //  Command Implementations
     // =========================================================================
+    object BypassCommand {
+        private val BYPASSING = Text.literal("Now bypassing region protection.").formatted(Formatting.YELLOW)
+        private val NOT_BYPASSING = Text.literal("No longer bypassing region protection.").formatted(Formatting.YELLOW)
+
+        fun Toggle(S: ServerCommandSource, SP: ServerPlayerEntity): Int {
+            val A = SP as ServerPlayerAccessor
+            val NewState = !A.bypassesRegionProtection
+            A.bypassesRegionProtection = NewState
+            ServerPlayNetworking.send(SP, ClientboundSyncProtectionBypassPacket(NewState))
+            S.sendMessage(if (NewState) BYPASSING else NOT_BYPASSING)
+            return 1
+        }
+    }
+
     object DiscordCommand {
         private val LIST_ENTRY = Text.literal("\n  - ")
         private val IS_LINKED_TO = Text.literal(" → ")
@@ -394,6 +412,10 @@ object Commands {
     // =========================================================================
     //  Command Trees
     // =========================================================================
+    private fun BypassCommand(): LiteralArgumentBuilder<ServerCommandSource> = literal("bypass")
+        .requires { it.isExecutedByPlayer && it.hasPermissionLevel(4) }
+        .executes { BypassCommand.Toggle(it.source, it.source.playerOrThrow) }
+
     private fun DiscordCommand(): LiteralArgumentBuilder<ServerCommandSource> = literal("discord")
         .then(literal("info")
             .requires { it.hasPermissionLevel(4) }

@@ -12,6 +12,7 @@ import org.nguh.nguhcraft.Utils
 import org.nguh.nguhcraft.Utils.LBRACK_COMPONENT
 import org.nguh.nguhcraft.Utils.RBRACK_COMPONENT
 import org.nguh.nguhcraft.client.ClientUtils.Client
+import org.nguh.nguhcraft.client.accessors.AbstractClientPlayerEntityAccessor
 import org.nguh.nguhcraft.client.accessors.ClientPlayerListEntryAccessor
 import org.nguh.nguhcraft.packets.*
 import org.nguh.nguhcraft.protect.ProtectionManager
@@ -99,6 +100,11 @@ object NetworkHandler {
         NguhcraftClient.InHypershotContext = Packet.InContext
     }
 
+    /** Sync protection bypass state. */
+    private fun HandleSyncProtectionBypassPacket(Packet: ClientboundSyncProtectionBypassPacket) {
+        NguhcraftClient.BypassesRegionProtection = Packet.BypassesRegionProtection
+    }
+
     /** Sync protection manager state. */
     private fun HandleSyncProtectionMgrPacket(Packet: ClientboundSyncProtectionMgrPacket) {
         ProtectionManager.UpdateState(Packet)
@@ -110,6 +116,7 @@ object NetworkHandler {
         Register(ClientboundChatPacket.ID, ::HandleChatPacket)
         Register(ClientboundSyncGameRulesPacket.ID, ::HandleSyncGameRulesPacket)
         Register(ClientboundSyncHypershotStatePacket.ID, ::HandleSyncHypershotStatePacket)
+        Register(ClientboundSyncProtectionBypassPacket.ID, ::HandleSyncProtectionBypassPacket)
         Register(ClientboundSyncProtectionMgrPacket.ID, ::HandleSyncProtectionMgrPacket)
     }
 

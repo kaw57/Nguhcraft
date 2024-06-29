@@ -9,6 +9,7 @@ import net.minecraft.server.network.ConnectedClientData;
 import net.minecraft.server.network.ServerPlayerEntity;
 import org.nguh.nguhcraft.SyncedGameRule;
 import org.nguh.nguhcraft.packets.ClientboundLinkUpdatePacket;
+import org.nguh.nguhcraft.packets.ClientboundSyncHypershotStatePacket;
 import org.nguh.nguhcraft.protect.ProtectionManager;
 import org.nguh.nguhcraft.server.Discord;
 import org.nguh.nguhcraft.server.accessors.ServerPlayerAccessor;
@@ -59,18 +60,6 @@ public abstract class PlayerManagerMixin {
         ConnectedClientData Data,
         CallbackInfo Info
     ) {
-        Discord.BroadcastJoinQuitMessage(SP, true);
-
-        // Broadcast this player’s name to everyone.
-        ServerUtils.Broadcast(new ClientboundLinkUpdatePacket(SP));
-
-        // Send all other players’ names to this player.
-        for (var P : players)
-            if (P != SP)
-                ServerPlayNetworking.send(SP, new ClientboundLinkUpdatePacket(P));
-
-        // Sync data with the client.
-        SyncedGameRule.Send(SP);
-        ProtectionManager.Send(SP);
+        ServerUtils.ActOnPlayerJoin(SP);
     }
 }
