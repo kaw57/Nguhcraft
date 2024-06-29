@@ -57,11 +57,12 @@ import org.nguh.nguhcraft.network.*
 //       - [x] Destroying end crystals.
 //       - [x] End crystal explosion effects.
 //     - [ ] AOEs (potions, dragon fireball)
-//     - [ ] Lightning.
-//       - [ ] Should not damage entities.
-//       - [ ] Should not ignite blocks.
-//         - [ ] In protected areas.
-//         - [ ] If caused by Channeling II (so I can smite people in the PoŊ).
+//     - [x] Lightning.
+//       - [x] Should not damage entities.
+//       - [x] Should not ignite blocks.
+//         - [x] In protected areas.
+//         - [x] If caused by Channeling II (so I can smite people in the PoŊ).
+//   - [ ] Make channeling trident fire texture blue.
 //   - [ ] Projectiles
 //     - [x] Investigate modifying LivingEntity#isInvulnerableTo() (check ALL projectiles)
 //     - [x] #onCollision()

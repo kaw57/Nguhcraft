@@ -153,6 +153,18 @@ class Region(
         return X in MinX..MaxX && Z in MinZ..MaxZ
     }
 
+    /** Check if a region intersects another. */
+    fun Intersects(Other: Region) = Intersects(
+        MinX = Other.MinX,
+        MinZ = Other.MinZ,
+        MaxX = Other.MaxX,
+        MaxZ = Other.MaxZ
+    )
+
+    /** Check if a region intersects a rectangle. */
+    fun Intersects(MinX: Int, MinZ: Int, MaxX: Int, MaxZ: Int) =
+        MinX <= this.MaxX && MaxX >= this.MinX && MinZ <= this.MaxZ && MaxZ >= this.MinZ
+
     /** Save this region. */
     fun Save(): NbtCompound {
         val Tag = NbtCompound()

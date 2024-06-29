@@ -43,6 +43,7 @@
 		"server.EntityMixin",
 		"server.FishingBobberEntityMixin",
 		"server.HungerManagerMixin",
+		"server.LightningEntityMixin",
 		"server.LivingEntityMixin",
 		"server.MeCommandMixin",
 		"server.MinecraftServerAccessor",

@@ -12,6 +12,7 @@ import net.minecraft.server.world.ServerWorld
 import net.minecraft.sound.SoundCategory
 import net.minecraft.sound.SoundEvents
 import net.minecraft.util.Hand
+import org.nguh.nguhcraft.TridentUtils
 import org.nguh.nguhcraft.mixin.server.RangedWeaponItemAccessor
 import org.nguh.nguhcraft.network.ClientboundSyncHypershotStatePacket
 import org.nguh.nguhcraft.server.accessors.LivingEntityAccessor
@@ -98,7 +99,7 @@ data class HypershotContext(
 
         // We also support tridents here.
         else if (I is TridentItem && Shooter is PlayerEntity) {
-            ServerUtils.ActOnTridentThrown(
+            TridentUtils.ActOnTridentThrown(
                 SW,
                 Shooter,
                 Weapon,

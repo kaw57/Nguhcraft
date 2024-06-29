@@ -5,7 +5,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.TridentItem;
 import net.minecraft.world.World;
-import org.nguh.nguhcraft.server.ServerUtils;
+import org.nguh.nguhcraft.TridentUtils;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -30,7 +30,7 @@ public abstract class TridentItemMixin {
         int Ticks,
         CallbackInfo CI
     ) {
-        ServerUtils.ActOnTridentThrown(
+        TridentUtils.ActOnTridentThrown(
             World,
             (PlayerEntity) User,
             Stack,

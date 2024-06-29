@@ -118,9 +118,15 @@ object ProtectionManager {
         return true
     }
 
+    /** Get the first region that intersects a bounding box, if any. */
+    @JvmStatic
+    fun GetIntersectingRegion(W: World, MinX: Int, MinZ: Int, MaxX: Int, MaxZ: Int): Region? {
+        val Regions = RegionList(W)
+        return Regions.find { it.Intersects(MinX, MinZ, MaxX, MaxZ) }
+    }
+
     /** Get the regions for a world. */
     fun GetRegions(W: World): List<Region> = RegionList(W)
-
 
     /**
      * Check whether a position can be teleported to.
