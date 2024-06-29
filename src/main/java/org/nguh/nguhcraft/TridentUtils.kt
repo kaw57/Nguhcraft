@@ -94,8 +94,11 @@ object TridentUtils {
             W.spawnEntity(Lightning)
 
             // Tell the entity it was created by the Channeling enchantment,
-            // in which case we do NOT want it to set anything on fire.
+            // in which case we do NOT want it to set anything on fire, and
+            // remember that the trident has summoned it, which causes it to
+            // be rendered on fire.
             (Lightning as LightningEntityAccessor).`Nguhcraft$SetCreatedByChanneling`()
+            (TE as TridentEntityAccessor).`Nguhcraft$SetStruckLightning`()
         }
     }
 }

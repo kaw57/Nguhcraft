@@ -20,6 +20,7 @@
 		"client.ChatScreenMixin",
 		"client.ClientPlayerInteractionManagerMixin",
 		"client.ClientPlayNetworkHandlerMixin",
+		"client.EntityRenderDispatcherMixin",
 		"client.GameRendererMixin",
 		"client.InGameHudMixin",
 		"client.KeyboardMixin",

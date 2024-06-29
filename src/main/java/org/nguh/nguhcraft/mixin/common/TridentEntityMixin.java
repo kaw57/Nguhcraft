@@ -2,7 +2,9 @@ package org.nguh.nguhcraft.mixin.common;
 
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.data.DataTracker;
 import net.minecraft.entity.data.TrackedData;
+import net.minecraft.entity.data.TrackedDataHandlerRegistry;
 import net.minecraft.entity.projectile.PersistentProjectileEntity;
 import net.minecraft.entity.projectile.TridentEntity;
 import net.minecraft.item.ItemStack;
@@ -30,6 +32,10 @@ public abstract class TridentEntityMixin extends PersistentProjectileEntity impl
 
     @Unique boolean Copy = false;
 
+    /** To mark that we have struck lightning so the client can render fire. */
+    @Unique private static final TrackedData<Boolean> STRUCK_LIGHTNING
+        = DataTracker.registerData(TridentEntity.class, TrackedDataHandlerRegistry.BOOLEAN);
+
     /** Mark this as a copy. */
     @Override
     @Unique
@@ -40,10 +46,24 @@ public abstract class TridentEntityMixin extends PersistentProjectileEntity impl
         setOwner(null);
     }
 
+    /** Mark this as having struck lightning. */
+    @Override public void Nguhcraft$SetStruckLightning() {
+        dataTracker.set(STRUCK_LIGHTNING, true);
+    }
+
     /** Disable pickup in the constructor. */
     @Inject(method = "<init>(Lnet/minecraft/world/World;Lnet/minecraft/entity/LivingEntity;Lnet/minecraft/item/ItemStack;)V", at = @At("TAIL"))
     private void inject$init$0(World W, LivingEntity O, ItemStack S, CallbackInfo CI) {
         this.pickupType = PickupPermission.CREATIVE_ONLY;
+    }
+
+    /** If this has struck lightning, render with blue fire. */
+    @Override public boolean doesRenderOnFire() { return dataTracker.get(STRUCK_LIGHTNING); }
+
+    /** Initialise data tracker. */
+    @Inject(method = "initDataTracker", at = @At("TAIL"))
+    private void inject$initDataTracker(DataTracker.Builder B, CallbackInfo CI) {
+        B.add(STRUCK_LIGHTNING, false);
     }
 
     /** Implement Channeling II. */

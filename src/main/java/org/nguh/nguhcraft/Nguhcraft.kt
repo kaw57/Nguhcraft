@@ -100,6 +100,7 @@ import org.nguh.nguhcraft.network.*
 //   - [ ] Ranged weapons (bows, crossbows, tridents, fire charges, fireworks)
 // - [ ] Disable the single-player button since this always need a dedicated server (because bot, linking, etc.)
 // - [ ] A /discard command that just outright removes an entity from the world without dropping loot etc.
+// - [ ] Drowned have a 50% chance to spawn with Channeling II tridents (but don’t drop the Channeling II)
 
 // Use Entity#teleportTo() to move players back to spawn.
 
