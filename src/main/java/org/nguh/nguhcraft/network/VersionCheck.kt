@@ -9,7 +9,6 @@ object VersionCheck {
     /**
      * Mod version.
      *
-     *
      * Needs to be compatible between server and client. Increment this
      * whenever there are breaking changes to client/server communication,
      * static registries, etc.

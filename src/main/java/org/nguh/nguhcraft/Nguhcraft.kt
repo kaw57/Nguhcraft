@@ -50,11 +50,12 @@ import org.nguh.nguhcraft.network.*
 //     - [x] Armour stands
 //     - [x] Using shulker boxes
 //     - [T] Interacting w/ villagers
-//     - [T] Using boats/minecarts -> ACTUALLY TEST THIS
-//     - [T] End crystals
-//       - [ ] Placing end crystals.
-//       - [ ] Destroying end crystals.
-//       - [ ] End crystal explosion effects.
+//     - [x] Using boats/minecarts -> ACTUALLY TEST THIS
+//     - [ ] Breaking boats/minecarts.
+//     - [x] End crystals
+//       - [x] Placing end crystals.
+//       - [x] Destroying end crystals.
+//       - [x] End crystal explosion effects.
 //     - [ ] AOEs (potions, dragon fireball)
 //     - [ ] Lightning.
 //       - [ ] Should not damage entities.
@@ -62,17 +63,23 @@ import org.nguh.nguhcraft.network.*
 //         - [ ] In protected areas.
 //         - [ ] If caused by Channeling II (so I can smite people in the PoŊ).
 //   - [ ] Projectiles
-//     - [T] Investigate modifying LivingEntity#isInvulnerableTo() (check ALL projectiles)
-//     - [ ] #onCollision()
-//       - [ ] Eggs should not spawn chickens.
+//     - [x] Investigate modifying LivingEntity#isInvulnerableTo() (check ALL projectiles)
+//     - [x] #onCollision()
+//       - [x] Eggs should not spawn chickens.
 //       - [x] Potions should not apply (negative) effects.
-//     - [ ] #onEntityHit()
-//       - [ ] Fishing hooks should not be allowed to hook anything.
+//     - [x] #onEntityHit()
+//       - [x] Fishing hooks should not be allowed to hook anything.
 //     - [ ] #onBlockHit()
-//       - [ ] Water potions should not be able to extinguish fire.
+//       - [x] Water potions should not be able to extinguish fire.
 //       - [ ] Small fireballs should not spawn fire.
 //     - [x] Wither skulls hitting entities.
 //     - [x] Arrows, fireballs, snowballs, other projectiles, tridents.
+//     - [ ] Allow picking up projectiles.
+//   - [x] Clear fire ticks.
+//   - [ ] Fire spread.
+//   - [ ] Lava flow.
+//   - [ ] Water flow.
+//   - [ ] Fire destroying blocks.
 //   - [ ] Also enable protection for ops by default and add a `/bypass` command
 //         to toggle it on a per-player basis (so that Agma doesn’t accidentally
 //         destroy anything). Also only check that flag instead of the op permission
