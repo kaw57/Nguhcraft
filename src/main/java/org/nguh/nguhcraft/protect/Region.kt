@@ -36,10 +36,33 @@ class Region(
         /**
         * Allow interacting with entities.
         *
-        * Entity-specific permissions (e.g. USE_VEHICLES) take precedence
-        * over this flag. This flag is never tested for such entities.
+        * Setting this to ALLOW will allow ALL entity interactions; to
+        * only allow specific ones, use the flags below instead (e.g.
+        * USE_VEHICLES).
         */
         ENTITY_INTERACT,
+
+        /**
+        * Allow entities to be affected by the environment.
+        *
+        * This includes explosions, lightning, etc and any other
+        * environmental hazards and everything that is not another
+        * entity (even if it is caused by an entity, e.g. a creeper
+        * exploding).
+        */
+        ENVIRONMENTAL_HAZARDS,
+
+        /**
+        * Allow teleportation.
+        *
+        * This restricts the use of ender pearls and chorus fruit, but NOT
+        * the /tp command, command blocks, or other forms of hard-coded
+        * teleporting (endermen etc.).
+        */
+        TELEPORT,
+
+        /** Allow trading with villagers. */
+        TRADE,
 
         /**
         * Allow using and destroying vehicles.
@@ -109,11 +132,20 @@ class Region(
     /** Check if this region allows entity interaction. */
     fun AllowsEntityInteraction() = Test(Flags.ENTITY_INTERACT)
 
+    /** Check if this region allows entities to be affected by the environment. */
+    fun AllowsEnvironmentalHazards() = Test(Flags.ENVIRONMENTAL_HAZARDS)
+
     /** Check if this region allows players to be attacked. */
     fun AllowsPvP() = Test(Flags.ATTACK_PLAYERS)
 
+    /** Check if this region allows teleportation. */
+    fun AllowsTeleportation() = Test(Flags.TELEPORT)
+
     /** Check if this region allows vehicle use. */
-    fun AllowsVehicleUse() = Test(Flags.USE_VEHICLES)
+    fun AllowsVehicleUse() = Test(Flags.ENTITY_INTERACT) || Test(Flags.USE_VEHICLES)
+
+    /** Check if this region allows trading with villagers. */
+    fun AllowsVillagerTrading() = Test(Flags.ENTITY_INTERACT) || Test(Flags.TRADE)
 
     /** Check if this region contains a block. */
     fun Contains(Pos: BlockPos): Boolean {

@@ -22,8 +22,8 @@ import org.nguh.nguhcraft.packets.*
 //   - [x] Prevent players from leaving the border
 //   - [ ] Machine gun Ghasts
 //   - [ ] Import Saved Lore as Lore
-// - [ ] 2. Vanish
-// - [ ] 3. Tree Chopping
+// - [x] 2. Vanish (There’s a separate mod for this that looks promising)
+// - [x] 3. Tree Chopping
 //   - [x] Basic implementation
 //   - [x] Acacia and other diagonal trees.
 // - [ ] Extras
@@ -43,18 +43,24 @@ import org.nguh.nguhcraft.packets.*
 //     - [x] Special case: editing signs
 //   - [ ] Entity interactions
 //     - [x] Attacking entities
-//     - [ ] TNT should not damage entities in protected regions.
-//     - [ ] Using boats/minecarts -> ACTUALLY TEST THIS
-//     - [ ] Using beds and respawn anchors
-//     - [ ] Interacting w/ villagers
-//     - [ ] Ender pearls / chorus fruits
-//     - [ ] Using ender chests (should always be allowed)
-//     - [ ] Using shulker boxes
-//     - [ ] Armour stands
-//   - [ ] Reading books on lecterns (but not taking them)
+//     - [x] TNT should not damage entities in protected regions.
+//     - [x] Using beds and respawn anchors
+//     - [x] Ender pearls
+//     - [x] Chorus fruit
+//     - [x] Armour stands
+//     - [x] Using shulker boxes
+//     - [T] Interacting w/ villagers
+//     - [T] Using boats/minecarts -> ACTUALLY TEST THIS
+//     - [ ] Wither skulls hitting entities.
+//     - [ ] Arrows, fireballs, snowballs, other projectiles, tridents.
+//   - [ ] Block interactions
+//     - [x] Using ender chests (should always be allowed)
+//     - [ ] Using crafting tables (should always be allowed)
+//     - [ ] Reading books on lecterns (but not taking them)
+//       - [ ] Prevent taking on the server side.
+//       - [ ] Grey out button on the client side.
 //   - [x] Disable enderman griefing entirely.
 //   - [x] TNT
-//   - [ ] Wither explosions
 //   - [ ] Pistons that extend into protected areas
 //   - [ ] Fire spread, lava flow and placement, flint and steel.
 //   - [ ] Vine spread & snow

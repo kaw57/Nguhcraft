@@ -3,9 +3,11 @@ package org.nguh.nguhcraft.protect
 import net.fabricmc.api.EnvType
 import net.fabricmc.api.Environment
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
+import net.minecraft.block.Blocks
 import net.minecraft.client.network.ClientPlayerEntity
 import net.minecraft.entity.Entity
 import net.minecraft.entity.mob.Monster
+import net.minecraft.entity.passive.VillagerEntity
 import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.entity.vehicle.VehicleEntity
 import net.minecraft.nbt.NbtCompound
@@ -72,6 +74,9 @@ object ProtectionManager {
         // Player is not linked. Always deny.
         if (!IsLinked(PE)) return false
 
+        // Interacting with ender chests is always fine.
+        if (W.getBlockState(Pos).isOf(Blocks.ENDER_CHEST)) return true
+
         // Block is within the bounds of a protected region. Deny.
         if (IsProtectedBlock(W, Pos)) return false
 
@@ -88,14 +93,10 @@ object ProtectionManager {
         // Player is not linked. Always deny.
         if (!IsLinked(PE)) return false
 
-        // Entity is a vehicle; check region flags.
-        if (E is VehicleEntity) {
-            val R = FindRegionContainingBlock(E.world, E.blockPos) ?: return true
-            return R.AllowsVehicleUse()
-        }
-
-        // Check regular region flags.
+        // Check region flags.
         val R = FindRegionContainingBlock(E.world, E.blockPos) ?: return true
+        if (E is VehicleEntity) return R.AllowsVehicleUse()
+        if (E is VillagerEntity) return R.AllowsVillagerTrading()
         return R.AllowsEntityInteraction()
     }
 
@@ -116,6 +117,20 @@ object ProtectionManager {
 
     /** Get the regions for a world. */
     fun GetRegions(W: World): List<Region> = RegionList(W)
+
+
+    /**
+     * Check whether a position can be teleported to.
+     *
+     * This should only be used for ‘natural’ events, e.g. ender pearls,
+     * not commands. If you don’t want people to use commands to teleport
+     * somewhere they shouldn’t be, don’t give them access to those commands.
+     */
+    @JvmStatic
+    fun IsLegalTeleportTarget(W: World, Pos: BlockPos): Boolean {
+        val R = FindRegionContainingBlock(W, Pos) ?: return true
+        return R.AllowsTeleportation()
+    }
 
     /** Check if a player is linked. */
     fun IsLinked(PE: PlayerEntity) = when (PE) {
@@ -142,20 +157,29 @@ object ProtectionManager {
 
         // Entity is a player. Check PvP flag.
         if (AttackedEntity is PlayerEntity) {
-            val Regions = RegionList(AttackedEntity.world)
-            val R = Regions.find { it.Contains(AttackedEntity.blockPos) } ?: return false
+            val R = FindRegionContainingBlock(AttackedEntity.world, AttackedEntity.blockPos) ?: return false
             return !R.AllowsPvP()
         }
 
         // Entity is a mob. Check friendly attack flag.
         if (AttackedEntity !is Monster) {
-            val Regions = RegionList(AttackedEntity.world)
-            val R = Regions.find { it.Contains(AttackedEntity.blockPos) } ?: return false
+            val R = FindRegionContainingBlock(AttackedEntity.world, AttackedEntity.blockPos) ?: return false
             return !R.AllowsAttackingFriendlyEntities()
         }
 
         // Otherwise, allow.
         return false
+    }
+
+    /**
+    * Check if this entity is protected from world effects.
+    *
+    * This is used for explosions, lightning, etc.
+    */
+    @JvmStatic
+    fun IsProtectedEntity(E: Entity): Boolean {
+        val R = FindRegionContainingBlock(E.world, E.blockPos) ?: return false
+        return !R.AllowsEnvironmentalHazards()
     }
 
     /**
@@ -170,7 +194,8 @@ object ProtectionManager {
     }
 
     /** Find the region that contains a block. */
-    private fun FindRegionContainingBlock(W: World, Pos: BlockPos) = RegionList(W).find { it.Contains(Pos) }
+    private fun FindRegionContainingBlock(W: World, Pos: BlockPos) =
+        RegionList(W).find { it.Contains(Pos) }
 
     /** Get the regions for a world. */
     private fun RegionList(W: World): MutableList<Region> {
