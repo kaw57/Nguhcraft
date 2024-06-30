@@ -62,6 +62,7 @@ import org.nguh.nguhcraft.network.*
 //     - [T] Interacting w/ villagers
 //     - [x] Using boats/minecarts -> ACTUALLY TEST THIS
 //     - [ ] Breaking boats/minecarts.
+//     - [ ] Placing boats/minecarts.
 //     - [x] End crystals
 //       - [x] Placing end crystals.
 //       - [x] Destroying end crystals.

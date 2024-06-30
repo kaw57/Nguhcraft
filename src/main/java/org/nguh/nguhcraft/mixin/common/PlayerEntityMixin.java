@@ -38,7 +38,9 @@ public abstract class PlayerEntityMixin extends LivingEntity {
         double Range,
         CallbackInfoReturnable<Boolean> CIR
     ) {
-        if (!ProtectionManager.AllowBlockInteract(This(), getWorld(), Pos))
+        // This acts as a server-side gate to prevent block interactions. On
+        // the client, they should have already been rewritten to item uses.
+        if (!ProtectionManager.HandleBlockInteract(This(), getWorld(), Pos, getMainHandStack()).isAccepted())
             CIR.setReturnValue(false);
     }
 }

@@ -22,18 +22,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public abstract class ClientPlayerInteractionManagerMixin {
     @Shadow @Final private MinecraftClient client;
 
-    /** Prevent interactions with blocks within regions. */
-    @Inject(method = "interactBlock", at = @At("HEAD"), cancellable = true)
-    private void inject$interactBlock(
-        ClientPlayerEntity Player,
-        Hand H,
-        BlockHitResult BHR,
-        CallbackInfoReturnable<ActionResult> CIR
-    ) {
-        if (!ProtectionManager.AllowBlockInteract(Player, Player.clientWorld, BHR.getBlockPos()))
-            CIR.setReturnValue(ActionResult.FAIL);
-    }
-
     @Inject(method = "interactItem", at = @At("HEAD"), cancellable = true)
     private void inject$interactItem(PlayerEntity Player, Hand Hand, CallbackInfoReturnable<ActionResult> CIR) {
         if (NguhcraftClient.InHypershotContext) CIR.setReturnValue(ActionResult.PASS);

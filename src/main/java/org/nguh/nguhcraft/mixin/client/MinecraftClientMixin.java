@@ -3,9 +3,12 @@ package org.nguh.nguhcraft.mixin.client;
 import com.llamalad7.mixinextras.sugar.Local;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.client.network.ClientPlayerInteractionManager;
 import net.minecraft.client.session.ProfileKeys;
 import net.minecraft.client.world.ClientWorld;
+import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
+import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import org.jetbrains.annotations.Nullable;
 import org.nguh.nguhcraft.client.NguhcraftClient;
@@ -15,6 +18,7 @@ import org.spongepowered.asm.mixin.Overwrite;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
@@ -45,8 +49,37 @@ public abstract class MinecraftClientMixin {
 
     /** Prevent using an item while in a hypershot context. */
     @Inject(method = "doItemUse()V", at = @At("HEAD"), cancellable = true)
-    private void inject$doItemUse(CallbackInfo CI) {
+    private void inject$doItemUse$0(CallbackInfo CI) {
         if (NguhcraftClient.InHypershotContext) CI.cancel();
+    }
+
+    /**
+    * Prevent interactions with blocks within regions.
+    * <p>
+    * Rewrite them to item uses instead.
+    */
+    @Redirect(
+        method = "doItemUse()V",
+        at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/client/network/ClientPlayerInteractionManager;interactBlock(Lnet/minecraft/client/network/ClientPlayerEntity;Lnet/minecraft/util/Hand;Lnet/minecraft/util/hit/BlockHitResult;)Lnet/minecraft/util/ActionResult;"
+        )
+    )
+    private ActionResult inject$doItemUse$1(
+        ClientPlayerInteractionManager Mgr,
+        ClientPlayerEntity CPE,
+        Hand H,
+        BlockHitResult BHR
+    ) {
+        var Res = ProtectionManager.HandleBlockInteract(
+            CPE,
+            CPE.clientWorld,
+            BHR.getBlockPos(),
+            CPE.getStackInHand(H)
+        );
+
+        if (!Res.isAccepted()) return Res;
+        return Mgr.interactBlock(CPE, H, BHR);
     }
 
     /**
