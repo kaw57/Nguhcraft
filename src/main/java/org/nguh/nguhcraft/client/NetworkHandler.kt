@@ -4,8 +4,6 @@ import net.fabricmc.api.EnvType
 import net.fabricmc.api.Environment
 import net.fabricmc.fabric.api.client.networking.v1.ClientLoginNetworking
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking
-import net.minecraft.block.entity.LockableContainerBlockEntity
-import net.minecraft.inventory.ContainerLock
 import net.minecraft.network.packet.CustomPayload
 import net.minecraft.text.Text
 import net.minecraft.util.Formatting
@@ -16,7 +14,6 @@ import org.nguh.nguhcraft.Utils.LBRACK_COMPONENT
 import org.nguh.nguhcraft.Utils.RBRACK_COMPONENT
 import org.nguh.nguhcraft.client.ClientUtils.Client
 import org.nguh.nguhcraft.client.accessors.ClientPlayerListEntryAccessor
-import org.nguh.nguhcraft.mixin.common.LockableContainerBlockEntityAccessor
 import org.nguh.nguhcraft.network.*
 import org.nguh.nguhcraft.protect.ProtectionManager
 import java.util.concurrent.CompletableFuture
@@ -67,18 +64,6 @@ object NetworkHandler {
         }
 
         Execute { Client().messageHandler.onGameMessage(Message, false) }
-    }
-
-    /** Notification that a container lock has changed. */
-    private fun HandleContainerLockChangedPacket(Packet: ClientboundContainerLockChangedPacket) {
-        Execute {
-            // No need to for KeyItem.GetLockableEntity() here as the server
-            // only ever sends us the entity that we actually care about here.
-            val BE = Client().world?.getBlockEntity(Packet.Pos) ?: return@Execute
-            if (BE !is LockableContainerBlockEntity) return@Execute
-            val BEA = (BE as LockableContainerBlockEntityAccessor)
-            BEA.lock = if (Packet.NewKey.isEmpty()) ContainerLock.EMPTY else ContainerLock(Packet.NewKey)
-        }
     }
 
     /** Notification to update a player’s Discord name. */
@@ -133,7 +118,6 @@ object NetworkHandler {
         }
 
         Register(ClientboundChatPacket.ID, ::HandleChatPacket)
-        Register(ClientboundContainerLockChangedPacket.ID, ::HandleContainerLockChangedPacket)
         Register(ClientboundLinkUpdatePacket.ID, ::HandleLinkUpdatePacket)
         Register(ClientboundSyncGameRulesPacket.ID, ::HandleSyncGameRulesPacket)
         Register(ClientboundSyncHypershotStatePacket.ID, ::HandleSyncHypershotStatePacket)

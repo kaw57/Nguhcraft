@@ -12,6 +12,7 @@
 		"common.EntityMixin",
 		"common.ExplosionMixin",
 		"common.LockableContainerBlockEntityAccessor",
+		"common.LockableContainerBlockEntityMixin",
 		"common.PlayerEntityMixin",
 		"common.PotionContentsComponent",
 		"common.TridentEntityMixin"

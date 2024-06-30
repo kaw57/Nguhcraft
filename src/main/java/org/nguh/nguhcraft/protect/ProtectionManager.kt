@@ -66,23 +66,8 @@ object ProtectionManager {
         // Player is not linked. Always deny.
         if (!IsLinked(PE)) return false
 
-        // Allow unlocking locked containers by left-clicking with a key.
-        val BE = KeyItem.GetLockableEntity(W, Pos)
-        if (BE is LockableContainerBlockEntity) {
-            val St = PE.mainHandStack
-            if (St.isOf(NguhItems.KEY)) {
-                // Key matches. Allow.
-                val CLock = BE.Lock.key
-                val KLock = St.get(DataComponentTypes.LOCK)?.key ?: ""
-                if (CLock == KLock) return true
-            }
-
-            // Not a key or the key doesn’t match. Deny.
-            return false
-        }
-
         // Block is within the bounds of a protected region. Deny.
-        if (IsProtectedBlockInternal(W, Pos)) return false
+        if (IsProtectedBlock(W, Pos)) return false
 
         // Otherwise, allow.
         return true
@@ -126,6 +111,10 @@ object ProtectionManager {
         if (E is VillagerEntity) return R.AllowsVillagerTrading()
         return R.AllowsEntityInteraction()
     }
+
+    /** Delegates to PlayerEntity.BypassesRegionProtection(). Callable from Java. */
+    @JvmStatic
+    fun BypassesRegionProtection(PE: PlayerEntity) = PE.BypassesRegionProtection()
 
     /**
      * This function is the intended way to delete a region from a world.

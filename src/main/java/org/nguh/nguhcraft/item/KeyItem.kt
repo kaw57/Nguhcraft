@@ -32,7 +32,7 @@ class KeyItem : Item(
         Ctx: TooltipContext,
         TT: MutableList<Text>,
         Ty: TooltipType
-    ) = AppendLockTooltip(S, TT, KEY_PREFIX)
+    ) = AppendLockTooltip(S, TT, Ty, KEY_PREFIX)
 
     override fun useOnBlock(Ctx: ItemUsageContext): ActionResult {
         // If this is not a lockable block, do nothing.
@@ -73,11 +73,10 @@ class KeyItem : Item(
             override fun getFallback() = null
         }
 
-
-        fun AppendLockTooltip(S: ItemStack, TT: MutableList<Text>, Prefix: Text) {
+        fun AppendLockTooltip(S: ItemStack, TT: MutableList<Text>, Ty: TooltipType, Prefix: Text) {
             val Lock = S.get(DataComponentTypes.LOCK) ?: return
             if (Lock.key.isEmpty()) return
-            val Key = Text.literal(Lock.key.substring(0..<13) + "...")
+            val Key = Text.literal(if (Ty.isAdvanced) Lock.key else Lock.key.substring(0..<13) + "...")
             TT.add(Prefix.copy().append(Key.formatted(Formatting.LIGHT_PURPLE)))
         }
 

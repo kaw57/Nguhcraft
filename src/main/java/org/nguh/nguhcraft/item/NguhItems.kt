@@ -23,6 +23,12 @@ object NguhItems {
             Id("crafting_special_key_lock_pairing"),
             SpecialRecipeSerializer(::KeyLockPairingRecipe)
         )
+
+        KeyDuplicationRecipe.SERIALISER = Registry.register(
+            Registries.RECIPE_SERIALIZER,
+            Id("crafting_special_key_duplication"),
+            SpecialRecipeSerializer(::KeyDuplicationRecipe)
+        )
     }
 
     private fun CreateItem(S: String, I: Item): Item =

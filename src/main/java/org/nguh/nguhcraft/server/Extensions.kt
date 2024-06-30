@@ -8,7 +8,6 @@ import net.minecraft.server.network.ServerPlayerEntity
 import net.minecraft.server.world.ServerWorld
 import net.minecraft.text.Text
 import org.nguh.nguhcraft.mixin.common.LockableContainerBlockEntityAccessor
-import org.nguh.nguhcraft.network.ClientboundContainerLockChangedPacket
 import org.nguh.nguhcraft.server.accessors.ServerPlayerAccessor
 
 val ServerPlayerEntity.isLinked get() = (this as ServerPlayerAccessor).isLinked
@@ -34,8 +33,6 @@ var ServerPlayerEntity.discordDisplayName: Text?
 @Environment(EnvType.SERVER)
 fun LockableContainerBlockEntity.UpdateLock(NewLock: ContainerLock) {
     (this as LockableContainerBlockEntityAccessor).lock = NewLock
-    ServerUtils.Broadcast(
-        world as ServerWorld,
-        ClientboundContainerLockChangedPacket(pos, NewLock.key)
-    )
+    (world as ServerWorld).chunkManager.markForUpdate(pos)
+    markDirty()
 }
