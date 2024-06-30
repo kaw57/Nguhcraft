@@ -11,6 +11,7 @@ import net.minecraft.registry.Registries
 import net.minecraft.registry.Registry
 import net.minecraft.text.Text
 import net.minecraft.util.hit.HitResult
+import net.minecraft.util.math.BlockPos
 import net.minecraft.world.RaycastContext
 import org.lwjgl.glfw.GLFW
 import org.nguh.nguhcraft.Constants.MAX_HOMING_DISTANCE
@@ -38,6 +39,7 @@ class NguhcraftClient : ClientModInitializer {
 
         @JvmField @Volatile var InHypershotContext = false
         @JvmField @Volatile var BypassesRegionProtection = false
+        @JvmField @Volatile var LastInteractedLecternPos: BlockPos = BlockPos.ORIGIN
 
         @JvmStatic
         fun ProcessF3(key: Int): Boolean {

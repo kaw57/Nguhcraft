@@ -4,6 +4,7 @@ import net.fabricmc.api.EnvType
 import net.fabricmc.api.Environment
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
 import net.minecraft.block.Blocks
+import net.minecraft.block.LecternBlock
 import net.minecraft.block.entity.LockableContainerBlockEntity
 import net.minecraft.client.network.ClientPlayerEntity
 import net.minecraft.entity.Entity
@@ -26,6 +27,7 @@ import net.minecraft.util.math.BlockPos
 import net.minecraft.world.World
 import org.nguh.nguhcraft.BypassesRegionProtection
 import org.nguh.nguhcraft.Lock
+import org.nguh.nguhcraft.client.NguhcraftClient
 import org.nguh.nguhcraft.client.accessors.AbstractClientPlayerEntityAccessor
 import org.nguh.nguhcraft.item.KeyItem
 import org.nguh.nguhcraft.network.ClientboundSyncProtectionMgrPacket
@@ -166,9 +168,22 @@ object ProtectionManager {
         // Player is not linked. Always deny.
         if (!IsLinked(PE)) return ActionResult.FAIL
 
-        // Interacting with ender chests is always fine.
+        // Interacting with certain blocks is always fine.
         val St = W.getBlockState(Pos)
-        if (St.isOf(Blocks.ENDER_CHEST)) return ActionResult.SUCCESS
+        when (St.block) {
+            // These either have inventories that are per player and are
+            // thus safe to access, or don’t have permanent effects when
+            // interacted with.
+            Blocks.ENDER_CHEST, Blocks.CRAFTING_TABLE, Blocks.BELL,
+                -> return ActionResult.SUCCESS
+
+            // Books on lecterns can be viewed, but not taken or placed;
+            // the latter is handled later on in the lectern code.
+            Blocks.LECTERN -> if (St.get(LecternBlock.HAS_BOOK)) return ActionResult.SUCCESS
+
+            // Players might want to mark banners on a map.
+            else -> if (St.isIn(BlockTags.BANNERS)) return ActionResult.SUCCESS
+        }
 
         // Allow placing minecarts.
         if (Stack != null && Stack.item is MinecartItem && St.isIn(BlockTags.RAILS)) {

@@ -71,6 +71,18 @@ public abstract class MinecraftClientMixin {
         Hand H,
         BlockHitResult BHR
     ) {
+        // Horrible hack: remember this as the last position we interacted
+        // with so we can subsequently disable the ‘Take Book’ button when
+        // opening a lectern screen.
+        //
+        // There doesn’t seem to be a good way of doing this properly since
+        // the block position of the lectern is never actually sent to the
+        // client...
+        //
+        // This means this value will contain garbage half of the time, but
+        // the only thing that matters is that it doesn’t when we actually
+        // manage to open a lectern...
+        NguhcraftClient.LastInteractedLecternPos = BHR.getBlockPos();
         var Res = ProtectionManager.HandleBlockInteract(
             CPE,
             CPE.clientWorld,
