@@ -31,6 +31,7 @@
 		"client.MinecraftClientMixin",
 		"client.PlayerListEntryMixin",
 		"client.SocialInteractionsPlayerListEntryMixin",
+		"client.TexturedRenderLayersMixin",
 		"client.TitleScreenMixin",
 		"client.YggdrasilUserApiServiceMixin"
 	],

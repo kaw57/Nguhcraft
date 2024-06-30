@@ -34,7 +34,7 @@ import org.nguh.nguhcraft.network.*
 //   - [x] Render potion levels properly.
 //   - [ ] Make homing arrows target ‘Target Blocks’ if there are no valid entities (or if you target it directly)
 //   - [ ] Have a way of locking chests and make them unbreakable.
-//     - [T] Disallowing hoppers/hopper minecarts, tnt, wither immune, dispensers, crafters, etc.
+//     - [ ] Disallowing hoppers/hopper minecarts, tnt, wither immune, dispensers, crafters, etc.
 //     - [x] Maybe barrels too if they can be locked.
 //     - [x] Left click with key to unlock (drops the lock).
 //     - [x] Show key in the ‘Chest is locked’ message.
@@ -42,7 +42,7 @@ import org.nguh.nguhcraft.network.*
 //     - [x] Allow opening in /bypass mode.
 //     - [x] Enforce region protection.
 //     - [x] What happens when a locked chest becomes a double chest?
-//     - [ ] Add little lock icon to chest (custom texture like furnace).
+//     - [x] Add little lock icon to chest (custom texture like furnace).
 //     - [x] Command to generate a key.
 //     - [T] Show full key in advanced tooltip.
 // - [ ] World protection
@@ -133,6 +133,6 @@ class Nguhcraft : ModInitializer {
 
     companion object {
         const val MOD_ID = "nguhcraft"
-        fun Id(S: String): Identifier = Identifier.of(MOD_ID, S)
+        @JvmStatic fun Id(S: String): Identifier = Identifier.of(MOD_ID, S)
     }
 }

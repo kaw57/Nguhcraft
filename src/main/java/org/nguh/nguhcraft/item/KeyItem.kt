@@ -3,6 +3,7 @@ package org.nguh.nguhcraft.item
 import net.minecraft.block.Block
 import net.minecraft.block.ChestBlock
 import net.minecraft.block.DoubleBlockProperties
+import net.minecraft.block.entity.BlockEntity
 import net.minecraft.block.entity.ChestBlockEntity
 import net.minecraft.block.entity.LockableContainerBlockEntity
 import net.minecraft.component.DataComponentTypes
@@ -12,6 +13,8 @@ import net.minecraft.item.ItemStack
 import net.minecraft.item.ItemUsageContext
 import net.minecraft.item.tooltip.TooltipType
 import net.minecraft.server.world.ServerWorld
+import net.minecraft.sound.SoundCategory
+import net.minecraft.sound.SoundEvents
 import net.minecraft.text.Text
 import net.minecraft.util.ActionResult
 import net.minecraft.util.Formatting
@@ -53,6 +56,15 @@ class KeyItem : Item(
             Block.dropStack(W, Ctx.blockPos, Lock)
             BE.UpdateLock(ContainerLock.EMPTY)
         }
+
+        W.playSound(
+            Ctx.player,
+            Ctx.blockPos,
+            SoundEvents.BLOCK_CHAIN_BREAK,
+            SoundCategory.BLOCKS,
+            1.0f,
+            1.0f
+        )
 
         return ActionResult.success(W.isClient)
     }
@@ -110,6 +122,14 @@ class KeyItem : Item(
             // interface with the corresponding Java method properly.
             val Cast =  BES as DoubleBlockProperties.PropertySource<ChestBlockEntity>
             return Cast.apply(Accessor)
+        }
+
+        /** Check if a chest is locked. */
+        @JvmStatic
+        fun IsChestLocked(BE: BlockEntity): Boolean {
+            val W = BE.world ?: return false
+            val E = GetLockableEntity(W, BE.pos) ?: return false
+            return E.Lock.key.isNotEmpty()
         }
     }
 }

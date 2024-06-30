@@ -1,5 +1,6 @@
 package org.nguh.nguhcraft.item
 
+import net.minecraft.block.entity.EnderChestBlockEntity
 import net.minecraft.block.entity.LockableContainerBlockEntity
 import net.minecraft.component.DataComponentTypes
 import net.minecraft.inventory.ContainerLock
@@ -7,6 +8,8 @@ import net.minecraft.item.Item
 import net.minecraft.item.ItemStack
 import net.minecraft.item.ItemUsageContext
 import net.minecraft.item.tooltip.TooltipType
+import net.minecraft.sound.SoundCategory
+import net.minecraft.sound.SoundEvents
 import net.minecraft.text.Text
 import net.minecraft.util.ActionResult
 import net.minecraft.util.Formatting
@@ -44,6 +47,15 @@ class LockItem : Item(
                 BE.UpdateLock(Comp)
                 Ctx.stack.decrement(1)
             }
+
+            W.playSound(
+                Ctx.player,
+                Pos,
+                SoundEvents.BLOCK_IRON_DOOR_CLOSE,
+                SoundCategory.BLOCKS,
+                1.0f,
+                1.0f
+            )
 
             return ActionResult.success(W.isClient)
         }
