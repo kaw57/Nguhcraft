@@ -1,9 +1,12 @@
 package org.nguh.nguhcraft
 
+import net.minecraft.block.entity.LockableContainerBlockEntity
 import net.minecraft.client.network.ClientPlayerEntity
 import net.minecraft.entity.player.PlayerEntity
+import net.minecraft.inventory.ContainerLock
 import net.minecraft.server.network.ServerPlayerEntity
 import org.nguh.nguhcraft.client.NguhcraftClient
+import org.nguh.nguhcraft.mixin.common.LockableContainerBlockEntityAccessor
 import org.nguh.nguhcraft.server.accessors.ServerPlayerAccessor
 
 fun PlayerEntity.BypassesRegionProtection(): Boolean {
@@ -18,3 +21,6 @@ fun PlayerEntity.BypassesRegionProtection(): Boolean {
     // Could get here for other clients, in which case we assume no bypass.
     return false
 }
+
+val LockableContainerBlockEntity.Lock: ContainerLock
+    get() = (this as LockableContainerBlockEntityAccessor).lock

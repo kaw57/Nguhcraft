@@ -4,7 +4,9 @@ import net.fabricmc.api.EnvType
 import net.fabricmc.api.Environment
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
 import net.minecraft.block.Blocks
+import net.minecraft.block.entity.LockableContainerBlockEntity
 import net.minecraft.client.network.ClientPlayerEntity
+import net.minecraft.component.DataComponentTypes
 import net.minecraft.entity.Entity
 import net.minecraft.entity.damage.DamageSource
 import net.minecraft.entity.mob.Monster
@@ -19,7 +21,10 @@ import net.minecraft.server.network.ServerPlayerEntity
 import net.minecraft.util.math.BlockPos
 import net.minecraft.world.World
 import org.nguh.nguhcraft.BypassesRegionProtection
+import org.nguh.nguhcraft.Lock
 import org.nguh.nguhcraft.client.accessors.AbstractClientPlayerEntityAccessor
+import org.nguh.nguhcraft.item.KeyItem
+import org.nguh.nguhcraft.item.NguhItems
 import org.nguh.nguhcraft.network.ClientboundSyncProtectionMgrPacket
 import org.nguh.nguhcraft.server.ServerUtils
 import org.nguh.nguhcraft.server.isLinked
@@ -61,8 +66,23 @@ object ProtectionManager {
         // Player is not linked. Always deny.
         if (!IsLinked(PE)) return false
 
+        // Allow unlocking locked containers by left-clicking with a key.
+        val BE = KeyItem.GetLockableEntity(W, Pos)
+        if (BE is LockableContainerBlockEntity) {
+            val St = PE.mainHandStack
+            if (St.isOf(NguhItems.KEY)) {
+                // Key matches. Allow.
+                val CLock = BE.Lock.key
+                val KLock = St.get(DataComponentTypes.LOCK)?.key ?: ""
+                if (CLock == KLock) return true
+            }
+
+            // Not a key or the key doesn’t match. Deny.
+            return false
+        }
+
         // Block is within the bounds of a protected region. Deny.
-        if (IsProtectedBlock(W, Pos)) return false
+        if (IsProtectedBlockInternal(W, Pos)) return false
 
         // Otherwise, allow.
         return true
@@ -81,7 +101,11 @@ object ProtectionManager {
         if (W.getBlockState(Pos).isOf(Blocks.ENDER_CHEST)) return true
 
         // Block is within the bounds of a protected region. Deny.
-        if (IsProtectedBlock(W, Pos)) return false
+        //
+        // Take care not to treat locked containers as protected here
+        // so the locking code can take over from here and do the check
+        // properly.
+        if (IsProtectedBlockInternal(W, Pos)) return false
 
         // Otherwise, allow.
         return true
@@ -151,6 +175,16 @@ object ProtectionManager {
     /** Check if a block is within a protected region. */
     @JvmStatic
     fun IsProtectedBlock(W: World, Pos: BlockPos): Boolean {
+        // If this is a locked chest, treat it as protected.
+        val BE = KeyItem.GetLockableEntity(W, Pos)
+        if (BE is LockableContainerBlockEntity && BE.Lock.key.isNotEmpty()) return true
+
+        // Otherwise, delegate to the region check.
+        return IsProtectedBlockInternal(W, Pos)
+    }
+
+    /** Like IsProtectedBlock(), but does not check for locked chests. */
+    private fun IsProtectedBlockInternal(W: World, Pos: BlockPos): Boolean {
         val R = FindRegionContainingBlock(W, Pos) ?: return false
         return !R.AllowsBlockModification()
     }

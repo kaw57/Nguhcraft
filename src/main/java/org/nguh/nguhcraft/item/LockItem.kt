@@ -7,12 +7,13 @@ import net.minecraft.item.Item
 import net.minecraft.item.ItemStack
 import net.minecraft.item.ItemUsageContext
 import net.minecraft.item.tooltip.TooltipType
-import net.minecraft.server.world.ServerWorld
 import net.minecraft.text.Text
 import net.minecraft.util.ActionResult
 import net.minecraft.util.Formatting
 import net.minecraft.util.Rarity
-import org.nguh.nguhcraft.mixin.common.LockableContainerBlockEntityAccessor
+import org.nguh.nguhcraft.Lock
+import org.nguh.nguhcraft.server.UpdateLock
+
 
 class LockItem : Item(
     Settings()
@@ -28,27 +29,36 @@ class LockItem : Item(
 
     override fun useOnBlock(Ctx: ItemUsageContext): ActionResult {
         val W = Ctx.world
-        val BE = W.getBlockEntity(Ctx.blockPos)
+        val Pos = Ctx.blockPos
+        val BE = KeyItem.GetLockableEntity(W, Pos)
         if (BE is LockableContainerBlockEntity) {
             // Already locked.
-            if ((BE as LockableContainerBlockEntityAccessor).lock.key.isNotEmpty())
-                return ActionResult.FAIL
+            if (BE.Lock.key.isNotEmpty()) return ActionResult.FAIL
 
             // Check if the lock is paired.
             val Comp = Ctx.stack.get(DataComponentTypes.LOCK)
             if (Comp == null || Comp.key.isEmpty()) return ActionResult.FAIL
 
             // Apply the lock.
-            if (Ctx.world is ServerWorld) BE.lock = Comp
+            if (!W.isClient) {
+                BE.UpdateLock(Comp)
+                Ctx.stack.decrement(1)
+            }
 
-            // And consume it.
-            Ctx.stack.decrement(1)
-            return ActionResult.success(Ctx.world.isClient)
+            return ActionResult.success(W.isClient)
         }
         return ActionResult.PASS
     }
 
     companion object {
         private val LOCK_PREFIX = Text.literal("Id: ").formatted(Formatting.YELLOW)
+
+        /** Create a lock item stack with the specified container lock. */
+        fun Create(Lock: ContainerLock): ItemStack {
+            val St = ItemStack(NguhItems.LOCK)
+            St.set(DataComponentTypes.LOCK, Lock)
+            St.set(DataComponentTypes.ENCHANTMENT_GLINT_OVERRIDE, true)
+            return St
+        }
     }
 }

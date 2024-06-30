@@ -17,7 +17,10 @@ import net.minecraft.command.argument.BlockPosArgumentType
 import net.minecraft.command.argument.DimensionArgumentType
 import net.minecraft.command.argument.EntityArgumentType
 import net.minecraft.command.argument.RegistryEntryReferenceArgumentType
+import net.minecraft.component.DataComponentTypes
 import net.minecraft.enchantment.Enchantment
+import net.minecraft.inventory.ContainerLock
+import net.minecraft.item.ItemStack
 import net.minecraft.registry.RegistryKeys
 import net.minecraft.registry.entry.RegistryEntry
 import net.minecraft.server.command.CommandManager.*
@@ -28,10 +31,12 @@ import net.minecraft.text.Text
 import net.minecraft.util.Formatting
 import net.minecraft.util.math.BlockPos
 import net.minecraft.world.World
+import org.apache.logging.log4j.core.jmx.Server
 import org.nguh.nguhcraft.Constants
 import org.nguh.nguhcraft.Commands.Exn
 import org.nguh.nguhcraft.SyncedGameRule
 import org.nguh.nguhcraft.Utils.Normalised
+import org.nguh.nguhcraft.item.NguhItems
 import org.nguh.nguhcraft.network.ClientboundSyncProtectionBypassPacket
 import org.nguh.nguhcraft.protect.ProtectionManager
 import org.nguh.nguhcraft.protect.Region
@@ -54,6 +59,7 @@ object Commands {
             D.register(BypassCommand())               // /bypass
             D.register(DiscordCommand())              // /discord
             D.register(EnchantCommand(A))             // /enchant
+            D.register(KeyCommand())                  // /key
             val Msg = D.register(MessageCommand())    // /msg
             D.register(RegionCommand())               // /region
             D.register(RuleCommand())                 // /rule
@@ -251,6 +257,27 @@ object Commands {
                         SP.displayName!!,
                     )
                 )
+            )
+            return 1
+        }
+    }
+
+    object KeyCommand {
+        val ERR_EMPTY: Text = Text.literal("Key may not be empty!")
+
+        fun Generate(S: ServerCommandSource, SP: ServerPlayerEntity, Key: String): Int {
+            if (Key.isEmpty()) {
+                S.sendError(ERR_EMPTY)
+                return 0
+            }
+
+            val St = ItemStack(NguhItems.KEY)
+            St.set(DataComponentTypes.LOCK, ContainerLock(Key))
+            SP.inventory.insertStack(St)
+            SP.currentScreenHandler.sendContentUpdates()
+            S.sendMessage(
+                Text.literal("Generated key ").formatted(Formatting.YELLOW)
+                .append(Text.literal(Key).formatted(Formatting.LIGHT_PURPLE))
             )
             return 1
         }
@@ -515,6 +542,16 @@ object Commands {
                         1
                     )
                 }
+        )
+
+    private fun KeyCommand(): LiteralArgumentBuilder<ServerCommandSource> = literal("key")
+        .requires { it.hasPermissionLevel(4) }
+        .then(argument("key", StringArgumentType.string())
+            .executes { KeyCommand.Generate(
+                it.source,
+                it.source.playerOrThrow,
+                StringArgumentType.getString(it, "key")
+            ) }
         )
 
     private fun MessageCommand(): LiteralArgumentBuilder<ServerCommandSource> = literal("msg")

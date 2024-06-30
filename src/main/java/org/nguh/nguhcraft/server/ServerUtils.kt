@@ -127,6 +127,13 @@ object ServerUtils {
                 ServerPlayNetworking.send(Player, P)
     }
 
+    /** Send a packet to every client in a world. */
+    @JvmStatic
+    fun Broadcast(W: ServerWorld, P: CustomPayload) {
+        for (Player in W.players)
+            ServerPlayNetworking.send(Player, P)
+    }
+
     /** Send a packet to every client. */
     @JvmStatic
     fun Broadcast(P: CustomPayload) {

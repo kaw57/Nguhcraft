@@ -72,7 +72,7 @@ object Treasures {
         .enchant(SHARPNESS, 40)
         .build()
 
-    private val THOU_HAST_BEEN_YEETEN = Builder(Items.NETHERITE_SWORD, Name("Thou Hast Been Yeeten"))
+    private val THOU_HAST_BEEN_YEETEN = Builder(Items.MACE, Name("Thou Hast Been Yeeten"))
         .unbreakable()
         .enchant(SHARPNESS, 255)
         .enchant(KNOCKBACK, 10)

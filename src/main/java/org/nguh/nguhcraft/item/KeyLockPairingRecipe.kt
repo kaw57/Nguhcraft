@@ -1,22 +1,15 @@
 package org.nguh.nguhcraft.item
 
-import net.dv8tion.jda.api.interactions.components.ItemComponent
-import net.minecraft.component.ComponentType
 import net.minecraft.component.DataComponentTypes
 import net.minecraft.inventory.ContainerLock
 import net.minecraft.item.ItemStack
 import net.minecraft.recipe.RecipeSerializer
 import net.minecraft.recipe.SpecialCraftingRecipe
-import net.minecraft.recipe.SpecialRecipeSerializer
 import net.minecraft.recipe.book.CraftingRecipeCategory
 import net.minecraft.recipe.input.CraftingRecipeInput
-import net.minecraft.registry.Registries
-import net.minecraft.registry.Registry
 import net.minecraft.registry.RegistryWrapper
-import net.minecraft.util.Identifier
 import net.minecraft.util.collection.DefaultedList
 import net.minecraft.world.World
-import org.nguh.nguhcraft.Nguhcraft.Companion.Id
 import java.util.*
 
 class KeyLockPairingRecipe(C: CraftingRecipeCategory) : SpecialCraftingRecipe(C) {
@@ -39,10 +32,10 @@ class KeyLockPairingRecipe(C: CraftingRecipeCategory) : SpecialCraftingRecipe(C)
         return Key to Locks
     }
 
-    private fun GetOrCreateKeyUUID(Key: ItemStack): String {
+    private fun GetOrCreateContainerLock(Key: ItemStack): ContainerLock {
         if (Key.get(DataComponentTypes.LOCK)!!.key.isEmpty())
             Key.set(DataComponentTypes.LOCK, ContainerLock(UUID.randomUUID().toString()))
-        return Key.get(DataComponentTypes.LOCK)!!.key
+        return Key.get(DataComponentTypes.LOCK)!!
     }
 
     override fun craft(Input: CraftingRecipeInput, Lookup: RegistryWrapper.WrapperLookup): ItemStack {
@@ -51,9 +44,9 @@ class KeyLockPairingRecipe(C: CraftingRecipeCategory) : SpecialCraftingRecipe(C)
         if (Key == null || Locks == 0) return ItemStack.EMPTY
 
         // Pair them.
-        val KeyUUID = GetOrCreateKeyUUID(Key)
+        val LockComponent = GetOrCreateContainerLock(Key)
         val Lock = ItemStack(NguhItems.LOCK, Locks)
-        Lock.set(DataComponentTypes.LOCK, ContainerLock(KeyUUID))
+        Lock.set(DataComponentTypes.LOCK, LockComponent)
 
         // Make both glow so we know that they’re paired.
         Key.set(DataComponentTypes.ENCHANTMENT_GLINT_OVERRIDE, true)

@@ -59,6 +59,7 @@ data class ClientboundLinkUpdatePacket(
         val ID = Utils.PacketId<ClientboundLinkUpdatePacket>("clientbound/link_update")
         val CODEC: PacketCodec<RegistryByteBuf, ClientboundLinkUpdatePacket> = PacketCodec.of(
             { obj: ClientboundLinkUpdatePacket, buf: RegistryByteBuf -> obj.write(buf) },
-            { buf: RegistryByteBuf -> ClientboundLinkUpdatePacket(buf) })
+            { buf: RegistryByteBuf -> ClientboundLinkUpdatePacket(buf) }
+        )
     }
 }

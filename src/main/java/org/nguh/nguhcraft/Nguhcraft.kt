@@ -34,8 +34,8 @@ import org.nguh.nguhcraft.network.*
 //   - [x] Render potion levels properly.
 //   - [ ] Make homing arrows target ‘Target Blocks’ if there are no valid entities (or if you target it directly)
 //   - [ ] Have a way of locking chests and make them unbreakable.
-//     - [ ] Disallowing hoppers/hopper minecarts, tnt, wither immune, dispensers, crafters, etc.
-//     - [ ] Maybe barrels too if they can be locked.
+//     - [T] Disallowing hoppers/hopper minecarts, tnt, wither immune, dispensers, crafters, etc.
+//     - [T] Maybe barrels too if they can be locked.
 //     - [ ] Left click with key to unlock (drops the lock).
 //     - [ ] Show key in the ‘Chest is locked’ message.
 //     - [ ] Recipe to duplicate keys.
@@ -43,6 +43,7 @@ import org.nguh.nguhcraft.network.*
 //     - [ ] Enforce region protection.
 //     - [ ] What happens when a locked chest becomes a double chest?
 //     - [ ] Add little lock icon to chest (custom texture like furnace).
+//     - [T] Command to generate a key.
 // - [ ] World protection
 //       This is used both for protected areas and to prevent unlinked
 //       players from doing anything.
@@ -116,11 +117,12 @@ class Nguhcraft : ModInitializer {
     override fun onInitialize() {
         // Clientbound packets.
         PayloadTypeRegistry.playS2C().register(ClientboundChatPacket.ID, ClientboundChatPacket.CODEC)
+        PayloadTypeRegistry.playS2C().register(ClientboundContainerLockChangedPacket.ID, ClientboundContainerLockChangedPacket.CODEC)
         PayloadTypeRegistry.playS2C().register(ClientboundLinkUpdatePacket.ID, ClientboundLinkUpdatePacket.CODEC)
         PayloadTypeRegistry.playS2C().register(ClientboundSyncGameRulesPacket.ID, ClientboundSyncGameRulesPacket.CODEC)
         PayloadTypeRegistry.playS2C().register(ClientboundSyncHypershotStatePacket.ID, ClientboundSyncHypershotStatePacket.CODEC)
-        PayloadTypeRegistry.playS2C().register(ClientboundSyncProtectionMgrPacket.ID, ClientboundSyncProtectionMgrPacket.CODEC)
         PayloadTypeRegistry.playS2C().register(ClientboundSyncProtectionBypassPacket.ID, ClientboundSyncProtectionBypassPacket.CODEC)
+        PayloadTypeRegistry.playS2C().register(ClientboundSyncProtectionMgrPacket.ID, ClientboundSyncProtectionMgrPacket.CODEC)
 
         // Serverbound packets.
         PayloadTypeRegistry.playC2S().register(ServerboundChatPacket.ID, ServerboundChatPacket.CODEC)
