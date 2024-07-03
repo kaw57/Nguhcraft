@@ -115,9 +115,7 @@ object ServerUtils {
     fun ActOnPlayerTick(SP: ServerPlayerEntity) {
         val SW = SP.serverWorld
         if (!SP.hasPermissionLevel(4) && !SW.worldBorder.contains(SP.boundingBox)) {
-            val Spawn = SW.spawnPos.toBottomCenterPos()
-            val Vec = Vec3d(Spawn.x, Spawn.y + 1, Spawn.z)
-            SP.teleportTo(TeleportTarget(SW, Vec, Vec3d.ZERO, 0F, 0F, TeleportTarget.NO_OP))
+            SP.Teleport(SW, SW.spawnPos)
             SendTitle(SP, BORDER_TITLE, BORDER_SUBTITLE)
             LOGGER.warn("Player {} tried to leave the border.", SP.displayName!!.string)
         }

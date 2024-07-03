@@ -26,14 +26,20 @@ import net.minecraft.registry.entry.RegistryEntry
 import net.minecraft.server.command.CommandManager.*
 import net.minecraft.server.command.ServerCommandSource
 import net.minecraft.server.network.ServerPlayerEntity
+import net.minecraft.server.world.ServerWorld
 import net.minecraft.text.MutableText
 import net.minecraft.text.Text
 import net.minecraft.util.Formatting
 import net.minecraft.util.math.BlockPos
+import net.minecraft.util.math.Direction
+import net.minecraft.util.math.Vec3d
+import net.minecraft.world.Heightmap
+import net.minecraft.world.TeleportTarget
 import net.minecraft.world.World
-import org.apache.logging.log4j.core.jmx.Server
-import org.nguh.nguhcraft.Constants
+import net.minecraft.world.chunk.Chunk
+import net.minecraft.world.chunk.ChunkStatus
 import org.nguh.nguhcraft.Commands.Exn
+import org.nguh.nguhcraft.Constants
 import org.nguh.nguhcraft.SyncedGameRule
 import org.nguh.nguhcraft.Utils.Normalised
 import org.nguh.nguhcraft.item.NguhItems
@@ -45,6 +51,7 @@ import org.nguh.nguhcraft.toUUID
 import org.slf4j.Logger
 import java.util.*
 import java.util.regex.PatternSyntaxException
+import kotlin.math.sqrt
 
 
 @Environment(EnvType.SERVER)
@@ -66,6 +73,7 @@ object Commands {
             D.register(SayCommand())                  // /say
             D.register(literal("tell").redirect(Msg)) // /tell
             D.register(literal("w").redirect(Msg))    // /w
+            D.register(WildCommand())                 // /wild
         }
     }
 
@@ -436,6 +444,89 @@ object Commands {
         }
     }
 
+    object WildCommand {
+        const val NETHER_TOP: Int = 128
+        const val MAX_ATTEMPTS = 50
+        val TELEPORT_FAILED: Text = Text.literal("Sorry, couldn’t find a suitable teleport location. Please try again.")
+
+        /**
+         * Teleport a player to a random position in the world
+         *
+         * The destination must not be within a region, and it must be within
+         * the border.
+         *
+         * We also don't want to send players into a lava lake or ocean. For
+         * this, we need to make sure the block they land on is a solid block.
+         *
+         * This is achieved by iterating downwards from the top of the world
+         * once random x and z coordinates have been computed and choosing
+         * different x and z coordinates should no suitable block be found
+         * at that location.
+         */
+        fun RandomTeleport(S: ServerCommandSource, SP: ServerPlayerEntity): Int {
+            val SW = SP.world as ServerWorld
+            val WB = SW.worldBorder
+            val MinY = SW.bottomY
+            val Sz = (WB.size * .8).toInt()
+            val Dim = SW.dimension
+            val Nether = Dim.hasCeiling()
+            val Y = SW.logicalHeight
+
+            // We may get really bad rolls, so don’t try for ever.
+            for (tries in 0..<MAX_ATTEMPTS) {
+                // Pick any position inside the world border and not too close
+                // to the edge.
+                val X = SP.random.nextInt(Sz) - Sz / 2
+                val Z = SP.random.nextInt(Sz) - Sz / 2
+                var Pos = BlockPos.Mutable(X, Y, Z)
+
+                // Check that it is not in a region.
+                if (!ProtectionManager.IsLegalTeleportTarget(SW, Pos)) continue
+
+                // Check if we can place the player somewhere in this XZ columns.
+                //
+                // In anything that is not the nether, getTopY() is the fastest way
+                // of accomplishing this; however, that won’t create the chunk if it
+                // doesn’t already exist, and we also need to do some post-processing
+                // in the nether, so grab the chunk first.
+                //
+                // But first, check if the chunk already exists; if not, we need to
+                // generate it; since this is expensive, only allow doing this once.
+                val Chunk = SW.getChunk(X, Z, ChunkStatus.SURFACE, false) ?: continue
+
+                // Helpers we’ll need below.
+                fun IsAir() = Chunk.getBlockState(Pos).isAir
+                fun MoveDownWhile(Cond: () -> Boolean) {
+                    while (Pos.y > MinY && Cond()) Pos = Pos.move(Direction.DOWN)
+                }
+
+                // Get the top-most solid block. In the nether, continue through
+                // the roof, and then keep going again until we no longer hit air;
+                // do the last part even if we’re not in the nether since TopY may
+                // be in the air.
+                Pos.y = SW.getTopY(Heightmap.Type.MOTION_BLOCKING_NO_LEAVES, X, Z)
+                if (Nether) MoveDownWhile { !IsAir() } // Scan through ceiling.
+                MoveDownWhile(::IsAir) // Scan to ground.
+
+                // Try teleporting if we’re still in bounds and not in a liquid.
+                val Up1 = Pos.up()
+                val Up2 = Up1.up()
+                if (Pos.y > MinY &&
+                    Chunk.getBlockState(Pos).isSideSolidFullSquare(SW, Pos, Direction.UP) &&
+                    Chunk.getBlockState(Up1).isAir &&
+                    Chunk.getBlockState(Up2).isAir
+                ) {
+                    SP.Teleport(SW, Pos)
+                    return 1
+                }
+            }
+
+            // Couldn’t find a suitable location.
+            S.sendError(TELEPORT_FAILED)
+            return 0
+        }
+    }
+
     // =========================================================================
     //  Command Trees
     // =========================================================================
@@ -671,4 +762,7 @@ object Commands {
                 1
             }
         )
+
+    private fun WildCommand(): LiteralArgumentBuilder<ServerCommandSource> = literal("wild")
+        .executes { WildCommand.RandomTeleport(it.source, it.source.playerOrThrow) }
 }
