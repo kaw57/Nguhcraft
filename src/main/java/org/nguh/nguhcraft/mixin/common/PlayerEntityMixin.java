@@ -1,6 +1,5 @@
 package org.nguh.nguhcraft.mixin.common;
 
-import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
@@ -12,7 +11,6 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
@@ -27,7 +25,7 @@ public abstract class PlayerEntityMixin extends LivingEntity {
     /** Prevent players from attacking certain entities. */
     @Inject(method = "attack", at = @At("HEAD"), cancellable = true)
     private void inject$attack$0(Entity Target, CallbackInfo CI) {
-        if (ProtectionManager.IsProtectedEntity(This(), Target))
+        if (ProtectionManager.AllowEntityAttack(This(), Target))
             CI.cancel();
     }
 

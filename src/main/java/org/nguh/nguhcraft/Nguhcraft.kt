@@ -33,8 +33,10 @@ import org.nguh.nguhcraft.network.*
 //   - [x] Creative mode tab for treasures etc
 //   - [x] Render potion levels properly.
 //   - [ ] Make homing arrows target ‘Target Blocks’ if there are no valid entities (or if you target it directly)
-//   - [ ] Have a way of locking chests and make them unbreakable.
-//     - [ ] Disallowing hoppers/hopper minecarts, tnt, wither immune, dispensers, crafters, etc.
+// - [ ] World protection
+//       This is used both for protected areas and to prevent unlinked
+//       players from doing anything.
+//   - [T] Have a way of locking chests and make them unbreakable.
 //     - [x] Maybe barrels too if they can be locked.
 //     - [x] Left click with key to unlock (drops the lock).
 //     - [x] Show key in the ‘Chest is locked’ message.
@@ -45,13 +47,11 @@ import org.nguh.nguhcraft.network.*
 //     - [x] Add little lock icon to chest (custom texture like furnace).
 //     - [x] Command to generate a key.
 //     - [T] Show full key in advanced tooltip.
-// - [ ] World protection
-//       This is used both for protected areas and to prevent unlinked
-//       players from doing anything.
+//   - [T] Disallow hoppers/hopper minecarts.
 //   - [x] Block placement/breaking
 //     - [x] Block state changes (opening door, activating button/lever)
 //     - [x] Special case: editing signs
-//   - [ ] Entity interactions
+//   - [x] Entity interactions
 //     - [x] Attacking entities
 //     - [x] TNT should not damage entities in protected regions.
 //     - [x] Using beds and respawn anchors
@@ -61,19 +61,22 @@ import org.nguh.nguhcraft.network.*
 //     - [x] Using shulker boxes
 //     - [T] Interacting w/ villagers
 //     - [x] Using boats/minecarts -> ACTUALLY TEST THIS
-//     - [ ] Breaking boats/minecarts.
-//     - [ ] Placing boats/minecarts.
+//     - [x] Breaking boats/minecarts.
+//     - [x] Placing boats/minecarts.
 //     - [x] End crystals
 //       - [x] Placing end crystals.
 //       - [x] Destroying end crystals.
 //       - [x] End crystal explosion effects.
-//     - [ ] AOEs (potions, dragon fireball)
+//     - [x] AOEs (potions, dragon fireball)
 //     - [x] Lightning.
 //       - [x] Should not damage entities.
 //       - [x] Should not ignite blocks.
 //         - [x] In protected areas.
 //         - [x] If caused by Channeling II (so I can smite people in the PoŊ).
-//   - [ ] Make channeling trident fire texture blue.
+//   - [ ] Melting/Freezing.
+//   - [ ] Snowing / snow golems.
+//   - [ ] Frost walker.
+//   - [x] Make channeling trident fire texture blue.
 //   - [ ] Projectiles
 //     - [x] Investigate modifying LivingEntity#isInvulnerableTo() (check ALL projectiles)
 //     - [x] #onCollision()
@@ -92,23 +95,23 @@ import org.nguh.nguhcraft.network.*
 //   - [ ] Lava flow.
 //   - [ ] Water flow.
 //   - [ ] Fire destroying blocks.
-//   - [ ] Also enable protection for ops by default and add a `/bypass` command
+//   - [x] Also enable protection for ops by default and add a `/bypass` command
 //         to toggle it on a per-player basis (so that Agma doesn’t accidentally
 //         destroy anything). Also only check that flag instead of the op permission
 //         when checking for protection.
-//   - [ ] Block interactions
+//   - [x] Block interactions
 //     - [x] Using ender chests (should always be allowed)
-//     - [ ] Using crafting tables (should always be allowed)
-//     - [ ] Reading books on lecterns (but not taking them)
-//       - [ ] Prevent taking on the server side.
-//       - [ ] Grey out button on the client side.
+//     - [x] Using crafting tables (should always be allowed)
+//     - [x] Reading books on lecterns (but not taking them)
+//       - [x] Prevent taking on the server side.
+//       - [x] Grey out button on the client side.
 //   - [x] Disable enderman griefing entirely.
 //   - [x] TNT
-//   - [ ] Pistons that extend into protected areas
+//   - [x] Pistons that extend into protected areas or pull blocks out of them.
 //   - [ ] Fire spread, lava flow and placement, flint and steel.
 //   - [ ] Vine spread & snow
 //   - [x] Creepers
-//   - [ ] Ranged weapons (bows, crossbows, tridents, fire charges, fireworks)
+//   - [x] Ranged weapons (bows, crossbows, tridents, fire charges, fireworks)
 // - [ ] Disable the single-player button since this always need a dedicated server (because bot, linking, etc.)
 // - [ ] A /discard command that just outright removes an entity from the world without dropping loot etc.
 // - [ ] Drowned have a 50% chance to spawn with Channeling II tridents (but don’t drop the Channeling II)

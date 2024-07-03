@@ -27,13 +27,45 @@ import net.minecraft.util.math.BlockPos
 import net.minecraft.world.World
 import org.nguh.nguhcraft.BypassesRegionProtection
 import org.nguh.nguhcraft.Lock
-import org.nguh.nguhcraft.client.NguhcraftClient
 import org.nguh.nguhcraft.client.accessors.AbstractClientPlayerEntityAccessor
 import org.nguh.nguhcraft.item.KeyItem
 import org.nguh.nguhcraft.network.ClientboundSyncProtectionMgrPacket
 import org.nguh.nguhcraft.server.ServerUtils
 import org.nguh.nguhcraft.server.isLinked
 
+/**
+* Namespace that handles world protection.
+*
+* This API generally provides three families of functions:
+*
+* - ‘AllowX’, which check whether a *player* is allowed to perform an action.
+* - ‘IsProtectedX’, which check whether an action is allowed in the absence of a player.
+* - ‘HandleX’, which does the above but may also modify an action to do something else instead.
+*
+* The most important of these are:
+*
+* - [AllowBlockModify] checks if a player is allowed to interact with
+*   a block in a way that would modify it; this typically handles left
+*   clicking it.
+*
+* - [AllowEntityAttack] checks if a player is allowed to attack an entity.
+*
+* - [AllowEntityInteract] checks if a player is allowed to interact with
+*   an entity; notably, this does not include attacking it.
+*
+* - [AllowItemUse] checks if a player is allowed to use an item (not on a
+*   block).
+*
+* - [HandleBlockInteract] handles interacting (right-clicking) with a block;
+*   this may rewrite the interaction to an item use (e.g. when right-clicking
+*   on a protected chest with an apple in hand, start eating the apple instead).
+*
+* - [IsProtectedBlock] checks whether a block can be modified in the absence
+*   of a player.
+*
+* - [IsProtectedEntity] checks whether an entity is protected from world effects;
+*   this does *not* handle block entities. Use [IsProtectedBlock] for that.
+*/
 object ProtectionManager {
     private const val TAG_REGIONS = "Regions"
 
@@ -78,7 +110,33 @@ object ProtectionManager {
         return true
     }
 
-     /** Check if a player is allowed to interact (= right-click) with an entity. */
+    /** Check if this entity is protected from attacks by a player. */
+    @JvmStatic
+    fun AllowEntityAttack(AttackingPlayer: PlayerEntity, AttackedEntity: Entity): Boolean {
+        fun ProtectedIfNot(Predicate: (R: Region) -> Boolean): Boolean {
+            val R = FindRegionContainingBlock(
+                AttackedEntity.world,
+                AttackedEntity.blockPos
+            ) ?: return false
+            return !Predicate(R)
+        }
+
+        // Player has bypass. Always allow.
+        if (AttackingPlayer.BypassesRegionProtection()) return false
+
+        // Player is not linked. Always deny.
+        if (!IsLinked(AttackingPlayer)) return true
+
+        // Check region flags.
+        return when (AttackedEntity) {
+            is PlayerEntity -> ProtectedIfNot(Region::AllowsPvP)
+            is VehicleEntity -> ProtectedIfNot(Region::AllowsVehicleUse)
+            !is Monster -> ProtectedIfNot(Region::AllowsAttackingFriendlyEntities)
+            else -> false
+        }
+    }
+
+    /** Check if a player is allowed to interact (= right-click) with an entity. */
     @JvmStatic
     fun AllowEntityInteract(PE: PlayerEntity, E: Entity) : Boolean {
         // Player has bypass. Always allow.
@@ -244,32 +302,6 @@ object ProtectionManager {
         return !R.AllowsBlockModification()
     }
 
-    /** Check if this entity is protected from attacks by a player. */
-    @JvmStatic
-    fun IsProtectedEntity(AttackingPlayer: PlayerEntity, AttackedEntity: Entity): Boolean {
-        fun ProtectedIfNot(Predicate: (R: Region) -> Boolean): Boolean {
-            val R = FindRegionContainingBlock(
-                AttackedEntity.world,
-                AttackedEntity.blockPos
-            ) ?: return false
-            return !Predicate(R)
-        }
-
-        // Player has bypass. Always allow.
-        if (AttackingPlayer.BypassesRegionProtection()) return false
-
-        // Player is not linked. Always deny.
-        if (!IsLinked(AttackingPlayer)) return true
-
-        // Check region flags.
-        return when (AttackedEntity) {
-            is PlayerEntity -> ProtectedIfNot(Region::AllowsPvP)
-            is VehicleEntity -> ProtectedIfNot(Region::AllowsVehicleUse)
-            !is Monster -> ProtectedIfNot(Region::AllowsAttackingFriendlyEntities)
-            else -> false
-        }
-    }
-
     /**
     * Check if this entity is protected from world effects.
     *
@@ -295,7 +327,7 @@ object ProtectionManager {
         // Otherwise, use established protection rules, making sure
         // that we forward the attacker if there is one.
         val A = DS.attacker
-        return if (A is PlayerEntity) IsProtectedEntity(A, E) else IsProtectedEntity(E)
+        return if (A is PlayerEntity) AllowEntityAttack(A, E) else IsProtectedEntity(E)
     }
 
     /** Check if an item stack is a vehicle. */
