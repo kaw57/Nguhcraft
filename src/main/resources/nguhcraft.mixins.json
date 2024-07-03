@@ -4,6 +4,7 @@
 	"package": "org.nguh.nguhcraft.mixin",
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [
+		"client.ItemStackComponentizationFixMixin",
 		"common.BlockItemMixin",
 		"common.ContainerLockMixin",
 		"common.EnchantmentMixin",

@@ -8,7 +8,7 @@ import org.nguh.nguhcraft.network.*
 
 // TODO: Port all patches.
 // - [ ] 1. Big Chungus
-//   - [ ] Enchantments
+//   - [x] Enchantments
 //     - [x] Health
 //     - [x] Homing
 //     - [x] Hypershot
@@ -16,7 +16,7 @@ import org.nguh.nguhcraft.network.*
 //     - [x] Smelting
 //     - [x] Channeling II
 //       - [x] On entity hit
-//       = [x] On block hit
+//       - [x] On block hit
 //     - [x] Make Multishot apply to bows (should already work in latest snapshot?)
 //   - [x] Render enchantment levels properly
 //   - [x] Patch enchant command to ignore restrictions
@@ -47,11 +47,12 @@ import org.nguh.nguhcraft.network.*
 //     - [x] Add little lock icon to chest (custom texture like furnace).
 //     - [x] Command to generate a key.
 //     - [T] Show full key in advanced tooltip.
-//   - [T] Disallow hoppers/hopper minecarts.
+//   - [x] Disallow hoppers.
+//   - [T] Disallow Hopper minecarts.
 //   - [x] Block placement/breaking
 //     - [x] Block state changes (opening door, activating button/lever)
 //     - [x] Special case: editing signs
-//   - [x] Entity interactions
+//   - [T] Entity interactions
 //     - [x] Attacking entities
 //     - [x] TNT should not damage entities in protected regions.
 //     - [x] Using beds and respawn anchors
@@ -74,7 +75,8 @@ import org.nguh.nguhcraft.network.*
 //         - [x] In protected areas.
 //         - [x] If caused by Channeling II (so I can smite people in the PoŊ).
 //   - [ ] Melting/Freezing.
-//   - [ ] Snowing / snow golems.
+//   - [ ] Snowing
+//   - [ ] Snow golems.
 //   - [ ] Frost walker.
 //   - [x] Make channeling trident fire texture blue.
 //   - [ ] Projectiles
@@ -92,8 +94,8 @@ import org.nguh.nguhcraft.network.*
 //     - [ ] Allow picking up projectiles.
 //   - [x] Clear fire ticks.
 //   - [ ] Fire spread.
-//   - [ ] Lava flow.
-//   - [ ] Water flow.
+//   - [x] Lava flow.
+//   - [x] Water flow.
 //   - [ ] Fire destroying blocks.
 //   - [x] Also enable protection for ops by default and add a `/bypass` command
 //         to toggle it on a per-player basis (so that Agma doesn’t accidentally
@@ -108,8 +110,8 @@ import org.nguh.nguhcraft.network.*
 //   - [x] Disable enderman griefing entirely.
 //   - [x] TNT
 //   - [x] Pistons that extend into protected areas or pull blocks out of them.
-//   - [ ] Fire spread, lava flow and placement, flint and steel.
-//   - [ ] Vine spread & snow
+//   - [x] Flint and steel.
+//   - [ ] Vine spread
 //   - [x] Creepers
 //   - [x] Ranged weapons (bows, crossbows, tridents, fire charges, fireworks)
 // - [ ] Disable the single-player button since this always need a dedicated server (because bot, linking, etc.)

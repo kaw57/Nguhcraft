@@ -85,6 +85,10 @@ object ServerUtils {
     fun ActOnPlayerJoin(SP: ServerPlayerEntity) {
         BroadcastJoinQuitMessage(SP, true)
 
+        // Re-fetch account data from Discord in the background to
+        // make sure they’re still linked.
+        Discord.UpdatePlayerAsync(SP)
+
         // Broadcast this player’s name to everyone.
         Broadcast(ClientboundLinkUpdatePacket(SP))
 

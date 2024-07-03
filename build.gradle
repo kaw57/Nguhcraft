@@ -100,3 +100,6 @@ publishing {
 kotlin {
     jvmToolchain(21)
 }
+loom {
+    accessWidenerPath = file('src/main/resources/nguhcraft.accessWidener')
+}

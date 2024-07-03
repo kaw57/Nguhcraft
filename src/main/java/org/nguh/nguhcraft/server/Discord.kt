@@ -644,7 +644,7 @@ internal class Discord : ListenerAdapter() {
          */
         fun UpdatePlayerAsync(SP: ServerPlayerEntity) {
             if (!SP.isLinked) {
-                Server().execute { BroadcastPlayerUpdate(SP) }
+                BroadcastPlayerUpdate(SP)
                 return
             }
 
@@ -670,6 +670,11 @@ internal class Discord : ListenerAdapter() {
         /** Recompute a player’s name after something has changed. */
         @JvmStatic
         fun UpdatePlayerName(SP: ServerPlayerEntity) {
+            // Set by the old paper server; delete it here.
+            SP.customName = null
+            SP.isCustomNameVisible = false
+
+            // Save this since we’ll be needing it constantly.
             SP.discordDisplayName = Utils.ComputePlayerName(
                 SP.isLinked,
                 SP.nameForScoreboard,
