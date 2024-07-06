@@ -6,7 +6,6 @@ import net.minecraft.block.enums.ChestType;
 import net.minecraft.client.render.TexturedRenderLayers;
 import net.minecraft.client.util.SpriteIdentifier;
 import net.minecraft.util.Identifier;
-import org.nguh.nguhcraft.Nguhcraft;
 import org.nguh.nguhcraft.item.KeyItem;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;

@@ -1,4 +1,4 @@
-package org.nguh.nguhcraft.mixin.client;
+package org.nguh.nguhcraft.mixin.protect.client;
 
 import net.minecraft.client.gui.screen.ingame.BookScreen;
 import net.minecraft.client.gui.screen.ingame.LecternScreen;

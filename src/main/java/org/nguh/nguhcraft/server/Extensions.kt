@@ -11,7 +11,7 @@ import net.minecraft.text.Text
 import net.minecraft.util.math.BlockPos
 import net.minecraft.util.math.Vec3d
 import net.minecraft.world.TeleportTarget
-import org.nguh.nguhcraft.mixin.common.LockableContainerBlockEntityAccessor
+import org.nguh.nguhcraft.mixin.protect.LockableContainerBlockEntityAccessor
 import org.nguh.nguhcraft.server.accessors.ServerPlayerAccessor
 
 val ServerPlayerEntity.isLinked get() = (this as ServerPlayerAccessor).isLinked

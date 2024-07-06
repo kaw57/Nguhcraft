@@ -1,10 +1,7 @@
-package org.nguh.nguhcraft.mixin.common;
+package org.nguh.nguhcraft.mixin.protect;
 
 import net.minecraft.item.BlockItem;
-import net.minecraft.item.BoatItem;
 import net.minecraft.item.ItemPlacementContext;
-import net.minecraft.item.MinecartItem;
-import net.minecraft.registry.tag.EntityTypeTags;
 import net.minecraft.util.ActionResult;
 import org.nguh.nguhcraft.protect.ProtectionManager;
 import org.spongepowered.asm.mixin.Mixin;

@@ -1,4 +1,4 @@
-package org.nguh.nguhcraft.mixin.server;
+package org.nguh.nguhcraft.mixin.protect.server;
 
 import net.minecraft.block.entity.HopperBlockEntity;
 import net.minecraft.util.math.Direction;

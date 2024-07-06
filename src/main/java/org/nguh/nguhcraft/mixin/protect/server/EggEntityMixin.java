@@ -1,7 +1,6 @@
-package org.nguh.nguhcraft.mixin.server;
+package org.nguh.nguhcraft.mixin.protect.server;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
-import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.projectile.thrown.EggEntity;
 import net.minecraft.entity.projectile.thrown.ThrownItemEntity;

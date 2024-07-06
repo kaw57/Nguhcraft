@@ -1,4 +1,4 @@
-package org.nguh.nguhcraft.mixin.common;
+package org.nguh.nguhcraft.mixin.protect;
 
 import com.llamalad7.mixinextras.sugar.Share;
 import com.llamalad7.mixinextras.sugar.ref.LocalRef;

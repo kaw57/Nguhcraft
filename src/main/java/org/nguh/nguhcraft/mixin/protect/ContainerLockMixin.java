@@ -1,4 +1,4 @@
-package org.nguh.nguhcraft.mixin.common;
+package org.nguh.nguhcraft.mixin.protect;
 
 import net.minecraft.inventory.ContainerLock;
 import net.minecraft.item.ItemStack;

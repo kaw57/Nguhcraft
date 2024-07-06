@@ -6,7 +6,7 @@ import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.inventory.ContainerLock
 import net.minecraft.server.network.ServerPlayerEntity
 import org.nguh.nguhcraft.client.NguhcraftClient
-import org.nguh.nguhcraft.mixin.common.LockableContainerBlockEntityAccessor
+import org.nguh.nguhcraft.mixin.protect.LockableContainerBlockEntityAccessor
 import org.nguh.nguhcraft.server.accessors.ServerPlayerAccessor
 
 fun PlayerEntity.BypassesRegionProtection(): Boolean {

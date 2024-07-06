@@ -1,4 +1,4 @@
-package org.nguh.nguhcraft.mixin.server;
+package org.nguh.nguhcraft.mixin.protect.server;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import net.minecraft.entity.Entity;

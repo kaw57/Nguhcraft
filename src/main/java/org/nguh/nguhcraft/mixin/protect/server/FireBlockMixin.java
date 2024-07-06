@@ -1,6 +1,5 @@
-package org.nguh.nguhcraft.mixin.server;
+package org.nguh.nguhcraft.mixin.protect.server;
 
-import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import net.minecraft.block.BlockState;
@@ -11,7 +10,6 @@ import net.minecraft.world.GameRules;
 import org.nguh.nguhcraft.protect.ProtectionManager;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(FireBlock.class)
 public abstract class FireBlockMixin {

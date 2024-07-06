@@ -1,4 +1,4 @@
-package org.nguh.nguhcraft.mixin.server;
+package org.nguh.nguhcraft.mixin.protect.server;
 
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.projectile.thrown.PotionEntity;

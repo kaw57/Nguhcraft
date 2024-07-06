@@ -1,4 +1,4 @@
-package org.nguh.nguhcraft.mixin.common;
+package org.nguh.nguhcraft.mixin.protect;
 
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;

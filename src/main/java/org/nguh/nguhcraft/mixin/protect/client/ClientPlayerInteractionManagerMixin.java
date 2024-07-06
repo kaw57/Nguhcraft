@@ -1,12 +1,10 @@
-package org.nguh.nguhcraft.mixin.client;
+package org.nguh.nguhcraft.mixin.protect.client;
 
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.network.ClientPlayerInteractionManager;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
-import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import org.nguh.nguhcraft.client.NguhcraftClient;

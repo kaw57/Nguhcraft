@@ -1,4 +1,4 @@
-package org.nguh.nguhcraft.mixin.client;
+package org.nguh.nguhcraft.mixin.protect.client;
 
 import com.llamalad7.mixinextras.sugar.Local;
 import net.minecraft.client.MinecraftClient;
