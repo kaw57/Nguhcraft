@@ -23,7 +23,7 @@
 			"org.nguh.nguhcraft.client.NguhcraftClient"
 		],
 		"server": [
-			"org.nguh.nguhcraft.server.NguhcraftServer"
+			"org.nguh.nguhcraft.server.dedicated.NguhcraftDedicatedServer"
 		]
 	},
 	"mixins": [

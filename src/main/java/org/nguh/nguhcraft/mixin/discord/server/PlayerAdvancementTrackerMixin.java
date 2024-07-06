@@ -5,7 +5,7 @@ import com.llamalad7.mixinextras.sugar.ref.LocalRef;
 import net.minecraft.advancement.PlayerAdvancementTracker;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
-import org.nguh.nguhcraft.server.Discord;
+import org.nguh.nguhcraft.server.dedicated.Discord;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;

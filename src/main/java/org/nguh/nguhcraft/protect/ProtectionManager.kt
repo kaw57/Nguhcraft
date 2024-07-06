@@ -31,7 +31,6 @@ import org.nguh.nguhcraft.client.accessors.AbstractClientPlayerEntityAccessor
 import org.nguh.nguhcraft.item.KeyItem
 import org.nguh.nguhcraft.network.ClientboundSyncProtectionMgrPacket
 import org.nguh.nguhcraft.server.ServerUtils
-import org.nguh.nguhcraft.server.isLinked
 
 /**
 * Namespace that handles world protection.
@@ -275,7 +274,7 @@ object ProtectionManager {
 
     /** Check if a player is linked. */
     fun IsLinked(PE: PlayerEntity) = when (PE) {
-        is ServerPlayerEntity -> PE.isLinked
+        is ServerPlayerEntity -> ServerUtils.IsLinkedOrOperator(PE)
         is ClientPlayerEntity -> (PE as AbstractClientPlayerEntityAccessor).isLinked
         else -> false
     }
@@ -381,7 +380,6 @@ object ProtectionManager {
     fun Send(SP: ServerPlayerEntity) = ServerPlayNetworking.send(SP, ClientboundSyncProtectionMgrPacket(S))
 
     /** Sync regions to the clients. */
-    @Environment(EnvType.SERVER)
     fun Sync() = ServerUtils.Broadcast(ClientboundSyncProtectionMgrPacket(S))
 
     /** Overwrite the region list of a world. */

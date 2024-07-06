@@ -21,6 +21,11 @@ public abstract class AbstractClientPlayerMixin extends PlayerEntity implements 
         super(world, pos, yaw, gameProfile);
     }
 
+    /**
+    * Note: If we’re connected to the integrated server, then we never receive
+    * a player list entry update, hence this will always fall through to the
+    * default value.
+    */
     @Override
     public Text getDisplayName() {
         // Overridden for linked players.
@@ -33,6 +38,7 @@ public abstract class AbstractClientPlayerMixin extends PlayerEntity implements 
         return super.getDisplayName();
     }
 
+    /** Note: As above. */
     @Override
     public boolean isLinked() {
         return playerListEntry instanceof ClientPlayerListEntryAccessor PLE && PLE.isLinked();

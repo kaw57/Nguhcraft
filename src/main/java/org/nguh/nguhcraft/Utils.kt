@@ -9,7 +9,6 @@ import net.minecraft.network.packet.CustomPayload
 import net.minecraft.registry.RegistryKey
 import net.minecraft.registry.RegistryKeys
 import net.minecraft.text.Text
-import net.minecraft.util.Formatting
 import net.minecraft.world.World
 import org.nguh.nguhcraft.enchantment.NguhcraftEnchantments
 import java.text.Normalizer
@@ -83,15 +82,6 @@ object Utils {
         }
     }
 
-    /** Compute the name of a (linked) player. */
-    fun ComputePlayerName(
-        IsLinked: Boolean,
-        ScoreboardName: String,
-        DiscordName: String,
-        DiscordColour: Int
-    ): Text = if (!IsLinked) Text.literal(ScoreboardName).formatted(Formatting.GRAY)
-              else Text.literal(DiscordName).withColor(DiscordColour)
-
     /** Print a debug message. */
     @JvmStatic
     fun Debug(Message: String, vararg Objects : Any) = LOGGER.info(Message, *Objects)
@@ -102,6 +92,7 @@ object Utils {
         val R = W.registryManager.get(RegistryKeys.ENCHANTMENT)
         return EnchantmentHelper.getLevel(R.entryOf(E), Stack)
     }
+
 
     /** Normalise a string for fuzzy matching against another string  */
     fun Normalised(S: String) = Normalizer.normalize(S, Normalizer.Form.NFKC).lowercase(Locale.getDefault())

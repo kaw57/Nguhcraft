@@ -7,9 +7,7 @@ import net.minecraft.network.codec.PacketCodec
 import net.minecraft.network.packet.CustomPayload
 import net.minecraft.server.network.ServerPlayerEntity
 import org.nguh.nguhcraft.Utils
-import org.nguh.nguhcraft.server.discordColour
-import org.nguh.nguhcraft.server.discordName
-import org.nguh.nguhcraft.server.isLinked
+import org.nguh.nguhcraft.server.accessors.ServerPlayerDiscordAccessor
 import java.util.*
 
 data class ClientboundLinkUpdatePacket(
@@ -42,7 +40,7 @@ data class ClientboundLinkUpdatePacket(
     constructor(SP: ServerPlayerEntity) : this(
         SP.uuid,
         SP.nameForScoreboard,
-        SP.discordColour,
+        (SP as ServerPlayerDiscordAccessor).discordColour,
         SP.discordName ?: "",
         SP.isLinked
     )

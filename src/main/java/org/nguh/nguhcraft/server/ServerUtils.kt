@@ -6,15 +6,12 @@ import net.fabricmc.api.Environment
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
 import net.fabricmc.loader.api.FabricLoader
 import net.minecraft.block.BlockState
-import net.minecraft.enchantment.Enchantments
 import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.mob.AbstractPiglinEntity
 import net.minecraft.entity.mob.Monster
 import net.minecraft.entity.passive.IronGolemEntity
 import net.minecraft.entity.passive.VillagerEntity
-import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.entity.projectile.ProjectileUtil
-import net.minecraft.entity.projectile.TridentEntity
 import net.minecraft.item.ItemStack
 import net.minecraft.nbt.NbtCompound
 import net.minecraft.nbt.NbtIo
@@ -34,28 +31,21 @@ import net.minecraft.util.WorldSavePath
 import net.minecraft.util.hit.HitResult
 import net.minecraft.util.math.Box
 import net.minecraft.util.math.MathHelper
-import net.minecraft.util.math.Vec3d
 import net.minecraft.world.RaycastContext
-import net.minecraft.world.TeleportTarget
 import net.minecraft.world.World
 import org.nguh.nguhcraft.Constants.MAX_HOMING_DISTANCE
 import org.nguh.nguhcraft.SyncedGameRule
 import org.nguh.nguhcraft.Utils.EnchantLvl
-import org.nguh.nguhcraft.accessors.ProjectileEntityAccessor
-import org.nguh.nguhcraft.accessors.TridentEntityAccessor
 import org.nguh.nguhcraft.enchantment.NguhcraftEnchantments
-import org.nguh.nguhcraft.network.ClientboundLinkUpdatePacket
 import org.nguh.nguhcraft.network.ClientboundSyncHypershotStatePacket
 import org.nguh.nguhcraft.network.ClientboundSyncProtectionBypassPacket
 import org.nguh.nguhcraft.protect.ProtectionManager
-import org.nguh.nguhcraft.server.Discord.Companion.BroadcastJoinQuitMessage
 import org.nguh.nguhcraft.server.accessors.LivingEntityAccessor
 import org.nguh.nguhcraft.server.accessors.ServerPlayerAccessor
+import org.nguh.nguhcraft.server.dedicated.Discord
 import org.slf4j.Logger
 import java.util.*
 
-
-@Environment(EnvType.SERVER)
 object ServerUtils {
     private val BORDER_TITLE: Text = Text.literal("TURN BACK").formatted(Formatting.RED)
     private val BORDER_SUBTITLE: Text = Text.literal("You may not cross the border")
@@ -83,20 +73,6 @@ object ServerUtils {
     /** Sync data on join. */
     @JvmStatic
     fun ActOnPlayerJoin(SP: ServerPlayerEntity) {
-        BroadcastJoinQuitMessage(SP, true)
-
-        // Re-fetch account data from Discord in the background to
-        // make sure they’re still linked.
-        Discord.UpdatePlayerAsync(SP)
-
-        // Broadcast this player’s name to everyone.
-        Broadcast(ClientboundLinkUpdatePacket(SP))
-
-        // Send all other players’ names to this player.
-        for (P in Server().playerManager.playerList)
-            if (P != SP)
-                ServerPlayNetworking.send(SP, ClientboundLinkUpdatePacket(P))
-
         // Sync data with the client.
         val LEA = SP as LivingEntityAccessor
         val SPA = SP as ServerPlayerAccessor
@@ -142,6 +118,15 @@ object ServerUtils {
         for (Player in Server().playerManager.playerList)
             ServerPlayNetworking.send(Player, P)
     }
+
+    /** Check if we’re running on a dedicated server. */
+    fun IsDedicatedServer() = FabricLoader.getInstance().environmentType == EnvType.SERVER
+    fun IsIntegratedServer() = !IsDedicatedServer()
+
+    /** Check if a player is linked or an operator. */
+    @JvmStatic
+    fun IsLinkedOrOperator(SP: ServerPlayerEntity) =
+        IsIntegratedServer() || Discord.__IsLinkedOrOperatorImpl(SP)
 
     @JvmStatic
     fun LoadExtraWorldData(SW: ServerWorld) {
@@ -305,7 +290,6 @@ object ServerUtils {
     @Suppress("DEPRECATION")
     fun Server() = FabricLoader.getInstance().gameInstance as MinecraftServer
 
-    @Environment(EnvType.SERVER)
     data class SmeltingResult(val Stack: ItemStack, val Experience: Int)
 
     /** Try to smelt this block as an item. */

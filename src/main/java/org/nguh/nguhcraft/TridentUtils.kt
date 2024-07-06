@@ -57,7 +57,6 @@ object TridentUtils {
 
     /** Handle multishot tridents. */
     @JvmStatic
-    @Environment(EnvType.SERVER)
     fun ActOnTridentThrown(W: World, PE: PlayerEntity, S: ItemStack, Extra: Int = 0) {
         val Lvl = EnchantLvl(W, S, Enchantments.MULTISHOT)
         val K = W.getRandom().nextFloat() / 10f // ADDED WITHOUT TESTING; WAS ALWAYS 0 BEFORE.
@@ -84,7 +83,6 @@ object TridentUtils {
     }
 
     /** Unconditionally strike lightning. */
-    @Environment(EnvType.SERVER)
     private fun StrikeLighting(W: ServerWorld, TE: TridentEntity, Where: BlockPos?) {
         val Lightning = EntityType.LIGHTNING_BOLT.create(W)
         if (Lightning != null) {

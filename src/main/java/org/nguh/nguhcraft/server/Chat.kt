@@ -1,7 +1,5 @@
 package org.nguh.nguhcraft.server
 
-import net.fabricmc.api.EnvType
-import net.fabricmc.api.Environment
 import com.mojang.logging.LogUtils
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.Context
@@ -14,10 +12,13 @@ import org.nguh.nguhcraft.Constants
 import org.nguh.nguhcraft.Utils
 import org.nguh.nguhcraft.network.ClientboundChatPacket
 import org.nguh.nguhcraft.server.ServerUtils.Broadcast
+import org.nguh.nguhcraft.server.ServerUtils.IsIntegratedServer
+import org.nguh.nguhcraft.server.ServerUtils.IsLinkedOrOperator
 import org.nguh.nguhcraft.server.ServerUtils.Multicast
+import org.nguh.nguhcraft.server.accessors.ServerPlayerDiscordAccessor
+import org.nguh.nguhcraft.server.dedicated.Discord
 
 /** This handles everything related to chat and messages */
-@Environment(EnvType.SERVER)
 object Chat {
     private val LOGGER = LogUtils.getLogger()
     private val ERR_NEEDS_LINK_TO_CHAT: Text = Text.translatable("You must link your account to send messages in chat or run commands (other than /discord link)").formatted(Formatting.RED)
@@ -30,10 +31,23 @@ object Chat {
 
     /** Actually send a message. */
     private fun DispatchMessage(Sender: ServerPlayerEntity?, Message: String) {
+        // On the integrated server, don’t bother with the linking.
+        if (IsIntegratedServer()) {
+            Broadcast(ClientboundChatPacket(
+                Sender?.displayName ?: SERVER_COMPONENT,
+                Message,
+                ClientboundChatPacket.MK_PUBLIC
+            ))
+            return
+        }
+
+        // On the dedicated server, actually do everything properly.
         val Name = (
             if (Sender == null) SERVER_COMPONENT
             else Sender.displayName!!.copy()
-                .append(COLON_COMPONENT.copy().withColor(Sender.discordColour))
+                .append(COLON_COMPONENT.copy().withColor(
+                    (Sender as ServerPlayerDiscordAccessor).discordColour)
+                )
         )
 
         Broadcast(ClientboundChatPacket(Name, Message, ClientboundChatPacket.MK_PUBLIC))
@@ -43,7 +57,7 @@ object Chat {
     /** Ensure a player is linked and issue an error if they aren’t. */
     private fun EnsurePlayerIsLinked(Context: Context): Boolean {
         val SP = Context.player()
-        if (!SP.isLinked) {
+        if (!IsLinkedOrOperator(SP)) {
             Context.responseSender().sendPacket(GameMessageS2CPacket(ERR_NEEDS_LINK_TO_CHAT, false))
             return false
         }
@@ -52,10 +66,11 @@ object Chat {
 
     /** Log a chat message. */
     fun LogChat(SP: ServerPlayerEntity, Message: String, IsCommand: Boolean) {
+        val Linked = IsLinkedOrOperator(SP)
         LOGGER.info(
             "[CHAT] {}{}{}: {}{}",
-            if (SP.isLinked) SP.discordName else SP.nameForScoreboard,
-            if (SP.isLinked) " [${SP.nameForScoreboard}]" else "",
+            SP.displayName,
+            if (Linked) " [${SP.nameForScoreboard}]" else "",
             if (IsCommand) " issued command" else " says",
             if (IsCommand) "/" else "",
             Message
@@ -80,7 +95,7 @@ object Chat {
         LogChat(SP, Command, true)
 
         // An unlinked player can only run /discord link.
-        if (!SP.isLinkedOrOperator && !Command.startsWith("discord")) {
+        if (!IsLinkedOrOperator(SP) && !Command.startsWith("discord")) {
             Handler.sendPacket(GameMessageS2CPacket(ERR_NEEDS_LINK_TO_CHAT, false))
             return
         }

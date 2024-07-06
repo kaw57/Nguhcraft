@@ -20,7 +20,7 @@ import java.util.concurrent.CompletableFuture
 
 /** This runs on the network thread. */
 @Environment(EnvType.CLIENT)
-object NetworkHandler {
+object ClientNetworkHandler {
     /** Coloured components used in chat messages. */
     private val ARROW_COMPONENT: Text = Text.literal(" → ").withColor(Constants.DeepKoamaru)
     private val ME_COMPONENT = Text.literal("me").withColor(Constants.Lavender)
@@ -66,7 +66,11 @@ object NetworkHandler {
         Execute { Client().messageHandler.onGameMessage(Message, false) }
     }
 
-    /** Notification to update a player’s Discord name. */
+    /**
+    * Notification to update a player’s Discord name.
+    *
+    * This is only ever sent if we’re connected to a dedicated server.
+    */
     private fun HandleLinkUpdatePacket(Packet: ClientboundLinkUpdatePacket) {
         val C = Client()
         val NW = C.networkHandler ?: return

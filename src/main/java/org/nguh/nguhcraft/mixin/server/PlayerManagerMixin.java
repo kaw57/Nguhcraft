@@ -1,4 +1,4 @@
-package org.nguh.nguhcraft.mixin.discord.server;
+package org.nguh.nguhcraft.mixin.server;
 
 import com.llamalad7.mixinextras.sugar.Local;
 import net.minecraft.nbt.NbtCompound;
@@ -6,8 +6,8 @@ import net.minecraft.network.ClientConnection;
 import net.minecraft.server.PlayerManager;
 import net.minecraft.server.network.ConnectedClientData;
 import net.minecraft.server.network.ServerPlayerEntity;
-import org.nguh.nguhcraft.server.dedicated.Discord;
-import org.nguh.nguhcraft.server.accessors.ServerPlayerDiscordAccessor;
+import org.nguh.nguhcraft.server.accessors.ServerPlayerAccessor;
+import org.nguh.nguhcraft.server.ServerUtils;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -15,7 +15,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.Optional;
 
-@Mixin(value = PlayerManager.class, priority = 1)
+@Mixin(PlayerManager.class)
 public abstract class PlayerManagerMixin {
     /** Load custom player data early. */
     @Inject(
@@ -33,9 +33,8 @@ public abstract class PlayerManagerMixin {
         CallbackInfo Info,
         @Local Optional<NbtCompound> Nbt
     ) {
-        var NSP = ((ServerPlayerDiscordAccessor)SP);
-        Nbt.ifPresent(NSP::LoadDiscordNguhcraftNbt);
-        Discord.UpdatePlayerName(SP);
+        var NSP = ((ServerPlayerAccessor)SP);
+        Nbt.ifPresent(NSP::LoadGeneralNguhcraftNbt);
     }
 
     /** Send a join message to Discord. */
@@ -49,6 +48,6 @@ public abstract class PlayerManagerMixin {
         ConnectedClientData Data,
         CallbackInfo Info
     ) {
-        Discord.SyncClientStateOnJoin(SP);
+        ServerUtils.ActOnPlayerJoin(SP);
     }
 }

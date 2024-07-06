@@ -32,7 +32,6 @@ enum class SyncedGameRule(
     private var Value: Boolean = default
 
     /** Set the value. */
-    @Environment(EnvType.SERVER)
     fun Set(NewValue: Boolean = true) {
         if (Value == NewValue) return
         Value = NewValue
@@ -46,13 +45,11 @@ enum class SyncedGameRule(
         private const val TAG_NAME = "SyncedGameRules"
 
         /** Encode the game rules into a packet. */
-        @Environment(EnvType.SERVER)
         private fun Encode() = ClientboundSyncGameRulesPacket(entries.fold(0L) { acc, rule ->
             if (rule.Value) acc or rule.Flag else acc
         })
 
         /** Load the rules from disk. */
-        @Environment(EnvType.SERVER)
         fun Load(LoadData: NbtCompound) {
             val Tag = LoadData.getCompound(TAG_NAME)
             for (R in entries)
@@ -61,7 +58,6 @@ enum class SyncedGameRule(
         }
 
         /** Save the rules to disk. */
-        @Environment(EnvType.SERVER)
         fun Save(SaveData: NbtCompound) {
             val Tag = NbtCompound()
             for (R in entries) Tag.putBoolean(R.Name, R.Value)
@@ -70,11 +66,9 @@ enum class SyncedGameRule(
 
         /** Send the game rules to a player. */
         @JvmStatic
-        @Environment(EnvType.SERVER)
         fun Send(SP: ServerPlayerEntity) = ServerPlayNetworking.send(SP, Encode())
 
         /** Sync the game rules. */
-        @Environment(EnvType.SERVER)
         fun Sync() = ServerUtils.Broadcast(Encode())
 
         /** Update the game rules. */

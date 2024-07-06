@@ -23,7 +23,7 @@ import org.nguh.nguhcraft.client.ClientUtils.Client
 @Environment(EnvType.CLIENT)
 class NguhcraftClient : ClientModInitializer {
     override fun onInitializeClient() {
-        NetworkHandler.Init()
+        ClientNetworkHandler.Init()
 
         WorldRenderEvents.LAST.register { Renderer.DebugRender(it) }
 

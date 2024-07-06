@@ -17,7 +17,6 @@ import org.nguh.nguhcraft.mixin.server.RangedWeaponItemAccessor
 import org.nguh.nguhcraft.network.ClientboundSyncHypershotStatePacket
 import org.nguh.nguhcraft.server.accessors.LivingEntityAccessor
 
-@Environment(EnvType.SERVER)
 data class HypershotContext(
     /** The hand the weapon is held in. */
     val Hand: Hand,

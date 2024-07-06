@@ -1,15 +1,13 @@
 package org.nguh.nguhcraft.server
 
-
-import net.fabricmc.api.EnvType
-import net.fabricmc.api.Environment
-import net.fabricmc.fabric.api.networking.v1.*
-import net.fabricmc.fabric.api.networking.v1.ServerLoginNetworking.LoginSynchronizer
+import net.fabricmc.fabric.api.networking.v1.PacketByteBufs
+import net.fabricmc.fabric.api.networking.v1.ServerLoginConnectionEvents
+import net.fabricmc.fabric.api.networking.v1.ServerLoginNetworking
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.Context
 import net.minecraft.network.PacketByteBuf
 import net.minecraft.network.message.ChatVisibility
 import net.minecraft.network.packet.s2c.play.GameMessageS2CPacket
-import net.minecraft.server.MinecraftServer
 import net.minecraft.server.network.ServerLoginNetworkHandler
 import net.minecraft.server.network.ServerPlayNetworkHandler
 import net.minecraft.server.network.ServerPlayerEntity
@@ -19,12 +17,9 @@ import net.minecraft.util.StringHelper
 import org.nguh.nguhcraft.network.ServerboundChatPacket
 import org.nguh.nguhcraft.network.VersionCheck
 import org.nguh.nguhcraft.server.ServerUtils.Server
-import java.util.concurrent.CompletableFuture
-
 
 /** This runs on the network thread. */
-@Environment(EnvType.SERVER)
-object NetworkHandler {
+object ServerNetworkHandler {
     private val ERR_ILLEGAL_CHARS: Text = Text.translatable("multiplayer.disconnect.illegal_characters")
     private val ERR_CHAT_DISABLED: Text = Text.translatable("chat.disabled.options").formatted(Formatting.RED)
     private val ERR_EMPTY_MESSAGE: Text = Text.literal("Client attempted to send an empty message.")

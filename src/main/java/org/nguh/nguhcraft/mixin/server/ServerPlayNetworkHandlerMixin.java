@@ -12,8 +12,7 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 import org.jetbrains.annotations.NotNull;
 import org.nguh.nguhcraft.protect.ProtectionManager;
-import org.nguh.nguhcraft.server.Discord;
-import org.nguh.nguhcraft.server.NetworkHandler;
+import org.nguh.nguhcraft.server.ServerNetworkHandler;
 import org.nguh.nguhcraft.server.ServerUtils;
 import org.nguh.nguhcraft.server.accessors.LivingEntityAccessor;
 import org.slf4j.Logger;
@@ -117,7 +116,7 @@ public abstract class ServerPlayNetworkHandlerMixin extends ServerCommonNetworkH
      */
     @Overwrite
     public void onCommandExecution(@NotNull CommandExecutionC2SPacket Packet) {
-        NetworkHandler.HandleCommand((ServerPlayNetworkHandler) (Object) this, Packet.command());
+        ServerNetworkHandler.HandleCommand((ServerPlayNetworkHandler) (Object) this, Packet.command());
     }
 
     /**

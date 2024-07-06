@@ -1,4 +1,4 @@
-package org.nguh.nguhcraft.mixin.server.command;
+package org.nguh.nguhcraft.mixin.discord.server;
 
 import com.mojang.brigadier.arguments.LongArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -9,7 +9,7 @@ import net.minecraft.command.CommandSource;
 import net.minecraft.network.packet.s2c.play.CommandTreeS2CPacket;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.network.ServerPlayerEntity;
-import org.nguh.nguhcraft.server.accessors.ServerPlayerAccessor;
+import org.nguh.nguhcraft.server.ServerUtils;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -35,7 +35,7 @@ public abstract class CommandManagerMixin {
         cancellable = true
     )
     private void inject$sendCommandTree(ServerPlayerEntity SP, CallbackInfo CI) {
-        if (!((ServerPlayerAccessor) SP).isLinked() && !SP.hasPermissionLevel(4)) {
+        if (!ServerUtils.IsLinkedOrOperator(SP)) {
             var Root = new RootCommandNode<CommandSource>();
             Root.addChild(UNLINKED_DISCORD_COMMAND);
             SP.networkHandler.sendPacket(new CommandTreeS2CPacket(Root));

@@ -5,6 +5,9 @@ import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry
 import net.minecraft.util.Identifier
 import org.nguh.nguhcraft.item.NguhItems
 import org.nguh.nguhcraft.network.*
+import org.nguh.nguhcraft.server.Commands
+import org.nguh.nguhcraft.server.ServerNetworkHandler
+import org.nguh.nguhcraft.server.ServerUtils
 
 // TODO: Port all patches.
 // - [ ] 1. Big Chungus
@@ -125,6 +128,7 @@ import org.nguh.nguhcraft.network.*
 // - [ ] Finally, look at some of the other mods Annwan linked.
 // - [ ] /warp, /delwarp, /setwarp, /warps
 // - [ ] /home, /sethome, /home player:<name>, /home bed
+// - [ ] Disable the ‘open to LAN’ button because it is NOT going to work.
 
 
 class Nguhcraft : ModInitializer {
@@ -142,6 +146,12 @@ class Nguhcraft : ModInitializer {
 
         // Items.
         NguhItems.Init()
+
+        // Commands.
+        Commands.Register()
+
+        // Network handlers.
+        ServerNetworkHandler.Init()
     }
 
     companion object {
