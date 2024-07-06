@@ -1,4 +1,4 @@
-package org.nguh.nguhcraft.mixin.client;
+package org.nguh.nguhcraft.mixin.client.render;
 
 import com.llamalad7.mixinextras.sugar.Local;
 import com.llamalad7.mixinextras.sugar.ref.LocalRef;

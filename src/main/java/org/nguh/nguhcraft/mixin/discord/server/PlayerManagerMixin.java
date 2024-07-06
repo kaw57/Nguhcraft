@@ -1,4 +1,4 @@
-package org.nguh.nguhcraft.mixin.server;
+package org.nguh.nguhcraft.mixin.discord.server;
 
 import com.llamalad7.mixinextras.sugar.Local;
 import net.minecraft.nbt.NbtCompound;

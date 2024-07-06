@@ -1,4 +1,4 @@
-package org.nguh.nguhcraft.mixin.client;
+package org.nguh.nguhcraft.mixin.client.render;
 
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.ChestBlockEntity;

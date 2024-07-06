@@ -1,4 +1,4 @@
-package org.nguh.nguhcraft.mixin.server;
+package org.nguh.nguhcraft.mixin.server.dedicated;
 
 import net.minecraft.server.dedicated.MinecraftDedicatedServer;
 import org.nguh.nguhcraft.server.NguhcraftServer;

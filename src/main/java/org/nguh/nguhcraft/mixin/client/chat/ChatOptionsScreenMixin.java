@@ -1,6 +1,5 @@
-package org.nguh.nguhcraft.mixin.client;
+package org.nguh.nguhcraft.mixin.client.chat;
 
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.option.ChatOptionsScreen;
 import net.minecraft.client.gui.screen.option.GameOptionsScreen;

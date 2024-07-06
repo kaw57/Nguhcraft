@@ -1,4 +1,4 @@
-package org.nguh.nguhcraft.mixin.client;
+package org.nguh.nguhcraft.mixin.client.chat;
 
 import net.minecraft.client.gui.hud.MessageIndicator;
 import org.spongepowered.asm.mixin.Mixin;

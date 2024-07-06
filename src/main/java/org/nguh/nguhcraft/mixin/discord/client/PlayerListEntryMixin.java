@@ -1,4 +1,4 @@
-package org.nguh.nguhcraft.mixin.client;
+package org.nguh.nguhcraft.mixin.discord.client;
 
 import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.text.Text;

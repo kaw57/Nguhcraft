@@ -1,4 +1,4 @@
-package org.nguh.nguhcraft.mixin.client;
+package org.nguh.nguhcraft.mixin.client.chat;
 
 import com.mojang.authlib.minecraft.TelemetrySession;
 import com.mojang.authlib.yggdrasil.YggdrasilUserApiService;

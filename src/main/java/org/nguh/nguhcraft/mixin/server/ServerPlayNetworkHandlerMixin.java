@@ -35,12 +35,6 @@ public abstract class ServerPlayNetworkHandlerMixin extends ServerCommonNetworkH
 
     @Shadow @Final static Logger LOGGER;
 
-    /** Forward quit message to Discord. */
-    @Inject(method = "cleanUp()V", at = @At("HEAD"))
-    private void inject$cleanUp(CallbackInfo CI) {
-        Discord.BroadcastJoinQuitMessage(player, false);
-    }
-
     /**
     * Prevent players in a hypershot context from using weapons.
     * <p>

@@ -1,4 +1,4 @@
-package org.nguh.nguhcraft.mixin.server;
+package org.nguh.nguhcraft.mixin.server.command;
 
 import com.mojang.brigadier.CommandDispatcher;
 import net.minecraft.server.command.MeCommand;
