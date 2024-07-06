@@ -4,31 +4,42 @@ import com.mojang.logging.LogUtils
 import net.minecraft.nbt.NbtCompound
 import net.minecraft.nbt.NbtIo
 import net.minecraft.nbt.NbtSizeTracker
+import net.minecraft.server.MinecraftServer
 import net.minecraft.util.WorldSavePath
 import org.nguh.nguhcraft.SyncedGameRule
-import org.nguh.nguhcraft.server.ServerUtils.Server
 import java.nio.file.Path
 import kotlin.io.path.inputStream
 
+/**
+* Handle server setup and shutdown.
+*
+* Note that functions in here MUST NOT use the `Server()` function
+* to retrieve the current server instance as the shutdown code in
+* particular runs in a context where the integrated server is no
+* longer accessible through the client.
+*/
 object ServerSetup {
     private val LOGGER = LogUtils.getLogger()
 
     @JvmStatic
-    fun ActOnStart() {
+    fun ActOnStart(S: MinecraftServer) {
         LOGGER.info("Setting up server state")
-        LoadPersistentState()
+        LoadPersistentState(S)
     }
 
      @JvmStatic
-     fun ActOnShutdown() {
+     fun ActOnShutdown(S: MinecraftServer) {
          LOGGER.info("Shutting down server")
-         SavePersistentState()
+         SavePersistentState(S)
      }
 
-    private fun LoadPersistentState() {
+    private fun LoadPersistentState(S: MinecraftServer) {
         try {
             // Read from disk.
-            val Tag = NbtIo.readCompressed(SavePath().inputStream(), NbtSizeTracker.ofUnlimitedBytes())
+            val Tag = NbtIo.readCompressed(
+                SavePath(S).inputStream(),
+                NbtSizeTracker.ofUnlimitedBytes()
+            )
 
             // Load data.
             SyncedGameRule.Load(Tag)
@@ -37,11 +48,11 @@ object ServerSetup {
         }
     }
 
-    private fun SavePath(): Path {
-        return Server().getSavePath(WorldSavePath.ROOT).resolve("nguhcraft.dat")
+    private fun SavePath(S: MinecraftServer): Path {
+        return S.getSavePath(WorldSavePath.ROOT).resolve("nguhcraft.dat")
     }
 
-    private fun SavePersistentState() {
+    private fun SavePersistentState(S: MinecraftServer) {
         val Tag = NbtCompound()
 
         // Save data.
@@ -49,7 +60,7 @@ object ServerSetup {
 
         // And write to disk.
         try {
-            NbtIo.writeCompressed(Tag, SavePath())
+            NbtIo.writeCompressed(Tag, SavePath(S))
         } catch (E: Exception) {
             LOGGER.error("Nguhcraft: Failed to save persistent state")
             E.printStackTrace()

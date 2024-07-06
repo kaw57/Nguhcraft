@@ -2,10 +2,10 @@ package org.nguh.nguhcraft.server
 
 import com.mojang.logging.LogUtils
 import net.fabricmc.api.EnvType
-import net.fabricmc.api.Environment
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
 import net.fabricmc.loader.api.FabricLoader
 import net.minecraft.block.BlockState
+import net.minecraft.client.MinecraftClient
 import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.mob.AbstractPiglinEntity
 import net.minecraft.entity.mob.Monster
@@ -244,7 +244,7 @@ object ServerUtils {
         for (Player in P) ServerPlayNetworking.send(Player, Packet)
     }
 
-    private fun NguhWorldSavePath(SW: ServerWorld) = Server().getSavePath(WorldSavePath.ROOT).resolve(
+    private fun NguhWorldSavePath(SW: ServerWorld) = SW.server.getSavePath(WorldSavePath.ROOT).resolve(
         "nguhcraft.extraworlddata.${SW.registryKey.value.path}.dat"
     )
 
@@ -288,7 +288,11 @@ object ServerUtils {
     }
 
     @Suppress("DEPRECATION")
-    fun Server() = FabricLoader.getInstance().gameInstance as MinecraftServer
+    fun Server(): MinecraftServer {
+        if (IsDedicatedServer())
+            return FabricLoader.getInstance().gameInstance as MinecraftServer
+        return MinecraftClient.getInstance().server!!
+    }
 
     data class SmeltingResult(val Stack: ItemStack, val Experience: Int)
 

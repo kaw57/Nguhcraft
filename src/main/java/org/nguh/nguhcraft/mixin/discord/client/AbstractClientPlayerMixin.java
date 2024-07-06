@@ -1,6 +1,7 @@
 package org.nguh.nguhcraft.mixin.discord.client;
 
 import com.mojang.authlib.GameProfile;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
 import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.entity.player.PlayerEntity;
@@ -38,9 +39,9 @@ public abstract class AbstractClientPlayerMixin extends PlayerEntity implements 
         return super.getDisplayName();
     }
 
-    /** Note: As above. */
     @Override
     public boolean isLinked() {
+        if (MinecraftClient.getInstance().getServer() != null) return true;
         return playerListEntry instanceof ClientPlayerListEntryAccessor PLE && PLE.isLinked();
     }
 }
