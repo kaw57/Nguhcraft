@@ -7,6 +7,7 @@ import net.minecraft.nbt.NbtSizeTracker
 import net.minecraft.server.MinecraftServer
 import net.minecraft.util.WorldSavePath
 import org.nguh.nguhcraft.SyncedGameRule
+import org.nguh.nguhcraft.protect.ProtectionManager
 import java.nio.file.Path
 import kotlin.io.path.inputStream
 
@@ -34,6 +35,11 @@ object ServerSetup {
      }
 
     private fun LoadPersistentState(S: MinecraftServer) {
+        // Reset defaults.
+        SyncedGameRule.Reset()
+        WarpManager.Reset()
+
+        // Load saved state.
         try {
             // Read from disk.
             val Tag = NbtIo.readCompressed(
@@ -43,6 +49,7 @@ object ServerSetup {
 
             // Load data.
             SyncedGameRule.Load(Tag)
+            WarpManager.Load(Tag)
         } catch (E: Exception) {
             LOGGER.warn("Nguhcraft: Failed to load persistent state; using defaults: ${E.message}")
         }
@@ -57,6 +64,7 @@ object ServerSetup {
 
         // Save data.
         SyncedGameRule.Save(Tag)
+        WarpManager.Save(Tag)
 
         // And write to disk.
         try {

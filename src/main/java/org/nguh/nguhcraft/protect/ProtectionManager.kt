@@ -361,12 +361,8 @@ object ProtectionManager {
         else -> throw IllegalArgumentException("Unknown world type!")
     }
 
-    /**
-    * Change a block interaction to use the item instead.
-    *
-    * This is only used for late fixups that allow the item use
-    * to go through AllowBlockInteract(), but sh
-    */
+    /** Reset state. */
+    fun Reset(W: World) { RegionList(W).clear() }
 
     /** Save regions to a tag. */
     fun SaveRegions(W: World, Tag: NbtCompound) {

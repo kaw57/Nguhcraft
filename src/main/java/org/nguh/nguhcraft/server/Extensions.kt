@@ -16,6 +16,10 @@ fun Entity.Teleport(ToWorld: ServerWorld, OnTopOf: BlockPos) {
     teleportTo(TeleportTarget(ToWorld, Vec, Vec3d.ZERO, 0F, 0F, TeleportTarget.NO_OP))
 }
 
+fun Entity.Teleport(ToWorld: ServerWorld, To: Vec3d, Yaw: Float, Pitch: Float) {
+    teleportTo(TeleportTarget(ToWorld, To, Vec3d.ZERO, Yaw, Pitch, TeleportTarget.NO_OP))
+}
+
 fun LockableContainerBlockEntity.UpdateLock(NewLock: ContainerLock) {
     (this as LockableContainerBlockEntityAccessor).lock = NewLock
     (world as ServerWorld).chunkManager.markForUpdate(pos)

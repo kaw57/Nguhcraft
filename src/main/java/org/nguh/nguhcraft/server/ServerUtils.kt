@@ -130,6 +130,7 @@ object ServerUtils {
 
     @JvmStatic
     fun LoadExtraWorldData(SW: ServerWorld) {
+        ProtectionManager.Reset(SW)
         try {
             val Path = NguhWorldSavePath(SW)
             val Tag = NbtIo.readCompressed(Path, NbtSizeTracker.ofUnlimitedBytes())

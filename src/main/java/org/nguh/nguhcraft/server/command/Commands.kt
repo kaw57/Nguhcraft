@@ -1,13 +1,11 @@
-package org.nguh.nguhcraft.server
+package org.nguh.nguhcraft.server.command
 
-import com.mojang.brigadier.arguments.BoolArgumentType
-import com.mojang.brigadier.arguments.IntegerArgumentType
-import com.mojang.brigadier.arguments.LongArgumentType
-import com.mojang.brigadier.arguments.StringArgumentType
+import com.mojang.brigadier.arguments.*
 import com.mojang.brigadier.builder.LiteralArgumentBuilder
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType
 import net.fabricmc.api.EnvType
 import net.fabricmc.api.Environment
+import net.fabricmc.fabric.api.command.v2.ArgumentTypeRegistry
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
 import net.minecraft.command.CommandRegistryAccess
@@ -15,10 +13,14 @@ import net.minecraft.command.argument.BlockPosArgumentType
 import net.minecraft.command.argument.DimensionArgumentType
 import net.minecraft.command.argument.EntityArgumentType
 import net.minecraft.command.argument.RegistryEntryReferenceArgumentType
+import net.minecraft.command.argument.serialize.ConstantArgumentSerializer
 import net.minecraft.component.DataComponentTypes
 import net.minecraft.enchantment.Enchantment
+import net.minecraft.entity.Entity
 import net.minecraft.inventory.ContainerLock
 import net.minecraft.item.ItemStack
+import net.minecraft.registry.Registries
+import net.minecraft.registry.Registry
 import net.minecraft.registry.RegistryKeys
 import net.minecraft.registry.entry.RegistryEntry
 import net.minecraft.server.command.CommandManager.argument
@@ -35,15 +37,28 @@ import net.minecraft.world.Heightmap
 import net.minecraft.world.World
 import net.minecraft.world.chunk.ChunkStatus
 import org.nguh.nguhcraft.Constants
+import org.nguh.nguhcraft.Nguhcraft.Companion.Id
 import org.nguh.nguhcraft.SyncedGameRule
 import org.nguh.nguhcraft.item.NguhItems
 import org.nguh.nguhcraft.network.ClientboundSyncProtectionBypassPacket
 import org.nguh.nguhcraft.protect.ProtectionManager
 import org.nguh.nguhcraft.protect.Region
+import org.nguh.nguhcraft.server.Chat
+import org.nguh.nguhcraft.server.ServerUtils.IsIntegratedServer
+import org.nguh.nguhcraft.server.Teleport
+import org.nguh.nguhcraft.server.WarpManager
 import org.nguh.nguhcraft.server.accessors.ServerPlayerAccessor
 import org.nguh.nguhcraft.server.accessors.ServerPlayerDiscordAccessor
 
 object Commands {
+    private inline fun <reified T : ArgumentType<*>> ArgType(Key: String, noinline Func: () -> T) {
+        ArgumentTypeRegistry.registerArgumentType(
+            Id(Key),
+            T::class.java,
+            ConstantArgumentSerializer.of(Func)
+        )
+    }
+
     fun Register() {
         CommandRegistrationCallback.EVENT.register { D, A, E ->
             if (E.dedicated) {
@@ -51,6 +66,7 @@ object Commands {
             }
 
             D.register(BypassCommand())               // /bypass
+            D.register(DiscardCommand())              // /discard
             D.register(EnchantCommand(A))             // /enchant
             D.register(KeyCommand())                  // /key
             val Msg = D.register(MessageCommand())    // /msg
@@ -59,8 +75,12 @@ object Commands {
             D.register(SayCommand())                  // /say
             D.register(literal("tell").redirect(Msg)) // /tell
             D.register(literal("w").redirect(Msg))    // /w
+            D.register(WarpCommand())                 // /warp
+            D.register(WarpsCommand())                // /warps
             D.register(WildCommand())                 // /wild
         }
+
+        ArgType("warp", WarpArgumentType::warp)
     }
 
     fun Exn(message: String): SimpleCommandExceptionType {
@@ -81,6 +101,24 @@ object Commands {
             ServerPlayNetworking.send(SP, ClientboundSyncProtectionBypassPacket(NewState))
             S.sendMessage(if (NewState) BYPASSING else NOT_BYPASSING)
             return 1
+        }
+    }
+
+    object DiscardCommand {
+        private val REASON = Text.literal("Player entity was discarded")
+
+        fun Execute(S: ServerCommandSource, Entities: Collection<Entity>): Int {
+            for (E in Entities) {
+                // Discard normal entities.
+                if (E !is ServerPlayerEntity) E.discard()
+
+                // Disconnect players instead of discarding them, but do
+                // not disconnect ourselves in single player.
+                else if (!IsIntegratedServer()) E.networkHandler.disconnect(REASON)
+            }
+
+            S.sendMessage(Text.literal("Discarded ${Entities.size} entities"))
+            return Entities.size
         }
     }
 
@@ -198,7 +236,8 @@ object Commands {
                 return 0
             }
 
-            S.sendMessage(AppendWorldAndRegionName(Text.literal("Deleted region "), W, Name)
+            S.sendMessage(
+                AppendWorldAndRegionName(Text.literal("Deleted region "), W, Name)
                 .formatted(Formatting.GREEN)
             )
             return 1
@@ -280,6 +319,55 @@ object Commands {
 
             AppendWorldAndRegionName(Mess, W, Name)
             S.sendMessage(Mess.formatted(Formatting.YELLOW))
+            return 1
+        }
+    }
+
+    object WarpsCommand {
+        fun Delete(S: ServerCommandSource, Name: String): Int {
+            if (WarpManager.Warps.remove(Name) == null) {
+                S.sendError(Text.literal("No such warp: ").append(Text.literal(Name).formatted(Formatting.AQUA)))
+                return 0
+            }
+
+            S.sendMessage(Text.literal("Deleted warp ").append(Text.literal(Name).formatted(Formatting.AQUA)))
+            return 1
+        }
+
+        private fun FormatWarp(W: WarpManager.Warp): Text =
+            Text.empty()
+                .append(Text.literal(W.Name).formatted(Formatting.AQUA))
+                .append(" in ")
+                .append(Text.literal(W.World.registryKey.value.path.toString()).withColor(Constants.Lavender))
+                .append(" at [")
+                .append(Text.literal("${W.Pos.x.toInt()}").formatted(Formatting.GRAY))
+                .append(", ")
+                .append(Text.literal("${W.Pos.y.toInt()}").formatted(Formatting.GRAY))
+                .append(", ")
+                .append(Text.literal("${W.Pos.z.toInt()}").formatted(Formatting.GRAY))
+                .append("]")
+
+
+        fun List(S: ServerCommandSource): Int {
+            if (WarpManager.Warps.isEmpty()) {
+                S.sendMessage(Text.literal("No warps defined").formatted(Formatting.YELLOW))
+                return 0
+            }
+
+            val List = Text.literal("Warps:")
+            for (W in WarpManager.Warps.values) {
+                List.append(Text.literal("\n  - "))
+                    .append(FormatWarp(W))
+            }
+
+            S.sendMessage(List.formatted(Formatting.YELLOW))
+            return 1
+        }
+
+        fun Set(S: ServerCommandSource, SP: ServerPlayerEntity, Name: String): Int {
+            val W = WarpManager.Warp(Name, SP.serverWorld, SP.pos, SP.yaw, SP.pitch)
+            WarpManager.Warps[Name] = W
+            S.sendMessage(Text.literal("Set warp ").append(FormatWarp(W)).formatted(Formatting.YELLOW))
             return 1
         }
     }
@@ -372,6 +460,12 @@ object Commands {
     private fun BypassCommand(): LiteralArgumentBuilder<ServerCommandSource> = literal("bypass")
         .requires { it.isExecutedByPlayer && it.hasPermissionLevel(4) }
         .executes { BypassCommand.Toggle(it.source, it.source.playerOrThrow) }
+
+    private fun DiscardCommand(): LiteralArgumentBuilder<ServerCommandSource> = literal("discard")
+        .requires { it.hasPermissionLevel(4) }
+        .then(argument("entity", EntityArgumentType.entities())
+            .executes { DiscardCommand.Execute(it.source, EntityArgumentType.getEntities(it, "entity")) }
+        )
 
     @Environment(EnvType.SERVER)
     private fun DiscordCommand(): LiteralArgumentBuilder<ServerCommandSource> = literal("discord")
@@ -478,11 +572,13 @@ object Commands {
     private fun KeyCommand(): LiteralArgumentBuilder<ServerCommandSource> = literal("key")
         .requires { it.hasPermissionLevel(4) }
         .then(argument("key", StringArgumentType.string())
-            .executes { KeyCommand.Generate(
-                it.source,
-                it.source.playerOrThrow,
-                StringArgumentType.getString(it, "key")
-            ) }
+            .executes {
+                KeyCommand.Generate(
+                    it.source,
+                    it.source.playerOrThrow,
+                    StringArgumentType.getString(it, "key")
+                )
+            }
         )
 
     private fun MessageCommand(): LiteralArgumentBuilder<ServerCommandSource> = literal("msg")
@@ -539,13 +635,15 @@ object Commands {
                 .then(argument("name", StringArgumentType.word())
                     .then(argument("from", BlockPosArgumentType.blockPos())
                         .then(argument("to", BlockPosArgumentType.blockPos())
-                            .executes { RegionCommand.AddRegion(
-                                it.source,
-                                it.source.world,
-                                StringArgumentType.getString(it, "name"),
-                                BlockPosArgumentType.getValidBlockPos(it, "from"),
-                                BlockPosArgumentType.getValidBlockPos(it, "to"),
-                            ) }
+                            .executes {
+                                RegionCommand.AddRegion(
+                                    it.source,
+                                    it.source.world,
+                                    StringArgumentType.getString(it, "name"),
+                                    BlockPosArgumentType.getValidBlockPos(it, "from"),
+                                    BlockPosArgumentType.getValidBlockPos(it, "to"),
+                                )
+                            }
                         )
                     )
                 )
@@ -553,21 +651,25 @@ object Commands {
             .then(literal("del")
                 .then(argument("name", StringArgumentType.word())
                     .then(argument("world", DimensionArgumentType.dimension())
-                        .executes { RegionCommand.DeleteRegion(
-                            it.source,
-                            DimensionArgumentType.getDimensionArgument(it, "world"),
-                            StringArgumentType.getString(it, "name"),
-                        ) }
+                        .executes {
+                            RegionCommand.DeleteRegion(
+                                it.source,
+                                DimensionArgumentType.getDimensionArgument(it, "world"),
+                                StringArgumentType.getString(it, "name"),
+                            )
+                        }
                     )
                 )
             )
             .then(literal("info")
                 .then(argument("name", StringArgumentType.word())
-                    .executes { RegionCommand.PrintRegionInfo(
-                        it.source,
-                        it.source.playerOrThrow.world,
-                        StringArgumentType.getString(it, "name")
-                    ) }
+                    .executes {
+                        RegionCommand.PrintRegionInfo(
+                            it.source,
+                            it.source.playerOrThrow.world,
+                            StringArgumentType.getString(it, "name")
+                        )
+                    }
                 )
                 .executes { RegionCommand.PrintRegionInfo(it.source, it.source.playerOrThrow) }
             )
@@ -602,6 +704,43 @@ object Commands {
                 1
             }
         )
+
+    private fun WarpCommand(): LiteralArgumentBuilder<ServerCommandSource> = literal("warp")
+        .requires { it.isExecutedByPlayer }
+        .then(argument("warp", WarpArgumentType.warp())
+            .executes {
+                val W = WarpArgumentType.resolve(it, "warp")
+                it.source.playerOrThrow.Teleport(W.World, W.Pos, W.Yaw, W.Pitch)
+                1
+            }
+        )
+
+    private fun WarpsCommand(): LiteralArgumentBuilder<ServerCommandSource> = literal("warps")
+        .requires { it.isExecutedByPlayer }
+        .then(literal("set")
+            .requires { it.hasPermissionLevel(4) }
+            .then(argument("warp", StringArgumentType.word())
+                .executes {
+                    WarpsCommand.Set(
+                        it.source,
+                        it.source.playerOrThrow,
+                        StringArgumentType.getString(it, "warp")
+                    )
+                }
+            )
+        )
+        .then(literal("del")
+            .requires { it.hasPermissionLevel(4) }
+            .then(argument("warp", StringArgumentType.word())
+                .executes {
+                    WarpsCommand.Delete(
+                        it.source,
+                        StringArgumentType.getString(it, "warp")
+                    )
+                }
+            )
+        )
+        .executes { WarpsCommand.List(it.source) }
 
     private fun WildCommand(): LiteralArgumentBuilder<ServerCommandSource> = literal("wild")
         .executes { WildCommand.RandomTeleport(it.source, it.source.playerOrThrow) }

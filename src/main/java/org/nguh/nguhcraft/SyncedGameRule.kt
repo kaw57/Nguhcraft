@@ -20,7 +20,7 @@ enum class SyncedGameRule(
     val Name: String,
 
     /** Default value for this rule. */
-    default: Boolean
+    val Default: Boolean
 ) {
     END_ENABLED("EndEnabled", false);
 
@@ -29,7 +29,7 @@ enum class SyncedGameRule(
 
     /** Current value. */
     @Volatile
-    private var Value: Boolean = default
+    private var Value: Boolean = Default
 
     /** Set the value. */
     fun Set(NewValue: Boolean = true) {
@@ -56,6 +56,9 @@ enum class SyncedGameRule(
                 if (Tag.contains(R.Name))
                     R.Value = Tag.getBoolean(R.Name)
         }
+
+        /** Reset the rules to their default values. */
+        fun Reset() = entries.forEach { it.Value = it.Default }
 
         /** Save the rules to disk. */
         fun Save(SaveData: NbtCompound) {

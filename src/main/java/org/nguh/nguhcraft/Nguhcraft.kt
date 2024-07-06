@@ -5,9 +5,8 @@ import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry
 import net.minecraft.util.Identifier
 import org.nguh.nguhcraft.item.NguhItems
 import org.nguh.nguhcraft.network.*
-import org.nguh.nguhcraft.server.Commands
+import org.nguh.nguhcraft.server.command.Commands
 import org.nguh.nguhcraft.server.ServerNetworkHandler
-import org.nguh.nguhcraft.server.ServerUtils
 
 // TODO: Port all patches.
 // - [ ] 1. Big Chungus
@@ -122,13 +121,12 @@ import org.nguh.nguhcraft.server.ServerUtils
 // - [ ] MINECARTS
 //   - [ ] Main patch.
 //   - [ ] Interpolate movement in a way that doesn’t suck.
-// - [ ] Disable the single-player button since this always need a dedicated server (because bot, linking, etc.)
-// - [ ] A /discard command that just outright removes an entity from the world without dropping loot etc.
+// - [T] A /discard command that just outright removes an entity from the world without dropping loot etc.
 // - [ ] Drowned have a 50% chance to spawn with Channeling II tridents (but don’t drop the Channeling II)
 // - [ ] Finally, look at some of the other mods Annwan linked.
-// - [ ] /warp, /delwarp, /setwarp, /warps
+// - [x] /warp, /delwarp, /setwarp, /warps
 // - [ ] /home, /sethome, /home player:<name>, /home bed
-// - [ ] Disable the ‘open to LAN’ button because it is NOT going to work.
+// - [x] Disable the ‘open to LAN’ button because it is NOT going to work.
 
 
 class Nguhcraft : ModInitializer {

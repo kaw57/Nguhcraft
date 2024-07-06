@@ -46,8 +46,8 @@ import org.nguh.nguhcraft.Utils
 import org.nguh.nguhcraft.Utils.Normalised
 import org.nguh.nguhcraft.mixin.server.MinecraftServerAccessor
 import org.nguh.nguhcraft.network.ClientboundLinkUpdatePacket
-import org.nguh.nguhcraft.server.Commands
-import org.nguh.nguhcraft.server.Commands.Exn
+import org.nguh.nguhcraft.server.command.Commands
+import org.nguh.nguhcraft.server.command.Commands.Exn
 import org.nguh.nguhcraft.server.ServerUtils
 import org.nguh.nguhcraft.server.ServerUtils.Server
 import org.nguh.nguhcraft.server.accessors.ServerPlayerAccessor
