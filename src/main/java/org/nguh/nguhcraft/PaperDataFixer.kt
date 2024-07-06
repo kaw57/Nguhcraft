@@ -10,7 +10,7 @@ object PaperDataFixer {
     * In the paper server, our custom enchantments were added to the
     * 'minecraft' namespace; migrate them to 'nguhcraft' instead and
     * remove any that were never actually implemented.
-    * */
+    */
     @JvmStatic
     fun FixEnchantments(Enchantments: List<MojangPair<String, Int>>) : List<MojangPair<String, Int>> {
         val NewList = mutableListOf<MojangPair<String, Int>>()

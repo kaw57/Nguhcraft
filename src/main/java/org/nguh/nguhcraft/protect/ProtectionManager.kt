@@ -39,7 +39,7 @@ import org.nguh.nguhcraft.server.isLinked
 * This API generally provides three families of functions:
 *
 * - ‘AllowX’, which check whether a *player* is allowed to perform an action.
-* - ‘IsProtectedX’, which check whether an action is allowed in the absence of a player.
+* - ‘IsX’, which check whether an action is allowed in the absence of a player.
 * - ‘HandleX’, which does the above but may also modify an action to do something else instead.
 *
 * The most important of these are:
@@ -284,6 +284,13 @@ object ProtectionManager {
     private fun IsLockedChest(W: World, Pos: BlockPos): Boolean {
         val BE = KeyItem.GetLockableEntity(W, Pos)
         return BE is LockableContainerBlockEntity && BE.Lock.key.isNotEmpty()
+    }
+
+    /** Check if a pressure plate is enabled. */
+    @JvmStatic
+    fun IsPressurePlateEnabled(W: World, Pos: BlockPos): Boolean {
+        val R = FindRegionContainingBlock(W, Pos) ?: return true
+        return R.AllowsPressurePlates()
     }
 
     /** Check if a block is within a protected region. */

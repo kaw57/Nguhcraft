@@ -4,7 +4,6 @@
 	"package": "org.nguh.nguhcraft.mixin",
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [
-		"client.ItemStackComponentizationFixMixin",
 		"common.BlockItemMixin",
 		"common.ContainerLockMixin",
 		"common.EnchantmentMixin",
@@ -13,8 +12,10 @@
 		"common.EntityMixin",
 		"common.ExplosionMixin",
 		"common.FlowableFluidMixin",
+		"common.ItemStackComponentizationFixMixin",
 		"common.LockableContainerBlockEntityAccessor",
 		"common.LockableContainerBlockEntityMixin",
+		"common.MultifaceGrowthBlockMixin",
 		"common.PistonBlockMixin",
 		"common.PlayerEntityMixin",
 		"common.PotionContentsComponent",
@@ -40,6 +41,7 @@
 		"client.YggdrasilUserApiServiceMixin"
 	],
 	"server": [
+		"server.AbstractPressurePlateBlockMixin",
 		"server.BlockMixin",
 		"server.ChorusFruitItemMixin",
 		"server.CommandManagerMixin",
@@ -50,6 +52,7 @@
 		"server.EnderPearlEntityMixin",
 		"server.EndPortalBlockMixin",
 		"server.EntityMixin",
+		"server.FireBlockMixin",
 		"server.FishingBobberEntityMixin",
 		"server.HopperBlockEntityAccessor",
 		"server.HopperBlockEntityMixin",

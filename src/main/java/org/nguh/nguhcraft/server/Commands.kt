@@ -445,7 +445,6 @@ object Commands {
     }
 
     object WildCommand {
-        const val NETHER_TOP: Int = 128
         const val MAX_ATTEMPTS = 50
         val TELEPORT_FAILED: Text = Text.literal("Sorry, couldn’t find a suitable teleport location. Please try again.")
 
@@ -467,7 +466,7 @@ object Commands {
             val SW = SP.world as ServerWorld
             val WB = SW.worldBorder
             val MinY = SW.bottomY
-            val Sz = (WB.size * .8).toInt()
+            val Sz = (WB.size * .6).toInt()
             val Dim = SW.dimension
             val Nether = Dim.hasCeiling()
             val Y = SW.logicalHeight

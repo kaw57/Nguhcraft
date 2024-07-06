@@ -93,10 +93,10 @@ import org.nguh.nguhcraft.network.*
 //     - [x] Arrows, fireballs, snowballs, other projectiles, tridents.
 //     - [ ] Allow picking up projectiles.
 //   - [x] Clear fire ticks.
-//   - [ ] Fire spread.
+//   - [T] Fire spread.
 //   - [x] Lava flow.
 //   - [x] Water flow.
-//   - [ ] Fire destroying blocks.
+//   - [T] Fire destroying blocks.
 //   - [x] Also enable protection for ops by default and add a `/bypass` command
 //         to toggle it on a per-player basis (so that Agma doesn’t accidentally
 //         destroy anything). Also only check that flag instead of the op permission
@@ -111,14 +111,21 @@ import org.nguh.nguhcraft.network.*
 //   - [x] TNT
 //   - [x] Pistons that extend into protected areas or pull blocks out of them.
 //   - [x] Flint and steel.
-//   - [ ] Vine spread
+//   - [T] Vine spread
 //   - [x] Creepers
 //   - [x] Ranged weapons (bows, crossbows, tridents, fire charges, fireworks)
+//   - [T] Pressure plates
+// - [ ] Impaling should always work in water.
+// - [ ] MINECARTS
+//   - [ ] Main patch.
+//   - [ ] Interpolate movement in a way that doesn’t suck.
 // - [ ] Disable the single-player button since this always need a dedicated server (because bot, linking, etc.)
 // - [ ] A /discard command that just outright removes an entity from the world without dropping loot etc.
 // - [ ] Drowned have a 50% chance to spawn with Channeling II tridents (but don’t drop the Channeling II)
+// - [ ] Finally, look at some of the other mods Annwan linked.
+// - [ ] /warp, /delwarp, /setwarp, /warps
+// - [ ] /home, /sethome, /home player:<name>, /home bed
 
-// Use Entity#teleportTo() to move players back to spawn.
 
 class Nguhcraft : ModInitializer {
     override fun onInitialize() {

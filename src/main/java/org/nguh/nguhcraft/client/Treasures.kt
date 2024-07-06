@@ -52,7 +52,7 @@ object Treasures {
         He wept, and from His tears sprang the cherry
         tree. While the cherry wood of today no longer
         bears His power, a sliver of it yet remains in
-        the amaranthine walls of the Exchange
+        the amaranthine walls of the Exchange.
     """).build()
 
     private val MOLTEN_PICKAXE = Builder(Items.NETHERITE_PICKAXE, Name("Molten Pickaxe"))

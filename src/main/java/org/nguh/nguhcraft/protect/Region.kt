@@ -52,6 +52,14 @@ class Region(
         ENVIRONMENTAL_HAZARDS,
 
         /**
+        * Enable pressure plates.
+        *
+        * This allows entities and players to interact with pressure
+        * plates; if disables, pressure plates will simply... not work.
+        */
+        PRESSURE_PLATES,
+
+        /**
         * Allow teleportation.
         *
         * This restricts the use of ender pearls and chorus fruit, but NOT
@@ -133,6 +141,9 @@ class Region(
 
     /** Check if this region allows entities to be affected by the environment. */
     fun AllowsEnvironmentalHazards() = Test(Flags.ENVIRONMENTAL_HAZARDS)
+
+    /** Check if this region allows pressure plates. */
+    fun AllowsPressurePlates() = Test(Flags.PRESSURE_PLATES)
 
     /** Check if this region allows players to be attacked. */
     fun AllowsPvP() = Test(Flags.ATTACK_PLAYERS)
