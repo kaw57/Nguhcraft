@@ -77,10 +77,13 @@ import org.nguh.nguhcraft.server.ServerNetworkHandler
 //       - [x] Should not ignite blocks.
 //         - [x] In protected areas.
 //         - [x] If caused by Channeling II (so I can smite people in the PoŊ).
-//   - [ ] Melting/Freezing.
-//   - [ ] Snowing
-//   - [ ] Snow golems.
-//   - [ ] Frost walker.
+//   - [x] Melting.
+//   - [x] Freezing.
+//   - [x] Snowing
+//   - [x] Creating snow/iron golems.
+//   - [x] Creating withers
+//   - [x] Frost walker.
+//   - [x] Picking up fluids using buckets.
 //   - [x] Make channeling trident fire texture blue.
 //   - [ ] Projectiles
 //     - [x] Investigate modifying LivingEntity#isInvulnerableTo() (check ALL projectiles)
@@ -119,16 +122,17 @@ import org.nguh.nguhcraft.server.ServerNetworkHandler
 //   - [x] Ranged weapons (bows, crossbows, tridents, fire charges, fireworks)
 //   - [T] Pressure plates
 // - [ ] Impaling should always work in water.
-// - [ ] MINECARTS
-//   - [ ] Main patch.
+// - [x] MINECARTS
+//   - [x] Main patch.
 //   - [ ] Interpolate movement in a way that doesn’t suck.
-// - [T] A /discard command that just outright removes an entity from the world without dropping loot etc.
+// - [x] A /discard command that just outright removes an entity from the world without dropping loot etc.
 // - [ ] Drowned have a 50% chance to spawn with Channeling II tridents (but don’t drop the Channeling II)
 // - [ ] Finally, look at some of the other mods Annwan linked.
 // - [x] /warp, /delwarp, /setwarp, /warps
 // - [x] /home, /sethome, /home player:<name>, /home bed
 // - [x] Disable the ‘open to LAN’ button because it is NOT going to work.
-
+// - [ ] /top
+// - [ ] Completion for /region.
 
 class Nguhcraft : ModInitializer {
     override fun onInitialize() {
