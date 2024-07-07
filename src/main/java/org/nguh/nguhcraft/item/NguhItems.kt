@@ -7,6 +7,7 @@ import net.minecraft.recipe.SpecialRecipeSerializer
 import net.minecraft.registry.Registries
 import net.minecraft.registry.Registry
 import org.nguh.nguhcraft.Nguhcraft.Companion.Id
+import org.nguh.nguhcraft.block.NguhBlocks
 
 object NguhItems {
     val LOCK: Item = CreateItem("lock", LockItem())

@@ -1,0 +1,18 @@
+{
+	"type": "minecraft:crafting_shaped",
+	"category": "redstone",
+	"pattern": [
+		"i i",
+		"i i",
+		" i "
+	],
+	"key": {
+		"i": {
+			"item": "minecraft:iron_ingot"
+		}
+	},
+	"result": {
+		"id": "nguhcraft:decorative_hopper",
+		"count": 1
+	}
+}

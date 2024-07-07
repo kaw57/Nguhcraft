@@ -3,6 +3,7 @@ package org.nguh.nguhcraft
 import net.fabricmc.api.ModInitializer
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry
 import net.minecraft.util.Identifier
+import org.nguh.nguhcraft.block.NguhBlocks
 import org.nguh.nguhcraft.item.NguhItems
 import org.nguh.nguhcraft.network.*
 import org.nguh.nguhcraft.server.command.Commands
@@ -142,13 +143,10 @@ class Nguhcraft : ModInitializer {
         // Serverbound packets.
         PayloadTypeRegistry.playC2S().register(ServerboundChatPacket.ID, ServerboundChatPacket.CODEC)
 
-        // Items.
-        NguhItems.Init()
-
-        // Commands.
+        // Misc.
         Commands.Register()
-
-        // Network handlers.
+        NguhItems.Init()
+        NguhBlocks.Init()
         ServerNetworkHandler.Init()
     }
 

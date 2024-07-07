@@ -7,6 +7,7 @@
 		"common.AbstractMinecartMixin",
 		"common.EnchantmentMixin",
 		"common.EnderEyeItemMixin",
+		"common.HopperBlockAcessor",
 		"common.ItemStackComponentizationFixMixin",
 		"common.PotionContentsComponent",
 		"common.TridentEntityMixin",

@@ -1,4 +1,6 @@
 {
+	"block.nguhcraft.decorative_hopper": "Decorative Hopper",
+
 	"death.attack.minecart_run_over": "%1$s was run over by a minecart",
 	"death.attack.minecart_run_over.player": "%1$s was run over by %2$s",
 	"death.attack.minecart_collision": "%1$s crashed into a rogue minecart",
