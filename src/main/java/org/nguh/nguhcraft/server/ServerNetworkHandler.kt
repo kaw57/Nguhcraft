@@ -16,7 +16,6 @@ import net.minecraft.util.Formatting
 import net.minecraft.util.StringHelper
 import org.nguh.nguhcraft.network.ServerboundChatPacket
 import org.nguh.nguhcraft.network.VersionCheck
-import org.nguh.nguhcraft.server.ServerUtils.Server
 
 /** This runs on the network thread. */
 object ServerNetworkHandler {
@@ -25,16 +24,14 @@ object ServerNetworkHandler {
     private val ERR_EMPTY_MESSAGE: Text = Text.literal("Client attempted to send an empty message.")
     private val ERR_NEEDS_CLIENT_MOD: Text = Text.literal("Sorry, the Nguhcraft client-side mod is required\nto play on the server!")
 
-    private fun Execute(CB: () -> Unit) = Server().execute(CB)
-
     @JvmStatic fun HandleChatMessage(Message: String, Context: Context) {
         if (!ValidateIncomingMessage(Message, Context.player())) return
-        Execute { Chat.ProcessChatMessage(Message, Context) }
+        Context.server().execute { Chat.ProcessChatMessage(Message, Context) }
     }
 
     @JvmStatic fun HandleCommand(Handler: ServerPlayNetworkHandler, Command: String) {
         if (!ValidateIncomingMessage(Command, Handler.player)) return
-        Execute { Chat.ProcessCommand(Handler, Command) }
+        Handler.player.server.execute { Chat.ProcessCommand(Handler, Command) }
     }
 
     private fun HandleVersionCheck(

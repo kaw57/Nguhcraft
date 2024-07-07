@@ -125,7 +125,7 @@ import org.nguh.nguhcraft.server.ServerNetworkHandler
 // - [ ] Drowned have a 50% chance to spawn with Channeling II tridents (but don’t drop the Channeling II)
 // - [ ] Finally, look at some of the other mods Annwan linked.
 // - [x] /warp, /delwarp, /setwarp, /warps
-// - [ ] /home, /sethome, /home player:<name>, /home bed
+// - [x] /home, /sethome, /home player:<name>, /home bed
 // - [x] Disable the ‘open to LAN’ button because it is NOT going to work.
 
 

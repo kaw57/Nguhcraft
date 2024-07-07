@@ -7,18 +7,10 @@ import net.minecraft.nbt.NbtSizeTracker
 import net.minecraft.server.MinecraftServer
 import net.minecraft.util.WorldSavePath
 import org.nguh.nguhcraft.SyncedGameRule
-import org.nguh.nguhcraft.protect.ProtectionManager
 import java.nio.file.Path
 import kotlin.io.path.inputStream
 
-/**
-* Handle server setup and shutdown.
-*
-* Note that functions in here MUST NOT use the `Server()` function
-* to retrieve the current server instance as the shutdown code in
-* particular runs in a context where the integrated server is no
-* longer accessible through the client.
-*/
+/** Handle server setup and shutdown. */
 object ServerSetup {
     private val LOGGER = LogUtils.getLogger()
 
@@ -49,7 +41,7 @@ object ServerSetup {
 
             // Load data.
             SyncedGameRule.Load(Tag)
-            WarpManager.Load(Tag)
+            WarpManager.Load(S, Tag)
         } catch (E: Exception) {
             LOGGER.warn("Nguhcraft: Failed to load persistent state; using defaults: ${E.message}")
         }

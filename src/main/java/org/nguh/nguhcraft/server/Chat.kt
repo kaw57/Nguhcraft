@@ -4,6 +4,7 @@ import com.mojang.logging.LogUtils
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.Context
 import net.minecraft.network.packet.s2c.play.GameMessageS2CPacket
+import net.minecraft.server.MinecraftServer
 import net.minecraft.server.network.ServerPlayNetworkHandler
 import net.minecraft.server.network.ServerPlayerEntity
 import net.minecraft.text.Text
@@ -11,7 +12,6 @@ import net.minecraft.util.Formatting
 import org.nguh.nguhcraft.Constants
 import org.nguh.nguhcraft.Utils
 import org.nguh.nguhcraft.network.ClientboundChatPacket
-import org.nguh.nguhcraft.server.ServerUtils.Broadcast
 import org.nguh.nguhcraft.server.ServerUtils.IsIntegratedServer
 import org.nguh.nguhcraft.server.ServerUtils.IsLinkedOrOperator
 import org.nguh.nguhcraft.server.ServerUtils.Multicast
@@ -30,10 +30,10 @@ object Chat {
     private val COMMA_COMPONENT = Text.literal(", ").withColor(Constants.DeepKoamaru)
 
     /** Actually send a message. */
-    private fun DispatchMessage(Sender: ServerPlayerEntity?, Message: String) {
+    private fun DispatchMessage(S: MinecraftServer, Sender: ServerPlayerEntity?, Message: String) {
         // On the integrated server, don’t bother with the linking.
         if (IsIntegratedServer()) {
-            Broadcast(ClientboundChatPacket(
+            S.Broadcast(ClientboundChatPacket(
                 Sender?.displayName ?: SERVER_COMPONENT,
                 Message,
                 ClientboundChatPacket.MK_PUBLIC
@@ -50,7 +50,7 @@ object Chat {
                 )
         )
 
-        Broadcast(ClientboundChatPacket(Name, Message, ClientboundChatPacket.MK_PUBLIC))
+        S.Broadcast(ClientboundChatPacket(Name, Message, ClientboundChatPacket.MK_PUBLIC))
         Discord.ForwardChatMessage(Sender, Message)
     }
 
@@ -86,7 +86,7 @@ object Chat {
         if (!EnsurePlayerIsLinked(Context)) return
 
         // Dew it.
-        DispatchMessage(SP, Message)
+        DispatchMessage(Context.server(), SP, Message)
     }
 
     /** Process an incoming command. */
@@ -136,5 +136,5 @@ object Chat {
     }
 
     /** Send a message from the console. */
-    fun SendServerMessage(Message: String) = DispatchMessage(null, Message)
+    fun SendServerMessage(S: MinecraftServer, Message: String) = DispatchMessage(S, null, Message)
 }

@@ -97,28 +97,6 @@ object ServerUtils {
         }
     }
 
-    /** Send a packet to every client except one. */
-    @JvmStatic
-    fun Broadcast(Except: ServerPlayerEntity, P: CustomPayload) {
-        for (Player in Server().playerManager.playerList)
-            if (Player != Except)
-                ServerPlayNetworking.send(Player, P)
-    }
-
-    /** Send a packet to every client in a world. */
-    @JvmStatic
-    fun Broadcast(W: ServerWorld, P: CustomPayload) {
-        for (Player in W.players)
-            ServerPlayNetworking.send(Player, P)
-    }
-
-    /** Send a packet to every client. */
-    @JvmStatic
-    fun Broadcast(P: CustomPayload) {
-        for (Player in Server().playerManager.playerList)
-            ServerPlayNetworking.send(Player, P)
-    }
-
     /** Check if we’re running on a dedicated server. */
     fun IsDedicatedServer() = FabricLoader.getInstance().environmentType == EnvType.SERVER
     fun IsIntegratedServer() = !IsDedicatedServer()
@@ -249,11 +227,6 @@ object ServerUtils {
         "nguhcraft.extraworlddata.${SW.registryKey.value.path}.dat"
     )
 
-    fun PlayerByUUID(ID: String?): ServerPlayerEntity? {
-        return try { Server().playerManager.getPlayer(UUID.fromString(ID)) }
-        catch (E: RuntimeException) { null }
-    }
-
     fun RoundExp(Exp: Float): Int {
         var Int = MathHelper.floor(Exp)
         val Frac = MathHelper.fractionalPart(Exp)
@@ -286,13 +259,6 @@ object ServerUtils {
     fun SendTitle(SP: ServerPlayerEntity, Title: Text?, Subtitle: Text?) {
         if (Title != null) SP.networkHandler.sendPacket(TitleS2CPacket(Title))
         if (Subtitle != null) SP.networkHandler.sendPacket(SubtitleS2CPacket(Subtitle))
-    }
-
-    @Suppress("DEPRECATION")
-    fun Server(): MinecraftServer {
-        if (IsDedicatedServer())
-            return FabricLoader.getInstance().gameInstance as MinecraftServer
-        return MinecraftClient.getInstance().server!!
     }
 
     data class SmeltingResult(val Stack: ItemStack, val Experience: Int)

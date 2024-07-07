@@ -21,6 +21,7 @@ import net.minecraft.nbt.NbtElement
 import net.minecraft.network.RegistryByteBuf
 import net.minecraft.registry.tag.BlockTags
 import net.minecraft.registry.tag.DamageTypeTags
+import net.minecraft.server.MinecraftServer
 import net.minecraft.server.network.ServerPlayerEntity
 import net.minecraft.util.ActionResult
 import net.minecraft.util.math.BlockPos
@@ -30,6 +31,7 @@ import org.nguh.nguhcraft.Lock
 import org.nguh.nguhcraft.client.accessors.AbstractClientPlayerEntityAccessor
 import org.nguh.nguhcraft.item.KeyItem
 import org.nguh.nguhcraft.network.ClientboundSyncProtectionMgrPacket
+import org.nguh.nguhcraft.server.Broadcast
 import org.nguh.nguhcraft.server.ServerUtils
 
 /**
@@ -86,7 +88,7 @@ object ProtectionManager {
         val Regions = RegionList(W)
         if (Regions.any { it.Name == R.Name }) throw IllegalArgumentException("Region name already taken!")
         Regions.add(R)
-        if (!W.isClient) Sync()
+        if (!W.isClient) Sync(W.server!!)
         return true
     }
 
@@ -187,7 +189,7 @@ object ProtectionManager {
         val Index = Regions.indexOfFirst { it.Name == Name }
         if (Index == -1) return false
         Regions.removeAt(Index)
-        if (!W.isClient) Sync()
+        if (!W.isClient) Sync(W.server!!)
         return true
     }
 
@@ -376,7 +378,7 @@ object ProtectionManager {
     fun Send(SP: ServerPlayerEntity) = ServerPlayNetworking.send(SP, ClientboundSyncProtectionMgrPacket(S))
 
     /** Sync regions to the clients. */
-    fun Sync() = ServerUtils.Broadcast(ClientboundSyncProtectionMgrPacket(S))
+    fun Sync(Server: MinecraftServer) = Server.Broadcast(ClientboundSyncProtectionMgrPacket(S))
 
     /** Overwrite the region list of a world. */
     @Environment(EnvType.CLIENT)

@@ -32,7 +32,9 @@ import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
 import net.minecraft.nbt.NbtCompound
 import net.minecraft.nbt.NbtIo
 import net.minecraft.nbt.NbtSizeTracker
+import net.minecraft.server.MinecraftServer
 import net.minecraft.server.command.ServerCommandSource
+import net.minecraft.server.dedicated.MinecraftDedicatedServer
 import net.minecraft.server.network.ServerPlayerEntity
 import net.minecraft.text.ClickEvent
 import net.minecraft.text.MutableText
@@ -46,10 +48,11 @@ import org.nguh.nguhcraft.Utils
 import org.nguh.nguhcraft.Utils.Normalised
 import org.nguh.nguhcraft.mixin.server.MinecraftServerAccessor
 import org.nguh.nguhcraft.network.ClientboundLinkUpdatePacket
+import org.nguh.nguhcraft.server.Broadcast
+import org.nguh.nguhcraft.server.PlayerByUUID
 import org.nguh.nguhcraft.server.command.Commands
 import org.nguh.nguhcraft.server.command.Commands.Exn
 import org.nguh.nguhcraft.server.ServerUtils
-import org.nguh.nguhcraft.server.ServerUtils.Server
 import org.nguh.nguhcraft.server.accessors.ServerPlayerAccessor
 import org.nguh.nguhcraft.server.accessors.ServerPlayerDiscordAccessor
 import org.nguh.nguhcraft.server.dedicated.PlayerList.Companion.UpdateCacheEntry
@@ -82,6 +85,8 @@ private var ServerPlayerEntity.discordDisplayName: Text?
     get() = (this as ServerPlayerDiscordAccessor).nguhcraftDisplayName
     set(value) { (this as ServerPlayerDiscordAccessor).nguhcraftDisplayName = value }
 
+private lateinit var Server: MinecraftDedicatedServer
+
 @Environment(EnvType.SERVER)
 internal class Discord : ListenerAdapter() {
     override fun onButtonInteraction(E: ButtonInteractionEvent) {
@@ -92,7 +97,7 @@ internal class Discord : ListenerAdapter() {
         if (!ID.startsWith(BUTTON_ID_LINK)) return
 
         // Try to retrieve the player we need to link to.
-        val SP = ServerUtils.PlayerByUUID(ID.substring(BUTTON_ID_LINK.length))
+        val SP = Server.PlayerByUUID(ID.substring(BUTTON_ID_LINK.length))
         if (SP == null) E.reply("Invalid player!").setEphemeral(true).queue()
 
         // Sanity check. Overriding the link would not be the end of the
@@ -119,7 +124,7 @@ internal class Discord : ListenerAdapter() {
             }
 
             // Link the player. Take care to do this in the main thread.
-            Server().execute { PerformLink(SP, M) }
+            Server.execute { PerformLink(SP, M) }
             E.reply("Done!").setEphemeral(true).queue()
         }, { Error ->
             if (Error is ErrorResponseException && Error.errorResponse == ErrorResponse.UNKNOWN_MEMBER) {
@@ -185,13 +190,12 @@ internal class Discord : ListenerAdapter() {
         val Content = Mess.contentDisplay
         val HasAttachments = Mess.attachments.isNotEmpty()
         val HasReference = Mess.messageReference != null
-        val S = Server()
-        Server().execute {
+        Server.execute {
             val Comp = DISCORD_COMPONENT.copy().append(Text.literal(Name).append(": ").withColor(Colour))
             if (HasReference) Comp.append(REPLY_COMPONENT)
             if (HasAttachments) Comp.append(IMAGE_COMPONENT)
             Comp.append(Text.literal(Content).formatted(Formatting.WHITE))
-            S.playerManager.broadcast(Comp, false)
+            Server.playerManager.broadcast(Comp, false)
         }
     }
 
@@ -233,11 +237,8 @@ internal class Discord : ListenerAdapter() {
         private lateinit var NguhcrafterRole: Role
         private lateinit var NgimpRole: Role
 
-        @Volatile
-        private var ServerAvatarURL: String = DEFAULT_AVATARS[0]
-
-        @Volatile
-        private var Ready = false
+        @Volatile private var ServerAvatarURL: String = DEFAULT_AVATARS[0]
+        @Volatile private var Ready = false
 
         /// Config file format.
         @Serializable
@@ -252,7 +253,9 @@ internal class Discord : ListenerAdapter() {
 
         @Throws(Exception::class)
         @JvmStatic
-        fun Start() {
+        fun Start(S: MinecraftDedicatedServer) {
+            Server = S
+
             // Load the bot config.
             val Config = Json.decodeFromString<ConfigFile>(File("discord-bot-config.json").readText())
             val Intents = EnumSet.allOf(GatewayIntent::class.java).also { it.add(GatewayIntent.GUILD_MEMBERS) }
@@ -338,7 +341,7 @@ internal class Discord : ListenerAdapter() {
 
         private fun BroadcastPlayerUpdate(SP: ServerPlayerEntity) {
             UpdatePlayerName(SP)
-            ServerUtils.Broadcast(
+            Server.Broadcast(
                 ClientboundLinkUpdatePacket(
                     SP.uuid,
                     SP.gameProfile.name,
@@ -447,7 +450,7 @@ internal class Discord : ListenerAdapter() {
         }
 
         private fun LinkedPlayerForMember(ID: Long): ServerPlayerEntity?
-            = Server().playerManager.playerList.find { it.discordId == ID}
+            = Server.playerManager.playerList.find { it.discordId == ID}
 
         private fun MemberByID(Source: ServerCommandSource, ID: Long): Member? {
             try {
@@ -483,7 +486,7 @@ internal class Discord : ListenerAdapter() {
             val Colour = M.colorRaw
             UpdateLinkedPlayer(M.idLong) { SP: ServerPlayerEntity ->
                 if (Colour != SP.discordColour) {
-                    Server().execute {
+                    Server.execute {
                         SP.discordColour = Colour
                         BroadcastPlayerUpdate(SP)
                     }
@@ -538,7 +541,7 @@ internal class Discord : ListenerAdapter() {
 
             // Broadcast the change to all players and send a message to Discord.
             SendSimpleEmbed(null, DiscordMsg, Constants.Green)
-            Server().playerManager.broadcast(
+            Server.playerManager.broadcast(
                 Text.empty()
                     .append(Text.literal(SP.nameForScoreboard).formatted(Formatting.AQUA))
                     .append(Text.literal(" is now linked to ").formatted(Formatting.GREEN))
@@ -639,10 +642,10 @@ internal class Discord : ListenerAdapter() {
             UpdatePlayerAsync(SP)
 
             // Broadcast this player’s name to everyone.
-            ServerUtils.Broadcast(ClientboundLinkUpdatePacket(SP))
+            Server.Broadcast(ClientboundLinkUpdatePacket(SP))
 
             // Send all other players’ names to this player.
-            for (P in Server().playerManager.playerList)
+            for (P in Server.playerManager.playerList)
                 if (P != SP)
                     ServerPlayNetworking.send(SP, ClientboundLinkUpdatePacket(P))
         }
@@ -666,7 +669,7 @@ internal class Discord : ListenerAdapter() {
          */
         fun UpdateLinkedPlayer(ID: Long, F: Consumer<ServerPlayerEntity>) {
             val SP = LinkedPlayerForMember(ID) ?: return
-            Server().execute { F.accept(SP) }
+            Server.execute { F.accept(SP) }
         }
 
         /**
@@ -683,7 +686,7 @@ internal class Discord : ListenerAdapter() {
             NameColour: Int
         ) {
             // Sanity check.
-            assert(Server().isOnThread) { "Must link on tick thread" }
+            assert(Server.isOnThread) { "Must link on tick thread" }
 
             // Dew it.
             SP.discordId = ID
@@ -694,7 +697,7 @@ internal class Discord : ListenerAdapter() {
 
             // The 'link'/'unlink' options are only available if the player is
             // unlinked/linked, so we need to refresh the player’s commands.
-            Server().commandManager.sendCommandTree(SP)
+            Server.commandManager.sendCommandTree(SP)
         }
 
         private fun UpdatePlayer(SP: ServerPlayerEntity, M: Member) = UpdatePlayer(
@@ -718,12 +721,12 @@ internal class Discord : ListenerAdapter() {
             // Retrieve the member to see if they’re still on the server and because
             // their name, avatar, etc. may have changed since we last saw them.
             AgmaSchwaGuild.retrieveMemberById(SP.discordId).useCache(false).queue({ M: Member? ->
-                Server().execute {
+                Server.execute {
                     if (M == null) PerformUnlink(SP)
                     else UpdatePlayer(SP, M)
                 }
             }, { failure ->
-                Server().execute {
+                Server.execute {
                     // Failure likely indicates that the player is no longer on the
                     // server; unlink them just in case and log the error.
                     PerformUnlink(SP)
@@ -802,17 +805,16 @@ class PlayerList private constructor(private val ByID: HashMap<UUID, Entry>) : I
         private val NULL_ENTRY = Entry(UUID(0, 0), Discord.INVALID_ID, 0, "", "")
 
         /** Player data directory */
-        private val PlayerDataDir get() = (Server() as MinecraftServerAccessor)
+        private val PlayerDataDir get() = (Server as MinecraftServerAccessor)
             .session.getDirectory(WorldSavePath.PLAYERDATA).toFile()
 
         /** Retrieve Nguhcraft-specific data for all players, even if they’re offline.  */
         fun AllPlayers(): PlayerList {
-            val S = Server()
             val DatFiles = PlayerDataDir.list { _, name -> name.endsWith(".dat") }
             val PlayerData = HashMap<UUID, Entry>()
 
             // Enumerate all players for which we have an entry, adding them to the list.
-            assert(S.isOnThread) { "Must run on the server thread" }
+            assert(Server.isOnThread) { "Must run on the server thread" }
             for (F in DatFiles!!) {
                 try {
                     val ID = UUID.fromString(F.substring(0, F.length - 4))
@@ -825,7 +827,7 @@ class PlayerList private constructor(private val ByID: HashMap<UUID, Entry>) : I
             }
 
             // Also add online players that haven’t been saved yet.
-            for (P in S.playerManager.playerList) AddPlayerData(PlayerData, P.uuid)
+            for (P in Server.playerManager.playerList) AddPlayerData(PlayerData, P.uuid)
             return PlayerList(PlayerData)
         }
 

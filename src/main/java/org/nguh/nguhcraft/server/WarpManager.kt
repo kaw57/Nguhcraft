@@ -3,11 +3,11 @@ package org.nguh.nguhcraft.server
 import com.mojang.logging.LogUtils
 import net.minecraft.nbt.NbtCompound
 import net.minecraft.nbt.NbtElement
-import net.minecraft.nbt.NbtOps
-import net.minecraft.server.world.ServerWorld
+import net.minecraft.registry.RegistryKey
+import net.minecraft.server.MinecraftServer
 import net.minecraft.util.math.Vec3d
 import net.minecraft.world.World
-import org.nguh.nguhcraft.server.ServerUtils.Server
+import org.nguh.nguhcraft.Utils
 
 object WarpManager {
     private val LOGGER = LogUtils.getLogger()
@@ -24,7 +24,7 @@ object WarpManager {
     /** A single warp. */
     data class Warp(
         val Name: String,
-        val World: ServerWorld,
+        val World: RegistryKey<World>,
         val Pos: Vec3d,
         val Yaw: Float,
         val Pitch: Float
@@ -34,15 +34,14 @@ object WarpManager {
     val Warps = mutableMapOf<String, Warp>()
 
     /** Load warps from save file. */
-    fun Load(Nbt: NbtCompound) {
+    fun Load(S: MinecraftServer, Nbt: NbtCompound) {
         Warps.clear()
         try {
             for (Elem in Nbt.getList(TAG_ROOT, NbtElement.COMPOUND_TYPE.toInt())) {
                 val W = Elem as NbtCompound
-                val WorldKey = World.CODEC.parse(NbtOps.INSTANCE, W.get(TAG_WORLD))!!.result().get()
                 Warps[W.getString(TAG_NAME)] = Warp(
                     W.getString(TAG_NAME),
-                    Server().getWorld(WorldKey)!!,
+                    Utils.DeserialiseWorld(W.get(TAG_WORLD)!!),
                     Vec3d(W.getDouble(TAG_X), W.getDouble(TAG_Y), W.getDouble(TAG_Z)),
                     W.getFloat(TAG_YAW),
                     W.getFloat(TAG_PITCH)
@@ -62,7 +61,7 @@ object WarpManager {
         for (W in Warps.values) {
             val WTag = NbtCompound()
             WTag.putString(TAG_NAME, W.Name)
-            WTag.put(TAG_WORLD, World.CODEC.encodeStart(NbtOps.INSTANCE, W.World.registryKey).result().get())
+            WTag.put(TAG_WORLD, Utils.SerialiseWorld(W.World))
             WTag.putDouble(TAG_X, W.Pos.x)
             WTag.putDouble(TAG_Y, W.Pos.y)
             WTag.putDouble(TAG_Z, W.Pos.z)

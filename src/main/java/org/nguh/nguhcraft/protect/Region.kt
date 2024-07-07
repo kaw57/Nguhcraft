@@ -2,6 +2,7 @@ package org.nguh.nguhcraft.protect
 
 import net.minecraft.nbt.NbtCompound
 import net.minecraft.network.RegistryByteBuf
+import net.minecraft.server.MinecraftServer
 import net.minecraft.text.Text
 import net.minecraft.util.Formatting
 import net.minecraft.util.math.BlockPos
@@ -194,10 +195,10 @@ class Region(
     }
 
     /** Set a region flag. */
-    fun SetFlag(Flag: Flags, Allow: Boolean) {
+    fun SetFlag(S: MinecraftServer, Flag: Flags, Allow: Boolean) {
         val OldFlags = RegionFlags
         RegionFlags = if (Allow) OldFlags or Flag.Bit() else OldFlags and Flag.Bit().inv()
-        if (OldFlags != RegionFlags) ProtectionManager.Sync()
+        if (OldFlags != RegionFlags) ProtectionManager.Sync(S)
     }
 
     /** Helper to simplify testing flags. */

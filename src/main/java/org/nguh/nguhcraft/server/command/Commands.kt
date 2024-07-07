@@ -2,6 +2,7 @@ package org.nguh.nguhcraft.server.command
 
 import com.mojang.brigadier.arguments.*
 import com.mojang.brigadier.builder.LiteralArgumentBuilder
+import com.mojang.brigadier.exceptions.DynamicCommandExceptionType
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType
 import net.fabricmc.api.EnvType
 import net.fabricmc.api.Environment
@@ -19,8 +20,6 @@ import net.minecraft.enchantment.Enchantment
 import net.minecraft.entity.Entity
 import net.minecraft.inventory.ContainerLock
 import net.minecraft.item.ItemStack
-import net.minecraft.registry.Registries
-import net.minecraft.registry.Registry
 import net.minecraft.registry.RegistryKeys
 import net.minecraft.registry.entry.RegistryEntry
 import net.minecraft.server.command.CommandManager.argument
@@ -43,10 +42,8 @@ import org.nguh.nguhcraft.item.NguhItems
 import org.nguh.nguhcraft.network.ClientboundSyncProtectionBypassPacket
 import org.nguh.nguhcraft.protect.ProtectionManager
 import org.nguh.nguhcraft.protect.Region
-import org.nguh.nguhcraft.server.Chat
+import org.nguh.nguhcraft.server.*
 import org.nguh.nguhcraft.server.ServerUtils.IsIntegratedServer
-import org.nguh.nguhcraft.server.Teleport
-import org.nguh.nguhcraft.server.WarpManager
 import org.nguh.nguhcraft.server.accessors.ServerPlayerAccessor
 import org.nguh.nguhcraft.server.accessors.ServerPlayerDiscordAccessor
 
@@ -66,21 +63,27 @@ object Commands {
             }
 
             D.register(BypassCommand())               // /bypass
+            D.register(DelHomeCommand())              // /delhome
             D.register(DiscardCommand())              // /discard
             D.register(EnchantCommand(A))             // /enchant
+            D.register(HomeCommand())                 // /home
+            D.register(HomesCommand())                // /homes
             D.register(KeyCommand())                  // /key
             val Msg = D.register(MessageCommand())    // /msg
             D.register(RegionCommand())               // /region
             D.register(RuleCommand())                 // /rule
             D.register(SayCommand())                  // /say
+            D.register(SetHomeCommand())              // /sethome
             D.register(literal("tell").redirect(Msg)) // /tell
+            D.register(UUIDComand())                  // /uuid
             D.register(literal("w").redirect(Msg))    // /w
             D.register(WarpCommand())                 // /warp
             D.register(WarpsCommand())                // /warps
             D.register(WildCommand())                 // /wild
         }
 
-        ArgType("warp", WarpArgumentType::warp)
+        ArgType("warp", WarpArgumentType::Warp)
+        ArgType("home", HomeArgumentType::Home)
     }
 
     fun Exn(message: String): SimpleCommandExceptionType {
@@ -148,8 +151,84 @@ object Commands {
         }
     }
 
+    object HomeCommand {
+        private val CANT_TOUCH_THIS = Exn("The \"bed\" home is special and cannot be deleted or set!")
+        private val CONNOR_MACLEOD = Exn("You may only have one home!")
+
+        fun Delete(S: ServerCommandSource, SP: ServerPlayerEntity, H: Home): Int {
+            if (H.Name == Home.BED_HOME) throw CANT_TOUCH_THIS.create()
+            (SP as ServerPlayerAccessor).Homes().remove(H)
+            S.sendMessage(
+                Text.literal("Deleted home ")
+                    .append(Text.literal(H.Name).formatted(Formatting.AQUA))
+                    .formatted(Formatting.YELLOW)
+            )
+            return 1
+        }
+
+        fun DeleteDefault(S: ServerCommandSource, SP: ServerPlayerEntity): Int {
+            val H = (SP as ServerPlayerAccessor).Homes().find { it.Name == Home.DEFAULT_HOME }?: return 0
+            return Delete(S, SP, H)
+        }
+
+        private fun FormatHome(H: Home): Text =
+            Text.literal("\n  - ")
+                .append(Text.literal(H.Name).formatted(Formatting.AQUA))
+                .append(" in ")
+                .append(Text.literal(H.World.value.path.toString()).withColor(Constants.Lavender))
+                .append(" at [")
+                .append(Text.literal("${H.Pos.x}").formatted(Formatting.GRAY))
+                .append(", ")
+                .append(Text.literal("${H.Pos.y}").formatted(Formatting.GRAY))
+                .append(", ")
+                .append(Text.literal("${H.Pos.z}").formatted(Formatting.GRAY))
+                .append("]")
+
+        fun List(S: ServerCommandSource, SP: ServerPlayerEntity): Int {
+            val Homes = (SP as ServerPlayerAccessor).Homes()
+            if (Homes.isEmpty()) {
+                S.sendMessage(Text.literal("No homes defined").formatted(Formatting.YELLOW))
+                return 0
+            }
+
+            val List = Text.literal("Homes:")
+            List.append(FormatHome(Home.Bed(SP)))
+            for (H in Homes) List.append(FormatHome(H))
+            S.sendMessage(List.formatted(Formatting.YELLOW))
+            return 1
+        }
+
+        fun Set(S: ServerCommandSource, SP: ServerPlayerEntity, RawName: String): Int {
+            val (TargetPlayer, Name) = HomeArgumentType.MapOrThrow(SP, RawName)
+            if (Name == Home.BED_HOME) throw CANT_TOUCH_THIS.create()
+            val Homes = (TargetPlayer as ServerPlayerAccessor).Homes()
+            Homes.removeIf { it.Name == Name }
+
+            // And add the new one.
+            if (!TargetPlayer.hasPermissionLevel(4) && Homes.isNotEmpty()) throw CONNOR_MACLEOD.create()
+            Homes.add(Home(Name, SP.world.registryKey, SP.blockPos))
+
+            S.sendMessage(
+                Text.literal("Set home ")
+                    .append(Text.literal(Name).formatted(Formatting.AQUA))
+                    .formatted(Formatting.GREEN)
+            )
+            return 1
+        }
+
+        fun Teleport(SP: ServerPlayerEntity, H: Home): Int {
+            SP.Teleport(SP.server.getWorld(H.World)!!, H.Pos)
+            return 1
+        }
+
+        fun TeleportToDefault(SP: ServerPlayerEntity): Int {
+            val H = (SP as ServerPlayerAccessor).Homes().firstOrNull() ?: Home.Bed(SP)
+            return Teleport(SP, H)
+        }
+    }
+
     object KeyCommand {
-        val ERR_EMPTY: Text = Text.literal("Key may not be empty!")
+        private val ERR_EMPTY: Text = Text.literal("Key may not be empty!")
 
         fun Generate(S: ServerCommandSource, SP: ServerPlayerEntity, Key: String): Int {
             if (Key.isEmpty()) {
@@ -307,7 +386,7 @@ object Commands {
             Allow: Boolean
         ): Int {
             val R = GetRegionByName(S, W, Name) ?: return 0
-            R.SetFlag(Flag, Allow)
+            R.SetFlag(S.server, Flag, Allow)
             val Mess = Text.literal("Set region flag ")
                 .append(Text.literal(Flag.name.lowercase()).withColor(Constants.Orange))
                 .append(" to ")
@@ -324,13 +403,9 @@ object Commands {
     }
 
     object WarpsCommand {
-        fun Delete(S: ServerCommandSource, Name: String): Int {
-            if (WarpManager.Warps.remove(Name) == null) {
-                S.sendError(Text.literal("No such warp: ").append(Text.literal(Name).formatted(Formatting.AQUA)))
-                return 0
-            }
-
-            S.sendMessage(Text.literal("Deleted warp ").append(Text.literal(Name).formatted(Formatting.AQUA)))
+        fun Delete(S: ServerCommandSource, W: WarpManager.Warp): Int {
+            WarpManager.Warps.remove(W.Name)
+            S.sendMessage(Text.literal("Deleted warp ").append(Text.literal(W.Name).formatted(Formatting.AQUA)))
             return 1
         }
 
@@ -338,7 +413,7 @@ object Commands {
             Text.empty()
                 .append(Text.literal(W.Name).formatted(Formatting.AQUA))
                 .append(" in ")
-                .append(Text.literal(W.World.registryKey.value.path.toString()).withColor(Constants.Lavender))
+                .append(Text.literal(W.World.value.path.toString()).withColor(Constants.Lavender))
                 .append(" at [")
                 .append(Text.literal("${W.Pos.x.toInt()}").formatted(Formatting.GRAY))
                 .append(", ")
@@ -365,7 +440,7 @@ object Commands {
         }
 
         fun Set(S: ServerCommandSource, SP: ServerPlayerEntity, Name: String): Int {
-            val W = WarpManager.Warp(Name, SP.serverWorld, SP.pos, SP.yaw, SP.pitch)
+            val W = WarpManager.Warp(Name, SP.serverWorld.registryKey, SP.pos, SP.yaw, SP.pitch)
             WarpManager.Warps[Name] = W
             S.sendMessage(Text.literal("Set warp ").append(FormatWarp(W)).formatted(Formatting.YELLOW))
             return 1
@@ -460,6 +535,26 @@ object Commands {
     private fun BypassCommand(): LiteralArgumentBuilder<ServerCommandSource> = literal("bypass")
         .requires { it.isExecutedByPlayer && it.hasPermissionLevel(4) }
         .executes { BypassCommand.Toggle(it.source, it.source.playerOrThrow) }
+
+    private fun DelHomeCommand(): LiteralArgumentBuilder<ServerCommandSource> = literal("delhome")
+        .requires { it.isExecutedByPlayer }
+        .then(argument("name", HomeArgumentType.Home())
+            .requires { it.hasPermissionLevel(4) }
+            .suggests(HomeArgumentType::Suggest)
+            .executes {
+                HomeCommand.Delete(
+                    it.source,
+                    it.source.playerOrThrow,
+                    HomeArgumentType.Resolve(it, "name")
+                )
+            }
+        )
+        .executes {
+            HomeCommand.DeleteDefault(
+                it.source,
+                it.source.playerOrThrow
+            )
+        }
 
     private fun DiscardCommand(): LiteralArgumentBuilder<ServerCommandSource> = literal("discard")
         .requires { it.hasPermissionLevel(4) }
@@ -568,6 +663,31 @@ object Commands {
                     )
                 }
         )
+
+    private fun HomeCommand(): LiteralArgumentBuilder<ServerCommandSource> = literal("home")
+        .requires { it.isExecutedByPlayer }
+        .then(argument("home", HomeArgumentType.Home())
+            .suggests(HomeArgumentType::Suggest)
+            .executes {
+                HomeCommand.Teleport(
+                    it.source.playerOrThrow,
+                    HomeArgumentType.Resolve(it, "home")
+                )
+            }
+        )
+        .executes { HomeCommand.TeleportToDefault(it.source.playerOrThrow) }
+
+    private fun HomesCommand(): LiteralArgumentBuilder<ServerCommandSource> = literal("homes")
+        .then(argument("player", EntityArgumentType.player())
+            .requires { it.hasPermissionLevel(4) }
+            .executes {
+                HomeCommand.List(
+                    it.source,
+                    EntityArgumentType.getPlayer(it, "player")
+                )
+            }
+        )
+        .executes { HomeCommand.List(it.source, it.source.playerOrThrow) }
 
     private fun KeyCommand(): LiteralArgumentBuilder<ServerCommandSource> = literal("key")
         .requires { it.hasPermissionLevel(4) }
@@ -682,7 +802,7 @@ object Commands {
             Command = Command.then(literal(Rule.Name)
                 .then(argument("value", BoolArgumentType.bool())
                     .executes {
-                        Rule.Set(BoolArgumentType.getBool(it, "value"))
+                        Rule.Set(it.source.server, BoolArgumentType.getBool(it, "value"))
                         it.source.sendMessage(Text.literal("Set '${Rule.Name}' to ${Rule.IsSet()}"))
                         1
                     }
@@ -700,17 +820,53 @@ object Commands {
         .requires { it.player == null && it.hasPermissionLevel(4) } // Console only.
         .then(argument("message", StringArgumentType.greedyString())
             .executes {
-                Chat.SendServerMessage(StringArgumentType.getString(it, "message"))
+                Chat.SendServerMessage(it.source.server, StringArgumentType.getString(it, "message"))
                 1
             }
         )
 
+    private fun SetHomeCommand(): LiteralArgumentBuilder<ServerCommandSource> = literal("sethome")
+        .requires { it.isExecutedByPlayer }
+        .then(argument("name", StringArgumentType.word())
+            .requires { it.hasPermissionLevel(4) }
+            .executes {
+                HomeCommand.Set(
+                    it.source,
+                    it.source.playerOrThrow,
+                    StringArgumentType.getString(it, "name")
+                )
+            }
+        )
+        .executes {
+            HomeCommand.Set(
+                it.source,
+                it.source.playerOrThrow,
+                Home.DEFAULT_HOME
+            )
+        }
+
+    private fun UUIDComand(): LiteralArgumentBuilder<ServerCommandSource> = literal("uuid")
+        .then(argument("player", EntityArgumentType.player())
+            .requires { it.hasPermissionLevel(4) }
+            .executes {
+                val Player = EntityArgumentType.getPlayer(it, "player")
+                it.source.sendMessage(Text.literal("UUID: ${Player.uuid}"))
+                1
+            }
+        )
+        .executes {
+            it.source.sendMessage(Text.literal("Your UUID: ${it.source.playerOrThrow.uuid}"))
+            1
+        }
+
     private fun WarpCommand(): LiteralArgumentBuilder<ServerCommandSource> = literal("warp")
         .requires { it.isExecutedByPlayer }
-        .then(argument("warp", WarpArgumentType.warp())
+        .then(argument("warp", WarpArgumentType.Warp())
+            .suggests(WarpArgumentType::Suggest)
             .executes {
-                val W = WarpArgumentType.resolve(it, "warp")
-                it.source.playerOrThrow.Teleport(W.World, W.Pos, W.Yaw, W.Pitch)
+                val W = WarpArgumentType.Resolve(it, "warp")
+                val SP = it.source.playerOrThrow
+                SP.Teleport(SP.server.getWorld(W.World)!!, W.Pos, W.Yaw, W.Pitch)
                 1
             }
         )
@@ -731,11 +887,12 @@ object Commands {
         )
         .then(literal("del")
             .requires { it.hasPermissionLevel(4) }
-            .then(argument("warp", StringArgumentType.word())
+            .then(argument("warp", WarpArgumentType.Warp())
+                .suggests(WarpArgumentType::Suggest)
                 .executes {
                     WarpsCommand.Delete(
                         it.source,
-                        StringArgumentType.getString(it, "warp")
+                        WarpArgumentType.Resolve(it, "warp")
                     )
                 }
             )

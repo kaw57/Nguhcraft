@@ -4,8 +4,10 @@ import net.fabricmc.api.EnvType
 import net.fabricmc.api.Environment
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
 import net.minecraft.nbt.NbtCompound
+import net.minecraft.server.MinecraftServer
 import net.minecraft.server.network.ServerPlayerEntity
 import org.nguh.nguhcraft.network.ClientboundSyncGameRulesPacket
+import org.nguh.nguhcraft.server.Broadcast
 import org.nguh.nguhcraft.server.ServerUtils
 
 /**
@@ -32,10 +34,10 @@ enum class SyncedGameRule(
     private var Value: Boolean = Default
 
     /** Set the value. */
-    fun Set(NewValue: Boolean = true) {
+    fun Set(S: MinecraftServer, NewValue: Boolean = true) {
         if (Value == NewValue) return
         Value = NewValue
-        Sync()
+        Sync(S)
     }
 
     /** Check if this rule is set. */
@@ -72,7 +74,7 @@ enum class SyncedGameRule(
         fun Send(SP: ServerPlayerEntity) = ServerPlayNetworking.send(SP, Encode())
 
         /** Sync the game rules. */
-        fun Sync() = ServerUtils.Broadcast(Encode())
+        fun Sync(S: MinecraftServer) = S.Broadcast(Encode())
 
         /** Update the game rules. */
         @JvmStatic

@@ -5,6 +5,9 @@ import net.minecraft.enchantment.Enchantment
 import net.minecraft.enchantment.EnchantmentHelper
 import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.item.ItemStack
+import net.minecraft.nbt.NbtCompound
+import net.minecraft.nbt.NbtElement
+import net.minecraft.nbt.NbtOps
 import net.minecraft.network.packet.CustomPayload
 import net.minecraft.registry.RegistryKey
 import net.minecraft.registry.RegistryKeys
@@ -86,6 +89,10 @@ object Utils {
     @JvmStatic
     fun Debug(Message: String, vararg Objects : Any) = LOGGER.info(Message, *Objects)
 
+    /** Deserialise a world from a registry key. */
+    fun DeserialiseWorld(Nbt: NbtElement) =
+        World.CODEC.parse(NbtOps.INSTANCE, Nbt).result().get()
+
     /** Get the level of an enchantment on an item stack. */
     @JvmStatic
     fun EnchantLvl(W: World, Stack: ItemStack, E: RegistryKey<Enchantment>): Int {
@@ -110,6 +117,9 @@ object Utils {
         val Ones = I[Number % 10]
         return "$Thousands$Hundreds$Tens$Ones"
     }
+
+    /** Serialise a world as a registry key. */
+    fun SerialiseWorld(W: RegistryKey<World>) = World.CODEC.encodeStart(NbtOps.INSTANCE, W).result().get()
 }
 
 /** Parse a string into a UUID, returning null on failure. */

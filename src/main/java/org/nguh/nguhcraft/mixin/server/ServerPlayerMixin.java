@@ -4,6 +4,8 @@ import com.mojang.authlib.GameProfile;
 import com.mojang.logging.LogUtils;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtElement;
+import net.minecraft.nbt.NbtList;
 import net.minecraft.network.message.MessageType;
 import net.minecraft.network.message.SentMessage;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -11,6 +13,7 @@ import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.NotNull;
+import org.nguh.nguhcraft.server.Home;
 import org.nguh.nguhcraft.server.accessors.ServerPlayerAccessor;
 import org.slf4j.Logger;
 import org.spongepowered.asm.mixin.Mixin;
@@ -21,6 +24,9 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Mixin(ServerPlayerEntity.class)
 public abstract class ServerPlayerMixin extends PlayerEntity implements ServerPlayerAccessor {
     public ServerPlayerMixin(World world, BlockPos pos, float yaw, GameProfile gameProfile) {
@@ -29,6 +35,7 @@ public abstract class ServerPlayerMixin extends PlayerEntity implements ServerPl
 
     @Unique private boolean Vanished = false;
     @Unique private boolean BypassesRegionProtection = false;
+    @Unique private List<Home> Homes = new ArrayList<>();
 
     @Unique static private final Logger LOGGER = LogUtils.getLogger();
 
@@ -42,13 +49,20 @@ public abstract class ServerPlayerMixin extends PlayerEntity implements ServerPl
         BypassesRegionProtection = bypassesProtection;
     }
 
+    @Override
+    public List<Home> Homes() { return Homes; }
+
     /** Load custom data from Nbt. */
     @Override
-    public void LoadGeneralNguhcraftNbt(@NotNull NbtCompound nbt) {
-        if (nbt.contains(TAG_ROOT)) {
-            var nguh = nbt.getCompound(TAG_ROOT);
-            Vanished = nguh.getBoolean(TAG_VANISHED);
-            BypassesRegionProtection = nguh.getBoolean(TAG_BYPASSES_REGION_PROTECTION);
+    public void LoadGeneralNguhcraftNbt(@NotNull NbtCompound Nbt) {
+        if (Nbt.contains(TAG_ROOT)) {
+            var Nguh = Nbt.getCompound(TAG_ROOT);
+            Vanished = Nguh.getBoolean(TAG_VANISHED);
+            BypassesRegionProtection = Nguh.getBoolean(TAG_BYPASSES_REGION_PROTECTION);
+            if (Nguh.contains(TAG_HOMES)) {
+                var HomesTag = Nguh.getList(TAG_HOMES, NbtElement.COMPOUND_TYPE);
+                for (var H : HomesTag) Homes.add(Home.Load((NbtCompound) H));
+            }
         }
     }
 
@@ -69,15 +83,24 @@ public abstract class ServerPlayerMixin extends PlayerEntity implements ServerPl
         var OldNSP = (ServerPlayerAccessor) Old;
         Vanished = OldNSP.getVanished();
         BypassesRegionProtection = OldNSP.getBypassesRegionProtection();
+        Homes = OldNSP.Homes();
     }
 
     /** Save Nbt data to the player file. */
     @Inject(method = "writeCustomDataToNbt(Lnet/minecraft/nbt/NbtCompound;)V", at = @At("TAIL"))
-    private void inject$saveData(@NotNull NbtCompound nbt, CallbackInfo ci) {
-        var tag = nbt.getCompound(TAG_ROOT);
-        tag.putBoolean(TAG_VANISHED, Vanished);
-        tag.putBoolean(TAG_BYPASSES_REGION_PROTECTION, BypassesRegionProtection);
-        nbt.put(TAG_ROOT, tag);
+    private void inject$saveData(@NotNull NbtCompound Nbt, CallbackInfo ci) {
+        // Save data.
+        var Nguh = Nbt.getCompound(TAG_ROOT);
+        Nguh.putBoolean(TAG_VANISHED, Vanished);
+        Nguh.putBoolean(TAG_BYPASSES_REGION_PROTECTION, BypassesRegionProtection);
+
+        // Save homes.
+        var HomesTag = new NbtList();
+        for (var H : Homes) HomesTag.add(H.Save());
+
+        // Store tags.
+        Nguh.put(TAG_HOMES, HomesTag);
+        Nbt.put(TAG_ROOT, Nguh);
     }
 
     /**
