@@ -1,7 +1,5 @@
 package org.nguh.nguhcraft.server
 
-import net.fabricmc.api.EnvType
-import net.fabricmc.api.Environment
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
 import net.minecraft.block.entity.LockableContainerBlockEntity
 import net.minecraft.entity.Entity
@@ -15,6 +13,10 @@ import net.minecraft.util.math.Vec3d
 import net.minecraft.world.TeleportTarget
 import org.nguh.nguhcraft.mixin.protect.LockableContainerBlockEntityAccessor
 import java.util.*
+
+fun Entity.CentreOn(Block: BlockPos) {
+    setPos(Block.x + 0.5, (Block.y + 1).toDouble(), Block.z + 0.5)
+}
 
 fun Entity.Teleport(ToWorld: ServerWorld, OnTopOf: BlockPos) {
     val Vec = Vec3d(OnTopOf.x.toDouble(), OnTopOf.y.toDouble() + 1, OnTopOf.z.toDouble())

@@ -4,6 +4,7 @@
 	"package": "org.nguh.nguhcraft.mixin",
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [
+		"common.AbstractMinecartMixin",
 		"common.EnchantmentMixin",
 		"common.EnderEyeItemMixin",
 		"common.ItemStackComponentizationFixMixin",
@@ -35,7 +36,9 @@
 		"protect.server.LightningEntityMixin",
 		"protect.server.PotionEntityMixin",
 		"protect.server.ServerPlayerInteractionManagerMixin",
+		"server.AbstractMinecartEntityAccessor",
 		"server.BlockMixin",
+		"server.DetectorRailBlockAccessor",
 		"server.EntityMixin",
 		"server.HungerManagerMixin",
 		"server.LivingEntityMixin",

@@ -1,13 +1,22 @@
 package org.nguh.nguhcraft
 
+import net.minecraft.block.AbstractBlock
+import net.minecraft.block.Block
+import net.minecraft.block.BlockState
 import net.minecraft.block.entity.LockableContainerBlockEntity
 import net.minecraft.client.network.ClientPlayerEntity
 import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.inventory.ContainerLock
+import net.minecraft.registry.entry.RegistryEntry
+import net.minecraft.registry.tag.TagKey
 import net.minecraft.server.network.ServerPlayerEntity
 import org.nguh.nguhcraft.client.NguhcraftClient
 import org.nguh.nguhcraft.mixin.protect.LockableContainerBlockEntityAccessor
 import org.nguh.nguhcraft.server.accessors.ServerPlayerAccessor
+
+infix fun AbstractBlock.AbstractBlockState.isa(B: TagKey<Block>) = this.isIn(B)
+infix fun AbstractBlock.AbstractBlockState.isa(B: RegistryEntry<Block>) = this.isOf(B)
+infix fun BlockState.isa(B: Block) = this.isOf(B)
 
 fun PlayerEntity.BypassesRegionProtection(): Boolean {
     // Server can check this directly.
