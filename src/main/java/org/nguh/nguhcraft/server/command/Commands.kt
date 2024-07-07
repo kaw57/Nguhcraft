@@ -77,7 +77,8 @@ object Commands {
             D.register(SayCommand())                  // /say
             D.register(SetHomeCommand())              // /sethome
             D.register(literal("tell").redirect(Msg)) // /tell
-            D.register(UUIDComand())                  // /uuid
+            D.register(TopCommand())                  // /top
+            D.register(UUIDCommand())                  // /uuid
             D.register(literal("w").redirect(Msg))    // /w
             D.register(WarpCommand())                 // /warp
             D.register(WarpsCommand())                // /warps
@@ -847,7 +848,25 @@ object Commands {
             )
         }
 
-    private fun UUIDComand(): LiteralArgumentBuilder<ServerCommandSource> = literal("uuid")
+    private fun TopCommand(): LiteralArgumentBuilder<ServerCommandSource> = literal("top")
+        .requires { it.hasPermissionLevel(4) && it.isExecutedByPlayer }
+        .executes {
+            val SP = it.source.playerOrThrow
+            val SW = SP.serverWorld
+            val TopY = SW.getTopY(Heightmap.Type.WORLD_SURFACE, SP.x.toInt(), SP.z.toInt()) - 1
+
+            // Make sure this doesn’t put us in the void.
+            if (TopY <= SW.bottomY) return@executes 0
+
+            // Make sure the block is solid.
+            val Pos = BlockPos(SP.x.toInt(), TopY, SP.z.toInt())
+            val St = SW.getBlockState(Pos)
+            if (!St.isAir) SP.Teleport(SW, Pos)
+            else it.source.sendError(Text.literal("Couldn’t find a suitable location to teleport to!"))
+            1
+        }
+
+    private fun UUIDCommand(): LiteralArgumentBuilder<ServerCommandSource> = literal("uuid")
         .then(argument("player", EntityArgumentType.player())
             .requires { it.hasPermissionLevel(4) }
             .executes {

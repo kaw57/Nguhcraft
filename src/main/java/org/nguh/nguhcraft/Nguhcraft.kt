@@ -131,7 +131,7 @@ import org.nguh.nguhcraft.server.ServerNetworkHandler
 // - [x] /warp, /delwarp, /setwarp, /warps
 // - [x] /home, /sethome, /home player:<name>, /home bed
 // - [x] Disable the ‘open to LAN’ button because it is NOT going to work.
-// - [ ] /top
+// - [x] /top
 // - [ ] Completion for /region.
 
 class Nguhcraft : ModInitializer {
