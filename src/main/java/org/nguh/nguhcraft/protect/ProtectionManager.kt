@@ -30,6 +30,7 @@ import net.minecraft.world.World
 import org.nguh.nguhcraft.BypassesRegionProtection
 import org.nguh.nguhcraft.Lock
 import org.nguh.nguhcraft.client.accessors.AbstractClientPlayerEntityAccessor
+import org.nguh.nguhcraft.isa
 import org.nguh.nguhcraft.item.KeyItem
 import org.nguh.nguhcraft.network.ClientboundSyncProtectionMgrPacket
 import org.nguh.nguhcraft.server.Broadcast
@@ -242,11 +243,17 @@ object ProtectionManager {
             Blocks.LECTERN -> if (St.get(LecternBlock.HAS_BOOK)) return ActionResult.SUCCESS
 
             // Players might want to mark banners on a map.
-            else -> if (St.isIn(BlockTags.BANNERS)) return ActionResult.SUCCESS
+            else -> if (St isa BlockTags.BANNERS) return ActionResult.SUCCESS
+        }
+
+        // Doors are a separate flag.
+        if (St isa BlockTags.WOODEN_DOORS) {
+            val R = FindRegionContainingBlock(W, Pos) ?: return ActionResult.SUCCESS
+            return if (R.AllowsDoors()) ActionResult.SUCCESS else ActionResult.FAIL
         }
 
         // Allow placing minecarts.
-        if (Stack != null && Stack.item is MinecartItem && St.isIn(BlockTags.RAILS)) {
+        if (Stack != null && Stack.item is MinecartItem && St isa BlockTags.RAILS) {
             val R = FindRegionContainingBlock(W, Pos) ?: return ActionResult.SUCCESS
             return if (R.AllowsVehicleUse()) ActionResult.SUCCESS else ActionResult.FAIL
         }

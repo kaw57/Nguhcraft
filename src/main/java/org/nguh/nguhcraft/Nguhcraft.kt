@@ -120,7 +120,7 @@ import org.nguh.nguhcraft.server.ServerNetworkHandler
 //   - [T] Vine spread
 //   - [x] Creepers
 //   - [x] Ranged weapons (bows, crossbows, tridents, fire charges, fireworks)
-//   - [T] Pressure plates
+//   - [x] Pressure plates
 // - [ ] Impaling should always work in water.
 // - [x] MINECARTS
 //   - [x] Main patch.

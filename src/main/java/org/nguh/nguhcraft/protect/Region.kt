@@ -38,8 +38,17 @@ class Region(
         /** Allow attacking players. */
         ATTACK_PLAYERS,
 
-        /** Allow breaking and placing blocks. */
+        /**
+        * Allow breaking and placing blocks.
+        *
+        * More specific block interaction flags, e.g. opening wooden
+        * doors, are separate flags entirely and not affected by this
+        * at all.
+        */
         CHANGE_BLOCKS,
+
+        /** Allow opening and closing doors. */
+        DOORS,
 
         /**
         * Allow interacting with entities.
@@ -145,6 +154,9 @@ class Region(
 
     /** Check if this region allows block breaking. */
     fun AllowsBlockModification() = Test(Flags.CHANGE_BLOCKS)
+
+    /** Check if this region allows interacting with doors. */
+    fun AllowsDoors() = Test(Flags.DOORS)
 
     /** Check if this region allows entity interaction. */
     fun AllowsEntityInteraction() = Test(Flags.ENTITY_INTERACT)
