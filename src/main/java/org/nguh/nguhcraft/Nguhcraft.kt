@@ -133,6 +133,9 @@ import org.nguh.nguhcraft.server.ServerNetworkHandler
 // - [x] Disable the ‘open to LAN’ button because it is NOT going to work.
 // - [x] /top
 // - [ ] Completion for /region.
+// - [ ] DELETE UNUSED CHUNKS FOR THE 1.21 update.
+// - [ ] Different item icon for decorative hoppers (a white dot or sth, or maybe the structure void texture overlaid).
+// - [T] Interacting w/ chiselled bookshelves.
 
 class Nguhcraft : ModInitializer {
     override fun onInitialize() {

@@ -19,6 +19,7 @@ import net.minecraft.item.MinecartItem
 import net.minecraft.nbt.NbtCompound
 import net.minecraft.nbt.NbtElement
 import net.minecraft.network.RegistryByteBuf
+import net.minecraft.registry.RegistryKey
 import net.minecraft.registry.tag.BlockTags
 import net.minecraft.registry.tag.DamageTypeTags
 import net.minecraft.server.MinecraftServer
@@ -84,11 +85,11 @@ object ProtectionManager {
      * if the region name is already taken.
      */
     @Throws(IllegalArgumentException::class)
-    fun AddRegionToWorld(W: World, R: Region) : Boolean {
-        val Regions = RegionList(W)
+    fun AddRegion(S: MinecraftServer, R: Region) : Boolean {
+        val Regions = RegionList(R.World)
         if (Regions.any { it.Name == R.Name }) throw IllegalArgumentException("Region name already taken!")
         Regions.add(R)
-        if (!W.isClient) Sync(W.server!!)
+        Sync(S)
         return true
     }
 
@@ -182,14 +183,11 @@ object ProtectionManager {
      * This function is the intended way to delete a region from a world.
      *
      * @returns Whether a region was successfully deleted. This can fail
-     * if the region does not exist.
+     * if the region does not exist or is not in this world, somehow.
      */
-    fun DeleteRegionFromWorld(W: World, Name: String) : Boolean {
-        val Regions = RegionList(W)
-        val Index = Regions.indexOfFirst { it.Name == Name }
-        if (Index == -1) return false
-        Regions.removeAt(Index)
-        if (!W.isClient) Sync(W.server!!)
+    fun DeleteRegion(S: MinecraftServer, R: Region) : Boolean {
+        if (!RegionList(R.World).remove(R)) return false
+        Sync(S)
         return true
     }
 
@@ -202,6 +200,9 @@ object ProtectionManager {
 
     /** Get the regions for a world. */
     fun GetRegions(W: World): List<Region> = RegionList(W)
+
+    /** Get a region by name. */
+    fun GetRegion(W: World, Name: String) = RegionList(W).find { it.Name == Name }
 
     /**
     * Handle interaction (= right-click), optionally with a block.
@@ -349,19 +350,23 @@ object ProtectionManager {
     fun LoadRegions(W: World, Tag: NbtCompound) {
         val RegionsTag = Tag.getList(TAG_REGIONS, NbtElement.COMPOUND_TYPE.toInt())
         val Regions = RegionList(W)
-        RegionsTag.forEach { Regions.add(Region(it as NbtCompound)) }
+        RegionsTag.forEach { Regions.add(Region(it as NbtCompound, W.registryKey)) }
     }
 
     /** Find the region that contains a block. */
     private fun FindRegionContainingBlock(W: World, Pos: BlockPos) = RegionList(W).find { it.Contains(Pos) }
 
-    /** Get the regions for a world. */
-    private fun RegionList(W: World) = when (W.registryKey) {
-        World.OVERWORLD -> S.OverworldRegions
-        World.NETHER -> S.NetherRegions
-        World.END -> S.EndRegions
-        else -> throw IllegalArgumentException("Unknown world type!")
-    }
+    /**
+    * Get the regions for a world.
+    *
+    * For internal use only as it returns a mutable list
+    * instead of an immutable one.
+    */
+    private fun RegionList(W: World) = RegionList(W.registryKey)
+
+    /** Get the regions for a world by key. */
+    private fun RegionList(Key: RegistryKey<World>) = TryGetRegionList(Key)
+        ?: throw IllegalArgumentException("No such world: ${Key.value}")
 
     /** Reset state. */
     fun Reset(W: World) { RegionList(W).clear() }
@@ -375,10 +380,53 @@ object ProtectionManager {
 
     /** Send data to the client. */
     @JvmStatic
-    fun Send(SP: ServerPlayerEntity) = ServerPlayNetworking.send(SP, ClientboundSyncProtectionMgrPacket(S))
+    fun Send(SP: ServerPlayerEntity) {
+        // Don’t sync in single player since we already have the state.
+        if (ServerUtils.IsDedicatedServer())
+            ServerPlayNetworking.send(SP, ClientboundSyncProtectionMgrPacket(S))
+    }
 
     /** Sync regions to the clients. */
-    fun Sync(Server: MinecraftServer) = Server.Broadcast(ClientboundSyncProtectionMgrPacket(S))
+    fun Sync(Server: MinecraftServer) {
+        // Don’t sync in single player since we already have the state.
+        if (ServerUtils.IsDedicatedServer())
+            Server.Broadcast(ClientboundSyncProtectionMgrPacket(S))
+    }
+
+    /**
+    * Attempt to get a region in a world.
+    *
+    * Prefer [GetRegion] over this if you already have a reference to the
+    * world; this is meant to be used for cases where you parsed a world
+    * registry key from somewhere w/o knowing whether it’s valid or not.
+    *
+    * @return null if the world or region does not exist.
+    */
+    fun TryGetRegion(W: RegistryKey<World>, Name: String): Region? = TryGetRegionList(W)?.find { it.Name == Name }
+
+    /**
+     * Attempt to get all region in a world.
+     *
+     * Prefer [GetRegions] over this if you already have a reference to the
+     * world; this is meant to be used for cases where you parsed a world
+     * registry key from somewhere w/o knowing whether it’s valid or not.
+     *
+     * @return null if the world does not exist.
+     */
+    fun TryGetRegions(W: RegistryKey<World>): List<Region>? = TryGetRegionList(W)
+
+    /**
+    * Get the region list for a world by key.
+    *
+    * For internal use; returns a mutable list instead of an
+    * immutable one.
+    */
+    private fun TryGetRegionList(Key: RegistryKey<World>) = when (Key) {
+        World.OVERWORLD -> S.OverworldRegions
+        World.NETHER -> S.NetherRegions
+        World.END -> S.EndRegions
+        else -> null
+    }
 
     /** Overwrite the region list of a world. */
     @Environment(EnvType.CLIENT)
@@ -395,9 +443,9 @@ object ProtectionManager {
 
         /** Deserialise the state from a packet. */
         constructor(B: RegistryByteBuf): this() {
-            OverworldRegions = ReadRegionList(B)
-            NetherRegions = ReadRegionList(B)
-            EndRegions = ReadRegionList(B)
+            OverworldRegions = ReadRegionList(B, World.OVERWORLD)
+            NetherRegions = ReadRegionList(B, World.NETHER)
+            EndRegions = ReadRegionList(B, World.END)
         }
 
         /** Dump a string representation of the state. */
@@ -411,10 +459,10 @@ object ProtectionManager {
         }
 
         /** Read a list of regions from a packet. */
-        private fun ReadRegionList(B: RegistryByteBuf): MutableList<Region> {
+        private fun ReadRegionList(B: RegistryByteBuf, W: RegistryKey<World>): MutableList<Region> {
             val Count = B.readInt()
             val List = mutableListOf<Region>()
-            for (I in 0 until Count) List.add(Region(B))
+            for (I in 0 until Count) List.add(Region(B, W))
             return List
         }
 

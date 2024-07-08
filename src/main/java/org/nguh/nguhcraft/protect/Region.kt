@@ -2,10 +2,12 @@ package org.nguh.nguhcraft.protect
 
 import net.minecraft.nbt.NbtCompound
 import net.minecraft.network.RegistryByteBuf
+import net.minecraft.registry.RegistryKey
 import net.minecraft.server.MinecraftServer
 import net.minecraft.text.Text
 import net.minecraft.util.Formatting
 import net.minecraft.util.math.BlockPos
+import net.minecraft.world.World
 import org.nguh.nguhcraft.Constants
 import kotlin.math.max
 import kotlin.math.min
@@ -14,6 +16,11 @@ import kotlin.math.min
 class Region(
     /** Region name. */
     val Name: String,
+
+    /** World the region is in. This is synthesised on creation. */
+    val World: RegistryKey<World>,
+
+    /** Region bounds. */
     FromX: Int,
     FromZ: Int,
     ToX: Int,
@@ -108,8 +115,9 @@ class Region(
     }
 
     /** Deserialise a region. */
-    constructor(Tag: NbtCompound) : this(
+    constructor(Tag: NbtCompound, W: RegistryKey<World>) : this(
         Tag.getString(TAG_NAME),
+        W,
         FromX = Tag.getInt(TAG_MIN_X),
         FromZ = Tag.getInt(TAG_MIN_Z),
         ToX = Tag.getInt(TAG_MAX_X),
@@ -123,8 +131,9 @@ class Region(
     }
 
     /** Deserialise a region from a packet. */
-    constructor(buf: RegistryByteBuf) : this(
+    constructor(buf: RegistryByteBuf, W: RegistryKey<World>) : this(
         Name = buf.readString(),
+        World = W,
         FromX = buf.readInt(),
         FromZ = buf.readInt(),
         ToX = buf.readInt(),

@@ -3,14 +3,22 @@ package org.nguh.nguhcraft.server.command
 import com.mojang.brigadier.StringReader
 import com.mojang.brigadier.arguments.ArgumentType
 import com.mojang.brigadier.context.CommandContext
+import com.mojang.brigadier.exceptions.Dynamic2CommandExceptionType
 import com.mojang.brigadier.exceptions.DynamicCommandExceptionType
 import com.mojang.brigadier.suggestion.Suggestions
 import com.mojang.brigadier.suggestion.SuggestionsBuilder
+import net.minecraft.client.network.ClientCommandSource
 import net.minecraft.command.CommandSource
-import net.minecraft.server.MinecraftServer
+import net.minecraft.registry.RegistryKey
+import net.minecraft.registry.RegistryKeys
 import net.minecraft.server.command.ServerCommandSource
 import net.minecraft.server.network.ServerPlayerEntity
 import net.minecraft.text.Text
+import net.minecraft.util.Identifier
+import net.minecraft.world.World
+import org.nguh.nguhcraft.client.ClientUtils.Client
+import org.nguh.nguhcraft.protect.ProtectionManager
+import org.nguh.nguhcraft.protect.Region
 import org.nguh.nguhcraft.server.Home
 import org.nguh.nguhcraft.server.PlayerByName
 import org.nguh.nguhcraft.server.WarpManager
@@ -86,6 +94,67 @@ class HomeArgumentType : ArgumentType<String> {
         }
 
         fun Home() = HomeArgumentType()
+    }
+}
+
+class RegionArgumentType : ArgumentType<String> {
+    override fun parse(R: StringReader) =  R.ReadUntilWhitespace()
+
+    // We can do this client-side since we have the regions on the client.
+    override fun <S> listSuggestions(
+        Ctx: CommandContext<S>,
+        SB: SuggestionsBuilder
+    ): CompletableFuture<Suggestions> {
+        // If the input contains a ':', filter by the world
+        // to the left of it.
+        if (":" in SB.remaining) {
+            val (W, _) = SB.remaining.split(":", limit = 2)
+            val Key = RegistryKey.of(RegistryKeys.WORLD, Identifier.ofVanilla(W))
+            val Regions = ProtectionManager.TryGetRegions(Key) ?: return Suggestions.empty()
+            return CommandSource.suggestMatching(Regions.map { "${Key.value.path}:${it.Name}" }, SB)
+        }
+
+        // Otherwise, suggest all regions in the current world if there is one.
+        val Regions = mutableListOf<String>()
+        val S = Ctx.source
+        if (S is ClientCommandSource) {
+            val W = Client().world
+            if (W != null) Regions.addAll(ProtectionManager.GetRegions(W).map { it.Name })
+        }
+
+        // And add the registry keys for any worlds that contain regions.
+        fun AddWorldKey(W: RegistryKey<World>) {
+            if (ProtectionManager.TryGetRegions(W)!!.isNotEmpty())
+                Regions.add("${W.value.path}:")
+        }
+
+        AddWorldKey(World.OVERWORLD)
+        AddWorldKey(World.NETHER)
+        AddWorldKey(World.END)
+        return CommandSource.suggestMatching(Regions, SB)
+    }
+
+    companion object {
+        private val NO_SUCH_WORLD = DynamicCommandExceptionType { Text.literal("No such world: $it") }
+        private val NO_SUCH_REGION = Dynamic2CommandExceptionType { R, W -> Text.literal(
+            "No region '$R' in world ${(W as World).registryKey.value.path}"
+        ) }
+
+        fun Region() = RegionArgumentType()
+
+        fun Resolve(Ctx: CommandContext<ServerCommandSource>, ArgName: String): Region {
+            var Name = Ctx.getArgument(ArgName, String::class.java)
+            val S = Ctx.source
+            var W = S.world
+            if (":" in Name) {
+                val (WorldKey, RegionName) = Name.split(":", limit = 2)
+                val Key = RegistryKey.of(RegistryKeys.WORLD, Identifier.ofVanilla(WorldKey))
+                W = S.server.getWorld(Key) ?: throw NO_SUCH_WORLD.create(Key.value.path)
+                Name = RegionName
+            }
+
+            return ProtectionManager.GetRegion(W, Name) ?: throw NO_SUCH_REGION.create(Name, W)
+        }
     }
 }
 
