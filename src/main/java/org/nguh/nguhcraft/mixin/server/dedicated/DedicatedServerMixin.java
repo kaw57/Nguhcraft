@@ -40,14 +40,8 @@ public abstract class DedicatedServerMixin extends MinecraftServer {
     /** Do initialisation that requires the server ot be running. */
     @Inject(method = "setupServer", at = @At("HEAD"))
     private void inject$setupServer(CallbackInfoReturnable<Boolean> CIR) {
-        try {
-            LOGGER.info("Initialising server");
-            Discord.Start((MinecraftDedicatedServer)(Object)this);
-        } catch (Exception E) {
-            E.printStackTrace();
-            System.exit(1);
-        }
-
+        LOGGER.info("Initialising server");
+        Discord.Start((MinecraftDedicatedServer)(Object)this);
         SessionSetup.ActOnStart(this);
     }
 

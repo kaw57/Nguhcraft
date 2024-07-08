@@ -24,7 +24,7 @@ public abstract class FlowableFluidMixin {
         CallbackInfoReturnable<Boolean> CIR
     ) {
         // Ignore region check during world generation.
-        if (!(BV instanceof World W)) return;
+        if (!(BV instanceof World W) || Pos == null) return;
         if (ProtectionManager.IsProtectedBlock(W, Pos))
             CIR.setReturnValue(false);
     }

@@ -3,6 +3,7 @@ plugins {
     id 'maven-publish'
     id 'org.jetbrains.kotlin.jvm'
     id "org.jetbrains.kotlin.plugin.serialization" version "2.0.20-Beta1"
+    id "com.github.johnrengelman.shadow" version "8.1.1"
 }
 
 version = project.mod_version
@@ -35,7 +36,24 @@ dependencies {
     implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.1'
 
     // Discord API
-    implementation 'net.dv8tion:JDA:5.0.0-beta.24'
+    implementation 'net.dv8tion:JDA:5.0.0'
+    shadow 'net.dv8tion:JDA:5.0.0'
+}
+
+shadowJar {
+    configurations = [project.configurations.shadow]
+    exclude "META-INF"
+    exclude "com/sun/**"
+}
+
+tasks.shadowJar {
+    setProperty("zip64", true)
+}
+
+remapJar {
+    dependsOn(shadowJar)
+    mustRunAfter(shadowJar)
+    inputFile = file(shadowJar.archivePath)
 }
 
 processResources {

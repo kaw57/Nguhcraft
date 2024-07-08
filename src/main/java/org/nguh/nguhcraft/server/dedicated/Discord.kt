@@ -251,7 +251,6 @@ internal class Discord : ListenerAdapter() {
             val requiredRoleId: Long
         )
 
-        @Throws(Exception::class)
         @JvmStatic
         fun Start(S: MinecraftDedicatedServer) {
             Server = S
