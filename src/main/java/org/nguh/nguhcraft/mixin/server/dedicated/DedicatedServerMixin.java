@@ -8,7 +8,7 @@ import net.minecraft.server.WorldGenerationProgressListenerFactory;
 import net.minecraft.server.dedicated.MinecraftDedicatedServer;
 import net.minecraft.util.ApiServices;
 import net.minecraft.world.level.storage.LevelStorage;
-import org.nguh.nguhcraft.server.ServerSetup;
+import org.nguh.nguhcraft.server.SessionSetup;
 import org.nguh.nguhcraft.server.dedicated.Discord;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
@@ -28,13 +28,13 @@ public abstract class DedicatedServerMixin extends MinecraftServer {
     /** Stop the discord bot on shutdown. */
     @Inject(method = "shutdown()V", at = @At("HEAD"))
     private void inject$shutdown(CallbackInfo CI) {
-        ServerSetup.ActOnShutdown(this);
+        SessionSetup.ActOnShutdown(this);
         Discord.Stop();
     }
 
     /** Do initialisation that requires the server ot be running. */
     @Inject(method = "setupServer", at = @At("HEAD"))
-    private void inject$setupServer(CallbackInfoReturnable<Boolean> CIR) { ServerSetup.ActOnStart(this); }
+    private void inject$setupServer(CallbackInfoReturnable<Boolean> CIR) { SessionSetup.ActOnStart(this); }
 
     /**
     * Disable enforcing secure profiles.

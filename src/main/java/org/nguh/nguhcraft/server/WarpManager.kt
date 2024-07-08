@@ -4,7 +4,6 @@ import com.mojang.logging.LogUtils
 import net.minecraft.nbt.NbtCompound
 import net.minecraft.nbt.NbtElement
 import net.minecraft.registry.RegistryKey
-import net.minecraft.server.MinecraftServer
 import net.minecraft.util.math.Vec3d
 import net.minecraft.world.World
 import org.nguh.nguhcraft.Utils
@@ -34,7 +33,7 @@ object WarpManager {
     val Warps = mutableMapOf<String, Warp>()
 
     /** Load warps from save file. */
-    fun Load(S: MinecraftServer, Nbt: NbtCompound) {
+    fun Load(Nbt: NbtCompound) {
         Warps.clear()
         try {
             for (Elem in Nbt.getList(TAG_ROOT, NbtElement.COMPOUND_TYPE.toInt())) {

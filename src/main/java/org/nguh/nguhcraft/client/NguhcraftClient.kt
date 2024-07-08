@@ -9,6 +9,7 @@ import net.minecraft.item.ItemStack
 import net.minecraft.item.Items
 import net.minecraft.registry.Registries
 import net.minecraft.registry.Registry
+import net.minecraft.server.integrated.IntegratedServer
 import net.minecraft.text.Text
 import net.minecraft.util.hit.HitResult
 import net.minecraft.util.math.BlockPos
@@ -18,6 +19,7 @@ import org.nguh.nguhcraft.Constants.MAX_HOMING_DISTANCE
 import org.nguh.nguhcraft.Nguhcraft.Companion.Id
 import org.nguh.nguhcraft.Utils.Debug
 import org.nguh.nguhcraft.client.ClientUtils.Client
+import org.nguh.nguhcraft.protect.ProtectionManager
 
 
 @Environment(EnvType.CLIENT)
@@ -40,6 +42,18 @@ class NguhcraftClient : ClientModInitializer {
         @JvmField @Volatile var InHypershotContext = false
         @JvmField @Volatile var BypassesRegionProtection = false
         @JvmField @Volatile var LastInteractedLecternPos: BlockPos = BlockPos.ORIGIN
+
+        @JvmStatic
+        fun ActOnSessionStart(S: IntegratedServer) {
+            InHypershotContext = false
+            BypassesRegionProtection = false
+            LastInteractedLecternPos = BlockPos.ORIGIN
+        }
+
+        @JvmStatic
+        fun ActOnSessionShutdown(S: IntegratedServer) {
+            // Nop.
+        }
 
         @JvmStatic
         fun ProcessF3(key: Int): Boolean {

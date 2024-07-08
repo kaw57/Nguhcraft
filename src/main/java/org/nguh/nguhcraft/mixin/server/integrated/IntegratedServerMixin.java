@@ -8,7 +8,8 @@ import net.minecraft.server.WorldGenerationProgressListenerFactory;
 import net.minecraft.server.integrated.IntegratedServer;
 import net.minecraft.util.ApiServices;
 import net.minecraft.world.level.storage.LevelStorage;
-import org.nguh.nguhcraft.server.ServerSetup;
+import org.nguh.nguhcraft.client.NguhcraftClient;
+import org.nguh.nguhcraft.server.SessionSetup;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -25,9 +26,15 @@ public abstract class IntegratedServerMixin extends MinecraftServer {
 
     /** Stop the discord bot on shutdown. */
     @Inject(method = "shutdown()V", at = @At("HEAD"))
-    private void inject$shutdown(CallbackInfo CI) { ServerSetup.ActOnShutdown(this); }
+    private void inject$shutdown(CallbackInfo CI) {
+        NguhcraftClient.ActOnSessionShutdown((IntegratedServer)(Object)this);
+        SessionSetup.ActOnShutdown(this);
+    }
 
     /** Do initialisation that requires the server ot be running. */
     @Inject(method = "setupServer", at = @At("HEAD"))
-    private void inject$setupServer(CallbackInfoReturnable<Boolean> CIR) { ServerSetup.ActOnStart(this); }
+    private void inject$setupServer(CallbackInfoReturnable<Boolean> CIR) {
+        NguhcraftClient.ActOnSessionStart((IntegratedServer)(Object)this);
+        SessionSetup.ActOnStart(this);
+    }
 }

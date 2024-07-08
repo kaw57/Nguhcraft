@@ -16,12 +16,10 @@ import net.minecraft.world.dimension.DimensionType;
 import net.minecraft.world.level.ServerWorldProperties;
 import net.minecraft.world.level.storage.LevelStorage;
 import net.minecraft.world.spawner.SpecialSpawner;
-import org.nguh.nguhcraft.server.ServerUtils;
+import org.nguh.nguhcraft.server.SessionSetup;
 import org.nguh.nguhcraft.server.TreeToChop;
 import org.nguh.nguhcraft.server.accessors.ServerWorldAccessor;
-import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -34,8 +32,6 @@ import java.util.function.Supplier;
 
 @Mixin(ServerWorld.class)
 public abstract class ServerWorldMixin extends World implements ServerWorldAccessor {
-    @Shadow @Final private MinecraftServer server;
-
     protected ServerWorldMixin(MutableWorldProperties properties, RegistryKey<World> registryRef, DynamicRegistryManager registryManager, RegistryEntry<DimensionType> dimensionEntry, Supplier<Profiler> profiler, boolean isClient, boolean debugWorld, long biomeAccess, int maxChainedNeighborUpdates) {
         super(properties, registryRef, registryManager, dimensionEntry, profiler, isClient, debugWorld, biomeAccess, maxChainedNeighborUpdates);
     }
@@ -62,13 +58,13 @@ public abstract class ServerWorldMixin extends World implements ServerWorldAcces
         boolean shouldTickTime,
         RandomSequencesState randomSequencesState,
         CallbackInfo ci
-    ) { ServerUtils.LoadExtraWorldData((ServerWorld)(Object)this); }
+    ) { SessionSetup.LoadExtraWorldData((ServerWorld)(Object)this); }
 
     /** Save regions. */
     @Inject(method = "save", at = @At("TAIL"))
     private void inject$save(ProgressListener PL, boolean Flush, boolean SavingDisabled, CallbackInfo CI) {
         if (!SavingDisabled)
-            ServerUtils.SaveExtraWorldData((ServerWorld)(Object)this);
+            SessionSetup.SaveExtraWorldData((ServerWorld)(Object)this);
     }
 
     /** Chop trees. */

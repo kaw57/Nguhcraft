@@ -5,7 +5,6 @@ import net.fabricmc.api.EnvType
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
 import net.fabricmc.loader.api.FabricLoader
 import net.minecraft.block.BlockState
-import net.minecraft.client.MinecraftClient
 import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.mob.AbstractPiglinEntity
 import net.minecraft.entity.mob.Monster
@@ -13,21 +12,15 @@ import net.minecraft.entity.passive.IronGolemEntity
 import net.minecraft.entity.passive.VillagerEntity
 import net.minecraft.entity.projectile.ProjectileUtil
 import net.minecraft.item.ItemStack
-import net.minecraft.nbt.NbtCompound
-import net.minecraft.nbt.NbtIo
-import net.minecraft.nbt.NbtSizeTracker
 import net.minecraft.network.packet.CustomPayload
 import net.minecraft.network.packet.s2c.play.SubtitleS2CPacket
 import net.minecraft.network.packet.s2c.play.TitleS2CPacket
 import net.minecraft.recipe.RecipeType
 import net.minecraft.recipe.input.SingleStackRecipeInput
-import net.minecraft.server.MinecraftServer
 import net.minecraft.server.network.ServerPlayerEntity
-import net.minecraft.server.world.ServerWorld
 import net.minecraft.text.Text
 import net.minecraft.util.Formatting
 import net.minecraft.util.Hand
-import net.minecraft.util.WorldSavePath
 import net.minecraft.util.hit.HitResult
 import net.minecraft.util.math.Box
 import net.minecraft.util.math.MathHelper
@@ -44,7 +37,6 @@ import org.nguh.nguhcraft.server.accessors.LivingEntityAccessor
 import org.nguh.nguhcraft.server.accessors.ServerPlayerAccessor
 import org.nguh.nguhcraft.server.dedicated.Discord
 import org.slf4j.Logger
-import java.util.*
 
 object ServerUtils {
     private val BORDER_TITLE: Text = Text.literal("TURN BACK").formatted(Formatting.RED)
@@ -105,20 +97,6 @@ object ServerUtils {
     @JvmStatic
     fun IsLinkedOrOperator(SP: ServerPlayerEntity) =
         IsIntegratedServer() || Discord.__IsLinkedOrOperatorImpl(SP)
-
-    @JvmStatic
-    fun LoadExtraWorldData(SW: ServerWorld) {
-        ProtectionManager.Reset(SW)
-        try {
-            val Path = NguhWorldSavePath(SW)
-            val Tag = NbtIo.readCompressed(Path, NbtSizeTracker.ofUnlimitedBytes())
-
-            // Load.
-            ProtectionManager.LoadRegions(SW, Tag)
-        } catch (E: Exception) {
-            LOGGER.error("Nguhcraft: Failed to load extra world data: ${E.message}")
-        }
-    }
 
     /** @return `true` if the entity entered or was already in a hypershot context. */
     @JvmStatic
@@ -223,31 +201,11 @@ object ServerUtils {
         for (Player in P) ServerPlayNetworking.send(Player, Packet)
     }
 
-    private fun NguhWorldSavePath(SW: ServerWorld) = SW.server.getSavePath(WorldSavePath.ROOT).resolve(
-        "nguhcraft.extraworlddata.${SW.registryKey.value.path}.dat"
-    )
-
     fun RoundExp(Exp: Float): Int {
         var Int = MathHelper.floor(Exp)
         val Frac = MathHelper.fractionalPart(Exp)
         if (Frac != 0.0f && Math.random() < Frac.toDouble()) Int++
         return Int
-    }
-
-    @JvmStatic
-    fun SaveExtraWorldData(SW: ServerWorld) {
-        try {
-            val Tag = NbtCompound()
-            val Path = NguhWorldSavePath(SW)
-
-            // Save.
-            ProtectionManager.SaveRegions(SW, Tag)
-
-            // Write to disk.
-            NbtIo.writeCompressed(Tag, Path)
-        } catch (E: Exception) {
-            LOGGER.error("Nguhcraft: Failed to save extra world data: ${E.message}")
-        }
     }
 
     /**

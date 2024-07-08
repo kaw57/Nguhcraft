@@ -371,6 +371,10 @@ object ProtectionManager {
     /** Reset state. */
     fun Reset(W: World) { RegionList(W).clear() }
 
+    /** Reset the entire state. */
+    @Environment(EnvType.CLIENT)
+    fun ResetAll() { S = State() }
+
     /** Save regions to a tag. */
     fun SaveRegions(W: World, Tag: NbtCompound) {
         val RegionsTag = Tag.getList(TAG_REGIONS, NbtElement.COMPOUND_TYPE.toInt())
