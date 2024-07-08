@@ -69,7 +69,7 @@ object Chat {
         val Linked = IsLinkedOrOperator(SP)
         LOGGER.info(
             "[CHAT] {}{}{}: {}{}",
-            SP.displayName,
+            SP.displayName?.string,
             if (Linked) " [${SP.nameForScoreboard}]" else "",
             if (IsCommand) " issued command" else " says",
             if (IsCommand) "/" else "",
