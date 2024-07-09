@@ -90,8 +90,11 @@ object PaperDataFixer {
                 DisplayDyn.remove("Lore")
                    .remove("SavedLore")
                    .set("Lore", SL)
-            } else {
-                DisplayDyn
+            }
+
+            // If something has lore, but not saved lore, yeet it.
+            else {
+                DisplayDyn.remove("Lore")
             }
         }
     }
