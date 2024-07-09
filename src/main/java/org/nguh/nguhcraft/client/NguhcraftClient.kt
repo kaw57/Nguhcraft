@@ -36,7 +36,7 @@ class NguhcraftClient : ClientModInitializer {
         val TREASURES_ITEM_GROUP: ItemGroup = net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup.builder()
             .icon { ItemStack(Items.NETHERITE_INGOT) }
             .displayName(Text.literal("Treasures"))
-            .entries {  _, Entries -> Treasures.AddAll(Entries) }
+            .entries {  Ctx, Entries -> Treasures.AddAll(Ctx, Entries) }
             .build()
 
         @JvmField @Volatile var InHypershotContext = false
