@@ -14,10 +14,12 @@ import net.minecraft.command.argument.DimensionArgumentType
 import net.minecraft.command.argument.EntityArgumentType
 import net.minecraft.command.argument.RegistryEntryReferenceArgumentType
 import net.minecraft.command.argument.serialize.ConstantArgumentSerializer
+import net.minecraft.component.ComponentType
 import net.minecraft.component.DataComponentTypes
 import net.minecraft.enchantment.Enchantment
 import net.minecraft.entity.Entity
 import net.minecraft.inventory.ContainerLock
+import net.minecraft.item.Item
 import net.minecraft.item.ItemStack
 import net.minecraft.registry.RegistryKeys
 import net.minecraft.registry.entry.RegistryEntry
@@ -69,6 +71,7 @@ object Commands {
             D.register(DelHomeCommand())              // /delhome
             D.register(DiscardCommand())              // /discard
             D.register(EnchantCommand(A))             // /enchant
+            D.register(FixCommand())                  // /fix
             D.register(HomeCommand())                 // /home
             D.register(HomesCommand())                // /homes
             D.register(KeyCommand())                  // /key
@@ -153,6 +156,31 @@ object Commands {
                 )
             )
             return 1
+        }
+    }
+
+    object FixCommand {
+        private val FIXED_ONE = Text.literal("Fixed item in hand").formatted(Formatting.YELLOW)
+        private val FIXED_ALL = Text.literal("Fixed all items in inventory").formatted(Formatting.YELLOW)
+
+        fun Fix(S: ServerCommandSource, SP: ServerPlayerEntity): Int {
+            FixStack(SP.mainHandStack)
+            S.sendMessage(FIXED_ONE)
+            return 1
+        }
+
+        fun FixAll(S: ServerCommandSource, SP: ServerPlayerEntity): Int {
+            for (St in SP.inventory.main) FixStack(St)
+            for (St in SP.inventory.armor) FixStack(St)
+            FixStack(SP.inventory.offHand[0])
+            S.sendMessage(FIXED_ALL)
+            return 1
+        }
+
+        private fun FixStack(St: ItemStack) {
+            if (St.isEmpty) return
+            St.remove(DataComponentTypes.LORE)
+            St.remove(DataComponentTypes.HIDE_TOOLTIP)
         }
     }
 
@@ -662,6 +690,11 @@ object Commands {
                     )
                 }
         )
+
+    private fun FixCommand(): LiteralArgumentBuilder<ServerCommandSource> = literal("fix")
+        .requires { it.isExecutedByPlayer && it.hasPermissionLevel(4) }
+        .then(literal("all").executes { FixCommand.FixAll(it.source, it.source.playerOrThrow) })
+        .executes { FixCommand.Fix(it.source, it.source.playerOrThrow) }
 
     private fun HomeCommand(): LiteralArgumentBuilder<ServerCommandSource> = literal("home")
         .requires { it.isExecutedByPlayer }
