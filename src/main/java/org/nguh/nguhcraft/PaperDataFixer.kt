@@ -2,6 +2,7 @@ package org.nguh.nguhcraft
 
 import net.minecraft.datafixer.fix.ItemStackComponentizationFix
 import org.nguh.nguhcraft.Nguhcraft.Companion.MOD_ID
+import kotlin.jvm.optionals.getOrNull
 
 object PaperDataFixer {
     /**
@@ -62,24 +63,36 @@ object PaperDataFixer {
         Data.applyFixer("display", false) fixer@{ DisplayDyn ->
             val SLRes = DisplayDyn.get("SavedLore").result()
             if (SLRes.isPresent) {
+                var SL = SLRes.get()
+                val Name = DisplayDyn.get("Name").asString().result()
+
                 // Unfortunately, it seems that potion effects have made their
                 // way into the SavedLore. Fortunately, there is only a single
                 // affected potion.
-                var SL = SLRes.get()
-                val Name = DisplayDyn.get("Name").asString().result()
                 if (Name.isPresent && Name.get().contains("Ancient Drop of Cherry")) {
                     SL = DisplayDyn.createList(SL.asStream().filter {
                         it.asString("").endsWith("\"color\":\"#AAAAAA\"}")
                     })
                 }
 
+                // Some items have a string as their SavedLore rather than a
+                // component. Make sure to repair that too.
+                else {
+                    val Str = SL.asStream().findFirst().getOrNull()?.asString("")
+                    if (Str != null && !Str.startsWith("{")) {
+                        SL = DisplayDyn.createList(SL.asStream().map { DisplayDyn.createString(
+                            """{"text":"${it.asString("<???>")}","italic":true,"color":"gray"}"""
+                        )})
+                    }
+                }
+
                 // At last, we can yeet all of this nonsense...
                 DisplayDyn.remove("Lore")
                    .remove("SavedLore")
-                   .remove("HideFlags")
                    .set("Lore", SL)
+            } else {
+                DisplayDyn
             }
-            DisplayDyn
         }
     }
 }

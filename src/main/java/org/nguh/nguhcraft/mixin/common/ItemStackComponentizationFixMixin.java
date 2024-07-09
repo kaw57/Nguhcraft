@@ -4,20 +4,34 @@ import com.llamalad7.mixinextras.sugar.Local;
 import com.llamalad7.mixinextras.sugar.ref.LocalRef;
 import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Dynamic;
+import com.mojang.serialization.OptionalDynamic;
 import net.minecraft.datafixer.fix.ItemStackComponentizationFix;
 import org.nguh.nguhcraft.PaperDataFixer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.List;
 
 @Mixin(value = ItemStackComponentizationFix.class, priority = 1)
 public abstract class ItemStackComponentizationFixMixin {
+    /** Yeet the HideFlags. */
+    @Redirect(
+        method = "fixStack",
+        at = @At(
+            value = "INVOKE",
+            target = "Lcom/mojang/serialization/OptionalDynamic;asInt(I)I",
+            remap = false, // Mojang’s serialisation library is separate and not obfuscated.
+            ordinal = 0
+        )
+    )
+    private static int inject$fixStack$0(OptionalDynamic<?> Instance, int i) { return 0; }
+
     /** Run lore data fix. */
     @Inject(method = "fixStack", at = @At("HEAD"))
-    private static void inject$fixStack(
+    private static void inject$fixStack$1(
         ItemStackComponentizationFix.StackData Data,
         Dynamic<?> Dyn,
         CallbackInfo CI
