@@ -14,12 +14,10 @@ import net.minecraft.command.argument.DimensionArgumentType
 import net.minecraft.command.argument.EntityArgumentType
 import net.minecraft.command.argument.RegistryEntryReferenceArgumentType
 import net.minecraft.command.argument.serialize.ConstantArgumentSerializer
-import net.minecraft.component.ComponentType
 import net.minecraft.component.DataComponentTypes
 import net.minecraft.enchantment.Enchantment
 import net.minecraft.entity.Entity
 import net.minecraft.inventory.ContainerLock
-import net.minecraft.item.Item
 import net.minecraft.item.ItemStack
 import net.minecraft.registry.RegistryKeys
 import net.minecraft.registry.entry.RegistryEntry
@@ -44,11 +42,8 @@ import org.nguh.nguhcraft.item.NguhItems
 import org.nguh.nguhcraft.network.ClientboundSyncProtectionBypassPacket
 import org.nguh.nguhcraft.protect.ProtectionManager
 import org.nguh.nguhcraft.protect.Region
-import org.nguh.nguhcraft.server.Chat
-import org.nguh.nguhcraft.server.Home
+import org.nguh.nguhcraft.server.*
 import org.nguh.nguhcraft.server.ServerUtils.IsIntegratedServer
-import org.nguh.nguhcraft.server.Teleport
-import org.nguh.nguhcraft.server.WarpManager
 import org.nguh.nguhcraft.server.accessors.ServerPlayerAccessor
 import org.nguh.nguhcraft.server.accessors.ServerPlayerDiscordAccessor
 
@@ -65,6 +60,7 @@ object Commands {
         CommandRegistrationCallback.EVENT.register { D, A, E ->
             if (E.dedicated) {
                 D.register(DiscordCommand())          // /discord
+                D.register(ModCommand())              // /mod
             }
 
             D.register(BypassCommand())               // /bypass
@@ -82,7 +78,7 @@ object Commands {
             D.register(SetHomeCommand())              // /sethome
             D.register(literal("tell").redirect(Msg)) // /tell
             D.register(TopCommand())                  // /top
-            D.register(UUIDCommand())                  // /uuid
+            D.register(UUIDCommand())                 // /uuid
             D.register(literal("w").redirect(Msg))    // /w
             D.register(WarpCommand())                 // /warp
             D.register(WarpsCommand())                // /warps
@@ -743,6 +739,22 @@ object Commands {
                     Players.size
                 }
             )
+        )
+
+    private fun ModCommand(): LiteralArgumentBuilder<ServerCommandSource> = literal("mod")
+        .requires { it.hasPermissionLevel(4) }
+        .then(argument("player", EntityArgumentType.player())
+            .executes {
+                val S = it.source
+                val SP = EntityArgumentType.getPlayer(it, "player")
+                SP.IsModerator = !SP.IsModerator
+                S.server.commandManager.sendCommandTree(SP)
+                S.sendMessage(
+                    Text.literal("Player '${SP.displayName?.string}' is ${if (SP.IsModerator) "now" else "no longer"} a moderator")
+                    .formatted(Formatting.YELLOW)
+                )
+                1
+            }
         )
 
     private fun RegionCommand(): LiteralArgumentBuilder<ServerCommandSource> {

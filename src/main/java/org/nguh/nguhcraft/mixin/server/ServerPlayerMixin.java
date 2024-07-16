@@ -34,6 +34,7 @@ public abstract class ServerPlayerMixin extends PlayerEntity implements ServerPl
     }
 
     @Unique private boolean Vanished = false;
+    @Unique private boolean IsModerator = false;
     @Unique private boolean BypassesRegionProtection = false;
     @Unique private List<Home> Homes = new ArrayList<>();
 
@@ -43,6 +44,9 @@ public abstract class ServerPlayerMixin extends PlayerEntity implements ServerPl
 
     @Override public boolean getVanished() { return Vanished; }
     @Override public void setVanished(boolean vanished) { Vanished = vanished; }
+
+    @Override public boolean isModerator() { return IsModerator; }
+    @Override public void setIsModerator(boolean IsModerator) { this.IsModerator = IsModerator; }
 
     @Override public boolean getBypassesRegionProtection() { return BypassesRegionProtection; }
     @Override public void setBypassesRegionProtection(boolean bypassesProtection) {
@@ -58,6 +62,7 @@ public abstract class ServerPlayerMixin extends PlayerEntity implements ServerPl
         if (Nbt.contains(TAG_ROOT)) {
             var Nguh = Nbt.getCompound(TAG_ROOT);
             Vanished = Nguh.getBoolean(TAG_VANISHED);
+            IsModerator = Nguh.getBoolean(TAG_IS_MODERATOR);
             BypassesRegionProtection = Nguh.getBoolean(TAG_BYPASSES_REGION_PROTECTION);
             if (Nguh.contains(TAG_HOMES)) {
                 var HomesTag = Nguh.getList(TAG_HOMES, NbtElement.COMPOUND_TYPE);
@@ -82,6 +87,7 @@ public abstract class ServerPlayerMixin extends PlayerEntity implements ServerPl
     private void inject$copyFrom(ServerPlayerEntity Old, boolean Alive, CallbackInfo CI) {
         var OldNSP = (ServerPlayerAccessor) Old;
         Vanished = OldNSP.getVanished();
+        IsModerator = OldNSP.isModerator();
         BypassesRegionProtection = OldNSP.getBypassesRegionProtection();
         Homes = OldNSP.Homes();
     }
@@ -92,6 +98,7 @@ public abstract class ServerPlayerMixin extends PlayerEntity implements ServerPl
         // Save data.
         var Nguh = Nbt.getCompound(TAG_ROOT);
         Nguh.putBoolean(TAG_VANISHED, Vanished);
+        Nguh.putBoolean(TAG_IS_MODERATOR, IsModerator);
         Nguh.putBoolean(TAG_BYPASSES_REGION_PROTECTION, BypassesRegionProtection);
 
         // Save homes.

@@ -12,6 +12,7 @@ import net.minecraft.util.math.BlockPos
 import net.minecraft.util.math.Vec3d
 import net.minecraft.world.TeleportTarget
 import org.nguh.nguhcraft.mixin.protect.LockableContainerBlockEntityAccessor
+import org.nguh.nguhcraft.server.accessors.ServerPlayerAccessor
 import java.util.*
 
 fun Entity.CentreOn(Block: BlockPos) {
@@ -62,3 +63,8 @@ fun MinecraftServer.PlayerByUUID(ID: String?): ServerPlayerEntity? {
     return try { playerManager.getPlayer(UUID.fromString(ID)) }
     catch (E: RuntimeException) { null }
 }
+
+/** Check if a player is a moderator. */
+var ServerPlayerEntity.IsModerator
+    get() = (this as ServerPlayerAccessor).isModerator
+    set(value) { (this as ServerPlayerAccessor).setIsModerator(value) }

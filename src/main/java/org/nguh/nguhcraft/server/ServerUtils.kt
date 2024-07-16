@@ -17,6 +17,7 @@ import net.minecraft.network.packet.s2c.play.SubtitleS2CPacket
 import net.minecraft.network.packet.s2c.play.TitleS2CPacket
 import net.minecraft.recipe.RecipeType
 import net.minecraft.recipe.input.SingleStackRecipeInput
+import net.minecraft.server.command.ServerCommandSource
 import net.minecraft.server.network.ServerPlayerEntity
 import net.minecraft.text.Text
 import net.minecraft.util.Formatting
@@ -97,6 +98,10 @@ object ServerUtils {
     @JvmStatic
     fun IsLinkedOrOperator(SP: ServerPlayerEntity) =
         IsIntegratedServer() || Discord.__IsLinkedOrOperatorImpl(SP)
+
+    /** Check if this server command source has moderator permissions. */
+    @JvmStatic
+    fun IsModerator(S: ServerCommandSource) = S.hasPermissionLevel(4) || S.player?.IsModerator == true
 
     /** @return `true` if the entity entered or was already in a hypershot context. */
     @JvmStatic
