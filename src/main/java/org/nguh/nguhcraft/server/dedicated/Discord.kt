@@ -32,6 +32,7 @@ import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
 import net.minecraft.nbt.NbtCompound
 import net.minecraft.nbt.NbtIo
 import net.minecraft.nbt.NbtSizeTracker
+import net.minecraft.screen.ScreenTexts
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.command.ServerCommandSource
 import net.minecraft.server.dedicated.MinecraftDedicatedServer
@@ -47,6 +48,7 @@ import org.nguh.nguhcraft.Constants
 import org.nguh.nguhcraft.Utils
 import org.nguh.nguhcraft.Utils.Normalised
 import org.nguh.nguhcraft.mixin.server.MinecraftServerAccessor
+import org.nguh.nguhcraft.network.ClientboundChatPacket
 import org.nguh.nguhcraft.network.ClientboundLinkUpdatePacket
 import org.nguh.nguhcraft.server.Broadcast
 import org.nguh.nguhcraft.server.PlayerByUUID
@@ -191,11 +193,10 @@ internal class Discord : ListenerAdapter() {
         val HasAttachments = Mess.attachments.isNotEmpty()
         val HasReference = Mess.messageReference != null
         Server.execute {
-            val Comp = DISCORD_COMPONENT.copy().append(Text.literal(Name).append(": ").withColor(Colour))
+            val Comp = DISCORD_COMPONENT.copy().append(Text.literal(Name).append(":").withColor(Colour))
             if (HasReference) Comp.append(REPLY_COMPONENT)
             if (HasAttachments) Comp.append(IMAGE_COMPONENT)
-            Comp.append(Text.literal(Content).formatted(Formatting.WHITE))
-            Server.playerManager.broadcast(Comp, false)
+            Server.Broadcast(ClientboundChatPacket(Comp, Content, ClientboundChatPacket.MK_PUBLIC))
         }
     }
 
@@ -205,9 +206,9 @@ internal class Discord : ListenerAdapter() {
         /**
          * The '[Discord]' [Text] used in chat messages
          */
-        private val DISCORD_COMPONENT: Text = Utils.BracketedLiteralComponent("Discord")
-        private val REPLY_COMPONENT: Text = Utils.BracketedLiteralComponent("Reply")
-        private val IMAGE_COMPONENT: Text = Utils.BracketedLiteralComponent("Image")
+        private val DISCORD_COMPONENT: Text = Utils.BracketedLiteralComponent("Discord").append(ScreenTexts.SPACE)
+        private val REPLY_COMPONENT: Text = ScreenTexts.space().append(Utils.BracketedLiteralComponent("Reply"))
+        private val IMAGE_COMPONENT: Text = ScreenTexts.space().append(Utils.BracketedLiteralComponent("Image"))
 
         private val INTERNAL_ERROR_PLEASE_RELINK: Text = Text
             .literal("Sorry, we couldn’t fetch your account info from Discord. Please relink your account")

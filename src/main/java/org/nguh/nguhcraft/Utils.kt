@@ -10,6 +10,7 @@ import net.minecraft.nbt.NbtOps
 import net.minecraft.network.packet.CustomPayload
 import net.minecraft.registry.RegistryKey
 import net.minecraft.registry.RegistryKeys
+import net.minecraft.text.MutableText
 import net.minecraft.text.Text
 import net.minecraft.world.World
 import org.nguh.nguhcraft.enchantment.NguhcraftEnchantments
@@ -38,8 +39,7 @@ object Utils {
 
     /** Coloured '[' and '] ' components (the latter includes a space). */
     val LBRACK_COMPONENT: Text = Text.literal("[").withColor(Constants.DeepKoamaru)
-    val RBRACK_COMPONENT: Text = Text.literal("] ").withColor(Constants.DeepKoamaru)
-    val RBRACK_COMPONENT_NO_SPACE: Text = Text.literal("]").withColor(Constants.DeepKoamaru)
+    val RBRACK_COMPONENT: Text = Text.literal("]").withColor(Constants.DeepKoamaru)
 
     /** For RomanNumeral conversion. */
     private val M = arrayOf("", "M", "MM", "MMM")
@@ -51,14 +51,15 @@ object Utils {
     const val MAX_SATURATION_ENCHANTMENT_VALUE = 8
 
     /**
-     * Get a component enclosed in brackets, optionally followed by a space
-     * <p>
-     * For example, for an input of "foo", this will return '[foo] ' with
+     * Get a component enclosed in brackets.
+     *
+     * For example, for an input of "foo", this will return '[foo]' with
      * appropriate formatting.
      */
-    fun BracketedLiteralComponent(Content: String, SpaceAfter: Boolean = true): Text = LBRACK_COMPONENT.copy()
+    fun BracketedLiteralComponent(Content: String): MutableText = Text.empty()
+        .append(LBRACK_COMPONENT)
         .append(Text.literal(Content).withColor(Constants.Lavender))
-        .append(if (SpaceAfter) RBRACK_COMPONENT else RBRACK_COMPONENT_NO_SPACE)
+        .append(RBRACK_COMPONENT)
 
     /** Calculate a player’s total saturation enchantment value. */
     @JvmStatic

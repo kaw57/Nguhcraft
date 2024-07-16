@@ -4,6 +4,7 @@ import com.mojang.logging.LogUtils
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking.Context
 import net.minecraft.network.packet.s2c.play.GameMessageS2CPacket
+import net.minecraft.screen.ScreenTexts
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.network.ServerPlayNetworkHandler
 import net.minecraft.server.network.ServerPlayerEntity
@@ -24,7 +25,7 @@ object Chat {
     private val ERR_NEEDS_LINK_TO_CHAT: Text = Text.translatable("You must link your account to send messages in chat or run commands (other than /discord link)").formatted(Formatting.RED)
 
     /** Components used in sender names. */
-    private val SERVER_COMPONENT: Text = Utils.BracketedLiteralComponent("Server", false)
+    private val SERVER_COMPONENT: Text = Utils.BracketedLiteralComponent("Server")
     private val SRV_LIT_COMPONENT: Text = Text.literal("Server").withColor(Constants.Lavender)
     private val COLON_COMPONENT: Text = Text.literal(":")
     private val COMMA_COMPONENT = Text.literal(", ").withColor(Constants.DeepKoamaru)

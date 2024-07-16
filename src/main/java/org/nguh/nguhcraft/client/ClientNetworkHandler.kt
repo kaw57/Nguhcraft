@@ -91,7 +91,7 @@ object ClientNetworkHandler {
                     it.nameAboveHead = DiscordName
                     it.displayName = DiscordName.copy()
                         .append(Text.literal(" "))
-                        .append(Utils.BracketedLiteralComponent(Packet.MinecraftName, false))
+                        .append(Utils.BracketedLiteralComponent(Packet.MinecraftName))
                 }
             }
         }
