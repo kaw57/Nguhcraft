@@ -1,6 +1,7 @@
 package org.nguh.nguhcraft.server.dedicated
 
 import com.mojang.brigadier.exceptions.CommandSyntaxException
+import com.mojang.brigadier.exceptions.DynamicCommandExceptionType
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType
 import com.mojang.logging.LogUtils
 import kotlinx.serialization.Serializable
@@ -33,7 +34,6 @@ import net.minecraft.nbt.NbtCompound
 import net.minecraft.nbt.NbtIo
 import net.minecraft.nbt.NbtSizeTracker
 import net.minecraft.screen.ScreenTexts
-import net.minecraft.server.MinecraftServer
 import net.minecraft.server.command.ServerCommandSource
 import net.minecraft.server.dedicated.MinecraftDedicatedServer
 import net.minecraft.server.network.ServerPlayerEntity
@@ -54,7 +54,6 @@ import org.nguh.nguhcraft.server.Broadcast
 import org.nguh.nguhcraft.server.PlayerByUUID
 import org.nguh.nguhcraft.server.command.Commands
 import org.nguh.nguhcraft.server.command.Commands.Exn
-import org.nguh.nguhcraft.server.ServerUtils
 import org.nguh.nguhcraft.server.accessors.ServerPlayerAccessor
 import org.nguh.nguhcraft.server.accessors.ServerPlayerDiscordAccessor
 import org.nguh.nguhcraft.server.dedicated.PlayerList.Companion.UpdateCacheEntry
@@ -214,8 +213,9 @@ internal class Discord : ListenerAdapter() {
             .literal("Sorry, we couldn’t fetch your account info from Discord. Please relink your account")
             .formatted(Formatting.RED)
 
-        private val NEED_NGIMP : SimpleCommandExceptionType
-            = Commands.Exn("You need to have at least the @ŋimp role on the Discord server to play on this server!")
+        private val ROLE_REQUIREMENTS_NOT_MET = DynamicCommandExceptionType {
+            Text.literal("You need to have at least the @$it role on the Discord server to play on this server!")
+        }
 
         private val MUST_ENABLE_DMS : SimpleCommandExceptionType
             = Commands.Exn("You must enable DMs from server members to link your account!")
@@ -236,7 +236,7 @@ internal class Discord : ListenerAdapter() {
         private lateinit var MessageChannel: TextChannel
         private lateinit var AgmaSchwaGuild: Guild
         private lateinit var NguhcrafterRole: Role
-        private lateinit var NgimpRole: Role
+        private lateinit var RequiredRole: Role
 
         @Volatile private var ServerAvatarURL: String = DEFAULT_AVATARS[0]
         @Volatile private var Ready = false
@@ -274,7 +274,7 @@ internal class Discord : ListenerAdapter() {
             MessageChannel = Get("channel") { Client.getTextChannelById(Config.channelId) }
             MessageWebhook = Get("webhook") { Client.retrieveWebhookById(Config.webhookId).complete() }
             NguhcrafterRole = Get("player role") { AgmaSchwaGuild.getRoleById(Config.playerRoleId) }
-            NgimpRole = Get("required role") { AgmaSchwaGuild.getRoleById(Config.requiredRoleId) }
+            RequiredRole = Get("required role") { AgmaSchwaGuild.getRoleById(Config.requiredRoleId) }
             ServerAvatarURL = AgmaSchwaGuild.iconUrl ?: Client.selfUser.effectiveAvatarUrl
             Ready = true
             SendSimpleEmbed(null, "Starting server...", Constants.Lavender);
@@ -409,7 +409,7 @@ internal class Discord : ListenerAdapter() {
         }
 
         /** Check if a server member is allowed to link their account at all. */
-        private fun IsAllowedToLink(M: Member): Boolean = M.roles.contains(NgimpRole)
+        private fun IsAllowedToLink(M: Member): Boolean = M.roles.contains(RequiredRole)
 
         /** DO NOT USE. */
         fun __IsLinkedOrOperatorImpl(SP: ServerPlayerEntity): Boolean = SP.isLinkedOrOperator
@@ -421,7 +421,7 @@ internal class Discord : ListenerAdapter() {
             val Member = MemberByID(Source, ID) ?: return
 
             // Check if the player is allowed to link their account.
-            if (!IsAllowedToLink(Member)) throw NEED_NGIMP.create()
+            if (!IsAllowedToLink(Member)) throw ROLE_REQUIREMENTS_NOT_MET.create(RequiredRole.name)
 
             // Some geniuses may have decided to make it so people can’t DM them;
             // display an error in that case instead of crashing.
