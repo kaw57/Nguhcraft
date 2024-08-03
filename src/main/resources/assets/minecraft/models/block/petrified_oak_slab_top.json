@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/slab_top",
+  "textures": {
+    "bottom": "nguhcraft:block/petrified_slab",
+    "side": "nguhcraft:block/petrified_slab",
+    "top": "nguhcraft:block/petrified_slab"
+  }
+}
