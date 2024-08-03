@@ -157,6 +157,13 @@ object ProtectionManager {
         }
     }
 
+    /** Check if a player should suffer fall damage when landing on a block. */
+    @JvmStatic
+    fun AllowFallDamage(PE: PlayerEntity): Boolean {
+        val R = FindRegionContainingBlock(PE.world, PE.blockPos) ?: return true
+        return R.AllowsPlayerFallDamage()
+    }
+
     /** Check if a player is allowed to use an item (not on a block). */
     @JvmStatic
     fun AllowItemUse(PE: PlayerEntity, W: World, St: ItemStack): Boolean {

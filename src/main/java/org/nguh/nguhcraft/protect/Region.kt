@@ -72,6 +72,13 @@ class Region(
         ENVIRONMENTAL_HAZARDS,
 
         /**
+         * Allow fall damage.
+         *
+         * This affects only players.
+         */
+        PLAYER_FALL_DAMAGE,
+
+        /**
         * Enable pressure plates.
         *
         * This allows entities and players to interact with pressure
@@ -169,6 +176,9 @@ class Region(
 
     /** Check if this region allows entities to be affected by the environment. */
     fun AllowsEnvironmentalHazards() = Test(Flags.ENVIRONMENTAL_HAZARDS)
+
+    /** Check if entities should be affected by fall damage. */
+    fun AllowsPlayerFallDamage() = Test(Flags.PLAYER_FALL_DAMAGE)
 
     /** Check if this region allows pressure plates. */
     fun AllowsPressurePlates() = Test(Flags.PRESSURE_PLATES)

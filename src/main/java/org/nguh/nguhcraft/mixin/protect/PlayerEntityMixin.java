@@ -3,6 +3,7 @@ package org.nguh.nguhcraft.mixin.protect;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
@@ -39,6 +40,13 @@ public abstract class PlayerEntityMixin extends LivingEntity {
         // This acts as a server-side gate to prevent block interactions. On
         // the client, they should have already been rewritten to item uses.
         if (!ProtectionManager.HandleBlockInteract(This(), getWorld(), Pos, getMainHandStack()).isAccepted())
+            CIR.setReturnValue(false);
+    }
+
+    /** Prevent fall damage in certain regions. */
+    @Inject(method = "handleFallDamage", at = @At("HEAD"), cancellable = true)
+    private void inject$handleFallDamage(float FD, float DM, DamageSource DS, CallbackInfoReturnable<Boolean> CIR) {
+        if (!ProtectionManager.AllowFallDamage(This()))
             CIR.setReturnValue(false);
     }
 }
