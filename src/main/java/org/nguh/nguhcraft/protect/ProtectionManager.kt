@@ -252,6 +252,12 @@ object ProtectionManager {
             return if (R.AllowsDoors()) ActionResult.SUCCESS else ActionResult.FAIL
         }
 
+        // As are buttons.
+        if (St isa BlockTags.BUTTONS) {
+            val R = FindRegionContainingBlock(W, Pos) ?: return ActionResult.SUCCESS
+            return if (R.AllowsButtons()) ActionResult.SUCCESS else ActionResult.FAIL
+        }
+
         // Allow placing minecarts.
         if (Stack != null && Stack.item is MinecartItem && St isa BlockTags.RAILS) {
             val R = FindRegionContainingBlock(W, Pos) ?: return ActionResult.SUCCESS

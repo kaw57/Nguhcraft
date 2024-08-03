@@ -38,6 +38,9 @@ class Region(
         /** Allow attacking players. */
         ATTACK_PLAYERS,
 
+        /** Allow interacting with buttons. */
+        BUTTONS,
+
         /**
         * Allow breaking and placing blocks.
         *
@@ -154,6 +157,9 @@ class Region(
 
     /** Check if this region allows block breaking. */
     fun AllowsBlockModification() = Test(Flags.CHANGE_BLOCKS)
+
+    /** Check if this region allows interacting with buttons. */
+    fun AllowsButtons() = Test(Flags.BUTTONS)
 
     /** Check if this region allows interacting with doors. */
     fun AllowsDoors() = Test(Flags.DOORS)
