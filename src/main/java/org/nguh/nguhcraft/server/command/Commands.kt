@@ -76,6 +76,7 @@ object Commands {
             D.register(RuleCommand())                 // /rule
             D.register(SayCommand())                  // /say
             D.register(SetHomeCommand())              // /sethome
+            D.register(SpeedCommand())                // /speed
             D.register(literal("tell").redirect(Msg)) // /tell
             D.register(TopCommand())                  // /top
             D.register(UUIDCommand())                 // /uuid
@@ -421,6 +422,23 @@ object Commands {
 
             AppendWorldAndRegionName(Mess, R)
             S.sendMessage(Mess.formatted(Formatting.YELLOW))
+            return 1
+        }
+    }
+
+    object SpeedCommand {
+        fun Execute(S: ServerCommandSource, Value: Int): Int {
+            // Sanity check so the server doesn’t explode when we move.
+            if (Value < 1 || Value > 10) {
+                S.sendError(Text.literal("Speed must be between 1 and 10"))
+                return 0
+            }
+
+            // Convert flying speed to blocks per tick.
+            val SP = S.playerOrThrow
+            SP.abilities.flySpeed = Value / 20f
+            SP.sendAbilitiesUpdate()
+            S.sendMessage(Text.literal("Set flying speed to $Value").formatted(Formatting.YELLOW))
             return 1
         }
     }
@@ -883,6 +901,17 @@ object Commands {
                 Home.DEFAULT_HOME
             )
         }
+
+    private fun SpeedCommand(): LiteralArgumentBuilder<ServerCommandSource> = literal("speed")
+        .requires { it.hasPermissionLevel(4) && it.isExecutedByPlayer }
+        .then(argument("value", IntegerArgumentType.integer())
+            .executes {
+                SpeedCommand.Execute(
+                    it.source,
+                    IntegerArgumentType.getInteger(it, "value")
+                )
+            }
+        )
 
     private fun TopCommand(): LiteralArgumentBuilder<ServerCommandSource> = literal("top")
         .requires { it.hasPermissionLevel(4) && it.isExecutedByPlayer }
