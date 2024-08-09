@@ -2,7 +2,7 @@
   "parent": "minecraft:block/slab_top",
   "textures": {
     "bottom": "nguhcraft:block/petrified_slab",
-    "side": "nguhcraft:block/petrified_slab",
+    "side": "nguhcraft:block/petrified_slab_side",
     "top": "nguhcraft:block/petrified_slab"
   }
 }
