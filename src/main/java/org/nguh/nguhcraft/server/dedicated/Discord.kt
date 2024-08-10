@@ -46,7 +46,7 @@ import net.minecraft.world.GameMode
 import org.jetbrains.annotations.Contract
 import org.nguh.nguhcraft.Constants
 import org.nguh.nguhcraft.Utils
-import org.nguh.nguhcraft.Utils.Normalised
+import org.nguh.nguhcraft.Utils.NormaliseNFKCLower
 import org.nguh.nguhcraft.mixin.server.MinecraftServerAccessor
 import org.nguh.nguhcraft.network.ClientboundChatPacket
 import org.nguh.nguhcraft.network.ClientboundLinkUpdatePacket
@@ -772,7 +772,7 @@ class PlayerList private constructor(private val ByID: HashMap<UUID, Entry>) : I
         val MinecraftName: String,
         val DiscordName: String
     ) {
-        val NormalisedDiscordName: String = Normalised(DiscordName)
+        val NormalisedDiscordName: String = NormaliseNFKCLower(DiscordName)
         val isLinked: Boolean get() = DiscordID != Discord.INVALID_ID
         override fun toString() = MinecraftName.ifEmpty { ID.toString() }
     }
@@ -1009,7 +1009,7 @@ object DiscordCommand {
         // member whose *ID* matches the query, if there is one.
         val Data = M.toLongOrNull()?.let { ID -> Players.find { it.DiscordID == ID }  }
             ?: M.toUUID()?.let { Players.find(it) }
-            ?: Normalised(M).let { Norm -> Players.find { it.NormalisedDiscordName == Norm } }
+            ?: NormaliseNFKCLower(M).let { Norm -> Players.find { it.NormalisedDiscordName == Norm } }
             ?: Players.find { M.equals(it.MinecraftName, ignoreCase = true) }
 
         // No player found.

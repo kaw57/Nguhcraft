@@ -86,6 +86,7 @@
 		"client.render.GameMenuScreenMixin",
 		"client.render.InGameHudMixin",
 		"client.render.TexturedRenderLayersMixin",
+		"client.render.TextVisitFactoryMixin",
 		"discord.client.AbstractClientPlayerMixin",
 		"discord.client.PlayerListEntryMixin",
 		"protect.client.ClientPlayerInteractionManagerMixin",

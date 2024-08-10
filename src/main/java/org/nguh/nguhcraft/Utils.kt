@@ -100,9 +100,8 @@ object Utils {
         return EnchantmentHelper.getLevel(R.entryOf(E), Stack)
     }
 
-
     /** Normalise a string for fuzzy matching against another string  */
-    fun Normalised(S: String) = Normalizer.normalize(S, Normalizer.Form.NFKC).lowercase(Locale.getDefault())
+    fun NormaliseNFKCLower(S: String) = Normalizer.normalize(S, Normalizer.Form.NFKC).lowercase(Locale.getDefault())
 
     /** Create a packet id. */
     fun <T : CustomPayload> PacketId(Name: String) = CustomPayload.Id<T>(Nguhcraft.Id(Name))
