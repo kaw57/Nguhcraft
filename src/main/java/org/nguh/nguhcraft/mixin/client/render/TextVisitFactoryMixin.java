@@ -30,7 +30,7 @@ public abstract class TextVisitFactoryMixin {
         Style RS,
         CharacterVisitor Vis,
         CallbackInfoReturnable<Boolean> CIR,
-        @Local(name = "text") LocalRef<String> Text
+        @Local(argsOnly = true) LocalRef<String> Text
     ) {
         Text.set(ClientUtils.RenderText(Text.get()));
     }

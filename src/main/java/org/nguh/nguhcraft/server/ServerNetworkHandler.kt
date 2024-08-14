@@ -50,8 +50,11 @@ object ServerNetworkHandler {
         if (V != VersionCheck.NGUHCRAFT_VERSION) {
             Handler.disconnect(Text.literal("""
                 Sorry, your Nguhcraft client mod is out of date!
+                Yours: $V vs Server: ${VersionCheck.NGUHCRAFT_VERSION}
+
                 Please update it to play on the server.
-                Yours: $V vs Server: ${VersionCheck.NGUHCRAFT_VERSION}""".trimIndent()
+                If you’re using Prism Launcher, just 
+                restart the game.""".trimIndent()
             ))
         }
     }
