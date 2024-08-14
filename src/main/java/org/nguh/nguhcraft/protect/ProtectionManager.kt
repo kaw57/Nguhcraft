@@ -5,7 +5,6 @@ import net.fabricmc.api.Environment
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
 import net.minecraft.block.Blocks
 import net.minecraft.block.LecternBlock
-import net.minecraft.block.entity.LockableContainerBlockEntity
 import net.minecraft.client.network.ClientPlayerEntity
 import net.minecraft.entity.Entity
 import net.minecraft.entity.damage.DamageSource
@@ -28,7 +27,7 @@ import net.minecraft.util.ActionResult
 import net.minecraft.util.math.BlockPos
 import net.minecraft.world.World
 import org.nguh.nguhcraft.BypassesRegionProtection
-import org.nguh.nguhcraft.Lock
+import org.nguh.nguhcraft.block.LockableBlockEntity
 import org.nguh.nguhcraft.client.accessors.AbstractClientPlayerEntityAccessor
 import org.nguh.nguhcraft.isa
 import org.nguh.nguhcraft.item.KeyItem
@@ -254,7 +253,7 @@ object ProtectionManager {
         }
 
         // Doors are a separate flag.
-        if (St isa BlockTags.WOODEN_DOORS) {
+        if (St isa BlockTags.DOORS) {
             val R = FindRegionContainingBlock(W, Pos) ?: return ActionResult.SUCCESS
             return if (R.AllowsDoors()) ActionResult.SUCCESS else ActionResult.FAIL
         }
@@ -303,9 +302,9 @@ object ProtectionManager {
     }
 
     /** Check if a block is a locked chest. */
-    private fun IsLockedChest(W: World, Pos: BlockPos): Boolean {
+    private fun IsLockedBlock(W: World, Pos: BlockPos): Boolean {
         val BE = KeyItem.GetLockableEntity(W, Pos)
-        return BE is LockableContainerBlockEntity && BE.Lock.key.isNotEmpty()
+        return BE is LockableBlockEntity && BE.lock.key.isNotEmpty()
     }
 
     /** Check if a pressure plate is enabled. */
@@ -318,8 +317,8 @@ object ProtectionManager {
     /** Check if a block is within a protected region. */
     @JvmStatic
     fun IsProtectedBlock(W: World, Pos: BlockPos): Boolean {
-        // If this is a locked chest, treat it as protected.
-        if (IsLockedChest(W, Pos)) return true
+        // If this is a locked block (container or door), treat it as protected.
+        if (IsLockedBlock(W, Pos)) return true
 
         // Otherwise, delegate to the region check.
         return IsProtectedBlockInternal(W, Pos)

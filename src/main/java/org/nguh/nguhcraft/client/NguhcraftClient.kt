@@ -3,7 +3,9 @@ package org.nguh.nguhcraft.client
 import net.fabricmc.api.ClientModInitializer
 import net.fabricmc.api.EnvType
 import net.fabricmc.api.Environment
+import net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents
+import net.minecraft.client.render.RenderLayer
 import net.minecraft.item.ItemGroup
 import net.minecraft.item.ItemStack
 import net.minecraft.item.Items
@@ -18,6 +20,7 @@ import org.lwjgl.glfw.GLFW
 import org.nguh.nguhcraft.Constants.MAX_HOMING_DISTANCE
 import org.nguh.nguhcraft.Nguhcraft.Companion.Id
 import org.nguh.nguhcraft.Utils.Debug
+import org.nguh.nguhcraft.block.NguhBlocks
 import org.nguh.nguhcraft.client.ClientUtils.Client
 import org.nguh.nguhcraft.protect.ProtectionManager
 
@@ -30,6 +33,8 @@ class NguhcraftClient : ClientModInitializer {
         WorldRenderEvents.LAST.register { Renderer.DebugRender(it) }
 
         Registry.register(Registries.ITEM_GROUP, Id("treasures"), TREASURES_ITEM_GROUP)
+
+        BlockRenderLayerMap.INSTANCE.putBlock(NguhBlocks.LOCKED_DOOR, RenderLayer.getCutout())
     }
 
     companion object {

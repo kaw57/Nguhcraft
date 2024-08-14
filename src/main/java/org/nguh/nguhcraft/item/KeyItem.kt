@@ -2,10 +2,12 @@ package org.nguh.nguhcraft.item
 
 import net.minecraft.block.Block
 import net.minecraft.block.ChestBlock
+import net.minecraft.block.DoorBlock
 import net.minecraft.block.DoubleBlockProperties
 import net.minecraft.block.entity.BlockEntity
 import net.minecraft.block.entity.ChestBlockEntity
 import net.minecraft.block.entity.LockableContainerBlockEntity
+import net.minecraft.block.enums.DoubleBlockHalf
 import net.minecraft.component.DataComponentTypes
 import net.minecraft.inventory.ContainerLock
 import net.minecraft.item.Item
@@ -21,8 +23,9 @@ import net.minecraft.util.Formatting
 import net.minecraft.util.Rarity
 import net.minecraft.util.math.BlockPos
 import net.minecraft.world.World
-import org.nguh.nguhcraft.Lock
-import org.nguh.nguhcraft.server.UpdateLock
+import org.nguh.nguhcraft.block.LockableBlockEntity
+import org.nguh.nguhcraft.block.LockedDoorBlockEntity
+import org.nguh.nguhcraft.server.ServerUtils.UpdateLock
 
 class KeyItem : Item(
     Settings()
@@ -40,21 +43,20 @@ class KeyItem : Item(
     override fun useOnBlock(Ctx: ItemUsageContext): ActionResult {
         // If this is not a lockable block, do nothing.
         val W = Ctx.world
-        val BE = GetLockableEntity(W, Ctx.blockPos)
-        if (BE !is LockableContainerBlockEntity) return ActionResult.PASS
+        val BE = GetLockableEntity(W, Ctx.blockPos) ?: return ActionResult.PASS
 
         // If the block is not locked, do nothing.
-        if (BE.Lock.key.isEmpty()) return ActionResult.PASS
+        if (BE.lock.key.isEmpty()) return ActionResult.PASS
 
         // If it is, and the key doesn’t match, then we fail here.
         val Key = Ctx.stack.get(DataComponentTypes.LOCK)?.key
-        if (Key != BE.Lock.key) return ActionResult.FAIL
+        if (Key != BE.lock.key) return ActionResult.FAIL
 
         // Key matches. Drop the lock and clear it.
         if (W is ServerWorld) {
-            val Lock = LockItem.Create(BE.Lock)
+            val Lock = LockItem.Create(BE.lock)
             Block.dropStack(W, Ctx.blockPos, Lock)
-            BE.UpdateLock(ContainerLock.EMPTY)
+            UpdateLock(BE, ContainerLock.EMPTY)
         }
 
         W.playSound(
@@ -77,7 +79,7 @@ class KeyItem : Item(
                 Left: ChestBlockEntity,
                 Right: ChestBlockEntity
             ): ChestBlockEntity {
-                if (Left.Lock.key.isNotEmpty()) return Left
+                if ((Left as LockableBlockEntity).lock.key.isNotEmpty()) return Left
                 return Right
             }
 
@@ -108,20 +110,33 @@ class KeyItem : Item(
         * there will be TWO block entities for the same chest, and we only want to
         * lock one of them. This handles getting whichever one is already locked, in
         * that case.
+        *
+        * For lockable doors, get the lower half instead.
         */
-        fun GetLockableEntity(W: World, Pos: BlockPos): LockableContainerBlockEntity? {
+        fun GetLockableEntity(W: World, Pos: BlockPos): LockableBlockEntity? {
             val BE = W.getBlockEntity(Pos)
-            if (BE !is LockableContainerBlockEntity) return null
-            if (BE !is ChestBlockEntity) return BE
 
-            // Handle double chests.
-            val St = W.getBlockState(Pos)
-            val BES = (St.block as ChestBlock).getBlockEntitySource(St, W, Pos, true)
+            // Handle (double) chests.
+            if (BE is ChestBlockEntity) {
+                val St = W.getBlockState(Pos)
+                val BES = (St.block as ChestBlock).getBlockEntitySource(St, W, Pos, true)
 
-            // This stupid cast is necessary because Kotlin is too dumb to
-            // interface with the corresponding Java method properly.
-            val Cast =  BES as DoubleBlockProperties.PropertySource<ChestBlockEntity>
-            return Cast.apply(Accessor)
+                // This stupid cast is necessary because Kotlin is too dumb to
+                // interface with the corresponding Java method properly.
+                val Cast =  BES as DoubleBlockProperties.PropertySource<ChestBlockEntity>
+                return Cast.apply(Accessor) as LockableBlockEntity
+            }
+
+            // Handle doors.
+            if (BE is LockedDoorBlockEntity) {
+                val St = W.getBlockState(Pos)
+                if (St.get(DoorBlock.HALF) == DoubleBlockHalf.UPPER) return GetLockableEntity(W, Pos.down())
+                return BE
+            }
+
+            // All other containers are not double blocks.
+            if (BE is LockableContainerBlockEntity) return BE as LockableBlockEntity
+            return null
         }
 
         /** Check if a chest is locked. */
@@ -129,7 +144,7 @@ class KeyItem : Item(
         fun IsChestLocked(BE: BlockEntity): Boolean {
             val W = BE.world ?: return false
             val E = GetLockableEntity(W, BE.pos) ?: return false
-            return E.Lock.key.isNotEmpty()
+            return E.lock.key.isNotEmpty()
         }
     }
 }

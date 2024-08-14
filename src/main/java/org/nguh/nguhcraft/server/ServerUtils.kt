@@ -5,12 +5,14 @@ import net.fabricmc.api.EnvType
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
 import net.fabricmc.loader.api.FabricLoader
 import net.minecraft.block.BlockState
+import net.minecraft.block.entity.BlockEntity
 import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.mob.AbstractPiglinEntity
 import net.minecraft.entity.mob.Monster
 import net.minecraft.entity.passive.IronGolemEntity
 import net.minecraft.entity.passive.VillagerEntity
 import net.minecraft.entity.projectile.ProjectileUtil
+import net.minecraft.inventory.ContainerLock
 import net.minecraft.item.ItemStack
 import net.minecraft.network.packet.CustomPayload
 import net.minecraft.network.packet.s2c.play.SubtitleS2CPacket
@@ -19,6 +21,7 @@ import net.minecraft.recipe.RecipeType
 import net.minecraft.recipe.input.SingleStackRecipeInput
 import net.minecraft.server.command.ServerCommandSource
 import net.minecraft.server.network.ServerPlayerEntity
+import net.minecraft.server.world.ServerWorld
 import net.minecraft.text.Text
 import net.minecraft.util.Formatting
 import net.minecraft.util.Hand
@@ -30,6 +33,7 @@ import net.minecraft.world.World
 import org.nguh.nguhcraft.Constants.MAX_HOMING_DISTANCE
 import org.nguh.nguhcraft.SyncedGameRule
 import org.nguh.nguhcraft.Utils.EnchantLvl
+import org.nguh.nguhcraft.block.LockableBlockEntity
 import org.nguh.nguhcraft.enchantment.NguhcraftEnchantments
 import org.nguh.nguhcraft.network.ClientboundSyncHypershotStatePacket
 import org.nguh.nguhcraft.network.ClientboundSyncProtectionBypassPacket
@@ -239,5 +243,13 @@ object ServerUtils {
         val Smelted: ItemStack = Recipe.getResult(W.registryManager)
         if (Smelted.isEmpty) return null
         return SmeltingResult(Smelted.copyWithCount(I.count), RoundExp(Recipe.experience))
+    }
+
+    /** Update the lock on a container. */
+    fun UpdateLock(LE: LockableBlockEntity, NewLock: ContainerLock) {
+        LE as BlockEntity // Every LockableBlockEntity is a BlockEntity.
+        LE.SetLockInternal(NewLock)
+        (LE.world as ServerWorld).chunkManager.markForUpdate(LE.pos)
+        LE.markDirty()
     }
 }

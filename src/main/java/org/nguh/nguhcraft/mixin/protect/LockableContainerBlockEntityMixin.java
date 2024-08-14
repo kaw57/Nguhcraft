@@ -17,6 +17,8 @@ import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.math.BlockPos;
+import org.nguh.nguhcraft.block.LockableBlockEntity;
+import org.nguh.nguhcraft.item.LockItem;
 import org.nguh.nguhcraft.protect.ProtectionManager;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -26,12 +28,15 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(LockableContainerBlockEntity.class)
-public abstract class LockableContainerBlockEntityMixin extends BlockEntity {
-    @Shadow private ContainerLock lock;
-
+public abstract class LockableContainerBlockEntityMixin extends BlockEntity implements LockableBlockEntity {
     public LockableContainerBlockEntityMixin(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
     }
+
+    @Shadow private ContainerLock lock;
+
+    @Override public ContainerLock getLock() { return lock; }
+    @Override public void SetLockInternal(ContainerLock lock) { this.lock = lock; }
 
     /** Allow opening locked chests in /bypass mode. */
     @Inject(
@@ -66,10 +71,7 @@ public abstract class LockableContainerBlockEntityMixin extends BlockEntity {
         Object[] Args,
         @Share("L") LocalRef<ContainerLock> Lock
     ) {
-        return ((Text)Args[0]).copy()
-            .append(" is locked (key: ")
-            .append(Text.literal(Lock.get().key()).formatted(Formatting.LIGHT_PURPLE))
-            .append(")!");
+        return LockItem.FormatLockedMessage(Lock.get(), (Text)Args[0]);
     }
 
     /** Send lock in initial chunk data. */

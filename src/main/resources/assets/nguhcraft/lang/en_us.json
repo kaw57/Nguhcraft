@@ -1,5 +1,6 @@
 {
 	"block.nguhcraft.decorative_hopper": "Decorative Hopper",
+	"block.nguhcraft.locked_door": "Locked Door",
 
 	"death.attack.minecart_run_over": "%1$s was run over by a minecart",
 	"death.attack.minecart_run_over.player": "%1$s was run over by %2$s",
@@ -15,5 +16,8 @@
 	"enchantment.nguhcraft.saturation": "Saturation",
 
 	"item.nguhcraft.lock": "Lock",
-	"item.nguhcraft.key": "Key"
+	"item.nguhcraft.key": "Key",
+
+	"nguhcraft.block.locked": "%1$s is locked (key: %2$s)!",
+	"nguhcraft.door": "Door"
 }

@@ -1,7 +1,5 @@
 package org.nguh.nguhcraft.item
 
-import net.minecraft.block.entity.EnderChestBlockEntity
-import net.minecraft.block.entity.LockableContainerBlockEntity
 import net.minecraft.component.DataComponentTypes
 import net.minecraft.inventory.ContainerLock
 import net.minecraft.item.Item
@@ -10,13 +8,12 @@ import net.minecraft.item.ItemUsageContext
 import net.minecraft.item.tooltip.TooltipType
 import net.minecraft.sound.SoundCategory
 import net.minecraft.sound.SoundEvents
+import net.minecraft.text.MutableText
 import net.minecraft.text.Text
 import net.minecraft.util.ActionResult
 import net.minecraft.util.Formatting
 import net.minecraft.util.Rarity
-import org.nguh.nguhcraft.Lock
-import org.nguh.nguhcraft.server.UpdateLock
-
+import org.nguh.nguhcraft.server.ServerUtils.UpdateLock
 
 class LockItem : Item(
     Settings()
@@ -34,9 +31,9 @@ class LockItem : Item(
         val W = Ctx.world
         val Pos = Ctx.blockPos
         val BE = KeyItem.GetLockableEntity(W, Pos)
-        if (BE is LockableContainerBlockEntity) {
+        if (BE != null) {
             // Already locked.
-            if (BE.Lock.key.isNotEmpty()) return ActionResult.FAIL
+            if (BE.lock.key.isNotEmpty()) return ActionResult.FAIL
 
             // Check if the lock is paired.
             val Comp = Ctx.stack.get(DataComponentTypes.LOCK)
@@ -44,7 +41,7 @@ class LockItem : Item(
 
             // Apply the lock.
             if (!W.isClient) {
-                BE.UpdateLock(Comp)
+                UpdateLock(BE, Comp)
                 Ctx.stack.decrement(1)
             }
 
@@ -72,5 +69,13 @@ class LockItem : Item(
             St.set(DataComponentTypes.ENCHANTMENT_GLINT_OVERRIDE, true)
             return St
         }
+
+        /** Format the message that indicates why a container is locked. */
+        @JvmStatic
+        fun FormatLockedMessage(Lock: ContainerLock, BlockName: Text) = Text.translatable(
+            "nguhcraft.block.locked",
+            BlockName,
+            Text.literal(Lock.key).formatted(Formatting.LIGHT_PURPLE)
+        )
     }
 }

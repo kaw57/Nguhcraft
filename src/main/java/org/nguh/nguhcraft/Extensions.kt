@@ -3,15 +3,12 @@ package org.nguh.nguhcraft
 import net.minecraft.block.AbstractBlock
 import net.minecraft.block.Block
 import net.minecraft.block.BlockState
-import net.minecraft.block.entity.LockableContainerBlockEntity
 import net.minecraft.client.network.ClientPlayerEntity
 import net.minecraft.entity.player.PlayerEntity
-import net.minecraft.inventory.ContainerLock
 import net.minecraft.registry.entry.RegistryEntry
 import net.minecraft.registry.tag.TagKey
 import net.minecraft.server.network.ServerPlayerEntity
 import org.nguh.nguhcraft.client.NguhcraftClient
-import org.nguh.nguhcraft.mixin.protect.LockableContainerBlockEntityAccessor
 import org.nguh.nguhcraft.server.accessors.ServerPlayerAccessor
 
 infix fun AbstractBlock.AbstractBlockState.isa(B: TagKey<Block>) = this.isIn(B)
@@ -30,6 +27,3 @@ fun PlayerEntity.BypassesRegionProtection(): Boolean {
     // Could get here for other clients, in which case we assume no bypass.
     return false
 }
-
-val LockableContainerBlockEntity.Lock: ContainerLock
-    get() = (this as LockableContainerBlockEntityAccessor).lock

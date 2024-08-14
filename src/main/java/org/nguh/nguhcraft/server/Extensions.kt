@@ -1,9 +1,7 @@
 package org.nguh.nguhcraft.server
 
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
-import net.minecraft.block.entity.LockableContainerBlockEntity
 import net.minecraft.entity.Entity
-import net.minecraft.inventory.ContainerLock
 import net.minecraft.network.packet.CustomPayload
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.network.ServerPlayerEntity
@@ -11,7 +9,6 @@ import net.minecraft.server.world.ServerWorld
 import net.minecraft.util.math.BlockPos
 import net.minecraft.util.math.Vec3d
 import net.minecraft.world.TeleportTarget
-import org.nguh.nguhcraft.mixin.protect.LockableContainerBlockEntityAccessor
 import org.nguh.nguhcraft.server.accessors.ServerPlayerAccessor
 import java.util.*
 
@@ -26,12 +23,6 @@ fun Entity.Teleport(ToWorld: ServerWorld, OnTopOf: BlockPos) {
 
 fun Entity.Teleport(ToWorld: ServerWorld, To: Vec3d, Yaw: Float, Pitch: Float) {
     teleportTo(TeleportTarget(ToWorld, To, Vec3d.ZERO, Yaw, Pitch, TeleportTarget.NO_OP))
-}
-
-fun LockableContainerBlockEntity.UpdateLock(NewLock: ContainerLock) {
-    (this as LockableContainerBlockEntityAccessor).lock = NewLock
-    (world as ServerWorld).chunkManager.markForUpdate(pos)
-    markDirty()
 }
 
 /** Send a packet to every client except one. */

@@ -17,7 +17,6 @@
 		"protect.EntityMixin",
 		"protect.ExplosionMixin",
 		"protect.FlowableFluidMixin",
-		"protect.LockableContainerBlockEntityAccessor",
 		"protect.LockableContainerBlockEntityMixin",
 		"protect.MultifaceGrowthBlockMixin",
 		"protect.PistonBlockMixin",

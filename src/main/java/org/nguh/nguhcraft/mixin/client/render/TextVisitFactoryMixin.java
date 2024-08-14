@@ -6,6 +6,7 @@ import net.minecraft.text.CharacterVisitor;
 import net.minecraft.text.Style;
 import net.minecraft.text.TextVisitFactory;
 import org.nguh.nguhcraft.Utils;
+import org.nguh.nguhcraft.client.ClientUtils;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -31,6 +32,6 @@ public abstract class TextVisitFactoryMixin {
         CallbackInfoReturnable<Boolean> CIR,
         @Local(name = "text") LocalRef<String> Text
     ) {
-        Text.set(Normalizer.normalize(Text.get(), Normalizer.Form.NFC));
+        Text.set(ClientUtils.RenderText(Text.get()));
     }
 }
