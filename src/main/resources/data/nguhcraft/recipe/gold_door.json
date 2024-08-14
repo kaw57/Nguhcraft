@@ -1,0 +1,18 @@
+{
+  "type": "crafting_shaped",
+  "category": "redstone",
+  "key": {
+    "#": {
+      "item": "gold_ingot"
+    }
+  },
+  "pattern": [
+    "##",
+    "##",
+    "##"
+  ],
+  "result": {
+    "count": 3,
+    "id": "nguhcraft:locked_door"
+  }
+}
