@@ -1,6 +1,9 @@
 package org.nguh.nguhcraft;
 
 public interface Constants {
+    /** Limit at which the anvil screen is disabled. */
+    int ANVIL_LIMIT = 10000;
+
     /** Maximum distance to the target after which we give up. */
     int MAX_HOMING_DISTANCE = 128;
 

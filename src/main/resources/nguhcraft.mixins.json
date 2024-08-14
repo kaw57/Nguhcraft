@@ -5,6 +5,7 @@
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [
 		"common.AbstractMinecartMixin",
+		"common.AnvilScreenHandlerMixin",
 		"common.EnchantmentMixin",
 		"common.EnderEyeItemMixin",
 		"common.HopperBlockAcessor",
@@ -72,6 +73,7 @@
 		"server.command.TriggerCommandMixin"
 	],
 	"client": [
+		"client.AnvilScreenMixin",
 		"client.KeyboardMixin",
 		"client.MinecraftClientMixin",
 		"client.chat.ChatOptionsScreenMixin",
