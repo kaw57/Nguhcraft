@@ -16,6 +16,7 @@ import net.minecraft.world.event.GameEvent
 import net.minecraft.world.explosion.Explosion
 import org.nguh.nguhcraft.item.KeyItem
 import org.nguh.nguhcraft.item.LockItem
+import org.nguh.nguhcraft.protect.ProtectionManager
 import java.util.function.BiConsumer
 
 
@@ -66,8 +67,12 @@ class LockedDoorBlock(S: Settings) : DoorBlock(BlockSetType.IRON, S), BlockEntit
         // Somehow, this is not a locked door. Ignore.
         if (BE !is LockedDoorBlockEntity) return ActionResult.PASS
 
-        // If the door is locked, we can’t open it.
-        if (!KeyItem.CanOpen(PE.mainHandStack, BE.Lock.key)) {
+        // Allow opening locked doors in '/bypass' mode; otherwise, if
+        // the door is locked, we can’t open it.
+        if (
+            !ProtectionManager.BypassesRegionProtection(PE) &&
+            !KeyItem.CanOpen(PE.mainHandStack, BE.Lock.key)
+        ) {
             PE.sendMessage(LockItem.FormatLockedMessage(BE.Lock, DOOR_TEXT), true)
             if (W.isClient) PE.playSoundToPlayer(SoundEvents.BLOCK_CHEST_LOCKED, SoundCategory.BLOCKS, 1.0F, 1.0F)
             return ActionResult.success(W.isClient)
