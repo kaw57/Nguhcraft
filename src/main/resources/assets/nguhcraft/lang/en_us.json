@@ -4,7 +4,9 @@
 
 	"death.attack.minecart_run_over": "%1$s was run over by a minecart",
 	"death.attack.minecart_run_over.player": "%1$s was run over by %2$s",
+	"death.attack.minecart_run_over.item": "%1$s was run over by %2$s",
 	"death.attack.minecart_collision": "%1$s crashed into a rogue minecart",
+	"death.attack.minecart_collision.item": "%1$s crashed into %2$s while riding a minecart",
 	"death.attack.minecart_collision.player": "%1$s crashed into %2$s while riding a minecart",
 	"death.attack.minecart_poor_track_design": "%1$s suffered poor track design",
 	"death.attack.minecart_poor_track_design.player": "%1$s suffered poor track while trying to escape %2$s",
