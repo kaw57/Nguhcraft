@@ -80,6 +80,7 @@
 		"client.chat.ChatScreenMixin",
 		"client.chat.ClientPlayNetworkHandlerMixin",
 		"client.chat.MessageIndicatorMixin",
+		"client.chat.ScreenMixin",
 		"client.chat.SocialInteractionsPlayerListEntryMixin",
 		"client.chat.TitleScreenMixin",
 		"client.chat.YggdrasilUserApiServiceMixin",
