@@ -6,12 +6,14 @@ import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
 import net.fabricmc.loader.api.FabricLoader
 import net.minecraft.block.BlockState
 import net.minecraft.block.entity.BlockEntity
+import net.minecraft.entity.EntityType
 import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.mob.AbstractPiglinEntity
 import net.minecraft.entity.mob.Monster
 import net.minecraft.entity.passive.IronGolemEntity
 import net.minecraft.entity.passive.VillagerEntity
 import net.minecraft.entity.projectile.ProjectileUtil
+import net.minecraft.entity.projectile.TridentEntity
 import net.minecraft.inventory.ContainerLock
 import net.minecraft.item.ItemStack
 import net.minecraft.network.packet.CustomPayload
@@ -26,13 +28,16 @@ import net.minecraft.text.Text
 import net.minecraft.util.Formatting
 import net.minecraft.util.Hand
 import net.minecraft.util.hit.HitResult
+import net.minecraft.util.math.BlockPos
 import net.minecraft.util.math.Box
 import net.minecraft.util.math.MathHelper
+import net.minecraft.util.math.Vec3d
 import net.minecraft.world.RaycastContext
 import net.minecraft.world.World
 import org.nguh.nguhcraft.Constants.MAX_HOMING_DISTANCE
 import org.nguh.nguhcraft.SyncedGameRule
 import org.nguh.nguhcraft.Utils.EnchantLvl
+import org.nguh.nguhcraft.accessors.TridentEntityAccessor
 import org.nguh.nguhcraft.block.LockableBlockEntity
 import org.nguh.nguhcraft.enchantment.NguhcraftEnchantments
 import org.nguh.nguhcraft.network.ClientboundSyncHypershotStatePacket
@@ -226,6 +231,17 @@ object ServerUtils {
     fun SendTitle(SP: ServerPlayerEntity, Title: Text?, Subtitle: Text?) {
         if (Title != null) SP.networkHandler.sendPacket(TitleS2CPacket(Title))
         if (Subtitle != null) SP.networkHandler.sendPacket(SubtitleS2CPacket(Subtitle))
+    }
+
+    /** Unconditionally strike lightning. */
+    fun StrikeLighting(W: ServerWorld, Where: Vec3d, TE: TridentEntity? = null) {
+        val Lightning = EntityType.LIGHTNING_BOLT.create(W)
+        if (Lightning != null) {
+            Lightning.refreshPositionAfterTeleport(Where)
+            Lightning.channeler = TE?.owner as? ServerPlayerEntity
+            W.spawnEntity(Lightning)
+            if (TE != null) (TE as TridentEntityAccessor).`Nguhcraft$SetStruckLightning`()
+        }
     }
 
     data class SmeltingResult(val Stack: ItemStack, val Experience: Int)

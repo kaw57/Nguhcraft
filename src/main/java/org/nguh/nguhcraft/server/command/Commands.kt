@@ -9,6 +9,7 @@ import net.fabricmc.fabric.api.command.v2.ArgumentTypeRegistry
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
 import net.minecraft.command.CommandRegistryAccess
+import net.minecraft.command.argument.BlockPosArgumentType
 import net.minecraft.command.argument.ColumnPosArgumentType
 import net.minecraft.command.argument.DimensionArgumentType
 import net.minecraft.command.argument.EntityArgumentType
@@ -17,6 +18,7 @@ import net.minecraft.command.argument.serialize.ConstantArgumentSerializer
 import net.minecraft.component.DataComponentTypes
 import net.minecraft.enchantment.Enchantment
 import net.minecraft.entity.Entity
+import net.minecraft.entity.LightningEntity
 import net.minecraft.inventory.ContainerLock
 import net.minecraft.item.ItemStack
 import net.minecraft.registry.RegistryKeys
@@ -32,6 +34,7 @@ import net.minecraft.util.Formatting
 import net.minecraft.util.math.BlockPos
 import net.minecraft.util.math.ColumnPos
 import net.minecraft.util.math.Direction
+import net.minecraft.util.math.Vec3d
 import net.minecraft.world.Heightmap
 import net.minecraft.world.World
 import net.minecraft.world.chunk.ChunkStatus
@@ -44,6 +47,7 @@ import org.nguh.nguhcraft.protect.ProtectionManager
 import org.nguh.nguhcraft.protect.Region
 import org.nguh.nguhcraft.server.*
 import org.nguh.nguhcraft.server.ServerUtils.IsIntegratedServer
+import org.nguh.nguhcraft.server.ServerUtils.StrikeLighting
 import org.nguh.nguhcraft.server.accessors.ServerPlayerAccessor
 import org.nguh.nguhcraft.server.accessors.ServerPlayerDiscordAccessor
 
@@ -76,6 +80,7 @@ object Commands {
             D.register(RuleCommand())                 // /rule
             D.register(SayCommand())                  // /say
             D.register(SetHomeCommand())              // /sethome
+            D.register(SmiteCommand())                // /smite
             D.register(SpeedCommand())                // /speed
             D.register(literal("tell").redirect(Msg)) // /tell
             D.register(TopCommand())                  // /top
@@ -901,6 +906,35 @@ object Commands {
                 Home.DEFAULT_HOME
             )
         }
+
+    private fun SmiteCommand(): LiteralArgumentBuilder<ServerCommandSource> = literal("smite")
+        .requires { it.hasPermissionLevel(4) }
+        .then(argument("targets", EntityArgumentType.entities())
+            .executes {
+                // Smite everything that isn’t also lightning, because that becomes
+                // exponential *really* quick...
+                val Entities = EntityArgumentType.getEntities(it, "targets")
+                for (E in Entities)
+                    if (E !is LightningEntity)
+                        StrikeLighting(E.world as ServerWorld, E.pos)
+
+                // And tell the user how many things were smitten.
+                it.source.sendMessage(Text.literal(
+                    if (Entities.size == 1) "${Entities.first().nameForScoreboard} has been smitten"
+                    else "${Entities.size} entities have been smitten"
+                ).formatted(Formatting.YELLOW))
+                Entities.size
+            }
+        )
+        .then(argument("where", BlockPosArgumentType.blockPos())
+            .requires { it.isExecutedByPlayer }
+            .executes {
+                val Pos = BlockPosArgumentType.getBlockPos(it, "where")
+                StrikeLighting(it.source.world as ServerWorld, Vec3d.ofBottomCenter(Pos))
+                it.source.sendMessage(Text.literal("[$Pos] has been smitten").formatted(Formatting.YELLOW))
+                1
+            }
+        )
 
     private fun SpeedCommand(): LiteralArgumentBuilder<ServerCommandSource> = literal("speed")
         .requires { it.hasPermissionLevel(4) && it.isExecutedByPlayer }

@@ -17,7 +17,7 @@ import org.nguh.nguhcraft.Utils.EnchantLvl
 import org.nguh.nguhcraft.accessors.ProjectileEntityAccessor
 import org.nguh.nguhcraft.accessors.TridentEntityAccessor
 import org.nguh.nguhcraft.server.ServerUtils.MaybeEnterHypershotContext
-import org.nguh.nguhcraft.server.accessors.LightningEntityAccessor
+import org.nguh.nguhcraft.server.ServerUtils.StrikeLighting
 
 object TridentUtils {
     @JvmStatic
@@ -25,7 +25,7 @@ object TridentUtils {
         val W = TE.world
         val Lvl = EnchantLvl(W, TE.itemStack, Enchantments.CHANNELING)
         if (W is ServerWorld && Lvl >= 2) {
-            StrikeLighting(W, TE, BHR.blockPos)
+            StrikeLighting(W, Vec3d.ofBottomCenter(BHR.blockPos), TE)
             TE.playSound(SoundEvents.ITEM_TRIDENT_THUNDER.value(), 5f, 1.0f)
         }
     }
@@ -44,7 +44,7 @@ object TridentUtils {
             EHR.entity.timeUntilRegen = 0
             val Where = EHR.entity.blockPos
             if (Lvl >= 2 || W.isSkyVisible(Where)) {
-                StrikeLighting(W, TE, Where)
+                StrikeLighting(W, EHR.entity.pos, TE)
                 SE = SoundEvents.ITEM_TRIDENT_THUNDER.value()
                 Volume = 5.0f
             }
@@ -78,23 +78,5 @@ object TridentUtils {
             W.spawnEntity(TE)
         }
         W.profiler.pop()
-    }
-
-    /** Unconditionally strike lightning. */
-    private fun StrikeLighting(W: ServerWorld, TE: TridentEntity, Where: BlockPos?) {
-        val Lightning = EntityType.LIGHTNING_BOLT.create(W)
-        if (Lightning != null) {
-            val Owner = TE.owner
-            Lightning.refreshPositionAfterTeleport(Vec3d.ofBottomCenter(Where))
-            Lightning.channeler = if (Owner is ServerPlayerEntity) Owner else null
-            W.spawnEntity(Lightning)
-
-            // Tell the entity it was created by the Channeling enchantment,
-            // in which case we do NOT want it to set anything on fire, and
-            // remember that the trident has summoned it, which causes it to
-            // be rendered on fire.
-            (Lightning as LightningEntityAccessor).`Nguhcraft$SetCreatedByChanneling`()
-            (TE as TridentEntityAccessor).`Nguhcraft$SetStruckLightning`()
-        }
     }
 }
