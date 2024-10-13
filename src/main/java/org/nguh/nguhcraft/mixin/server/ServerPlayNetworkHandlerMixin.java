@@ -15,6 +15,7 @@ import org.nguh.nguhcraft.protect.ProtectionManager;
 import org.nguh.nguhcraft.server.ServerNetworkHandler;
 import org.nguh.nguhcraft.server.ServerUtils;
 import org.nguh.nguhcraft.server.accessors.LivingEntityAccessor;
+import org.nguh.nguhcraft.server.accessors.PlayerInteractEntityC2SPacketAccessor;
 import org.slf4j.Logger;
 import org.spongepowered.asm.mixin.*;
 import org.spongepowered.asm.mixin.injection.At;
@@ -69,8 +70,17 @@ public abstract class ServerPlayNetworkHandlerMixin extends ServerCommonNetworkH
         )
     )
     private void inject$onPlayerInteractEntity(PlayerInteractEntityC2SPacket Packet, CallbackInfo CI, @Local Entity E) {
-        if (!ProtectionManager.AllowEntityInteract(player, E))
-            CI.cancel();
+        // Attack.
+        if (((PlayerInteractEntityC2SPacketAccessor) Packet).IsAttack()) {
+            if (!ProtectionManager.AllowEntityAttack(player, E))
+                CI.cancel();
+        }
+
+        // Interaction.
+        else {
+            if (!ProtectionManager.AllowEntityInteract(player, E))
+                CI.cancel();
+        }
     }
 
     /**

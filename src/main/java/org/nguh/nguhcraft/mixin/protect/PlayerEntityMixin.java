@@ -26,7 +26,7 @@ public abstract class PlayerEntityMixin extends LivingEntity {
     /** Prevent players from attacking certain entities. */
     @Inject(method = "attack", at = @At("HEAD"), cancellable = true)
     private void inject$attack$0(Entity Target, CallbackInfo CI) {
-        if (ProtectionManager.AllowEntityAttack(This(), Target))
+        if (!ProtectionManager.AllowEntityAttack(This(), Target))
             CI.cancel();
     }
 

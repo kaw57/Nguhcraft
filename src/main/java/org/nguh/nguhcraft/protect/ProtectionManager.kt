@@ -115,26 +115,26 @@ object ProtectionManager {
     /** Check if this entity is protected from attacks by a player. */
     @JvmStatic
     fun AllowEntityAttack(AttackingPlayer: PlayerEntity, AttackedEntity: Entity): Boolean {
-        fun ProtectedIfNot(Predicate: (R: Region) -> Boolean): Boolean {
+        fun Allow(Predicate: (R: Region) -> Boolean): Boolean {
             val R = FindRegionContainingBlock(
                 AttackedEntity.world,
                 AttackedEntity.blockPos
-            ) ?: return false
-            return !Predicate(R)
+            ) ?: return true
+            return Predicate(R)
         }
 
         // Player has bypass. Always allow.
-        if (AttackingPlayer.BypassesRegionProtection()) return false
+        if (AttackingPlayer.BypassesRegionProtection()) return true
 
         // Player is not linked. Always deny.
-        if (!IsLinked(AttackingPlayer)) return true
+        if (!IsLinked(AttackingPlayer)) return false
 
         // Check region flags.
         return when (AttackedEntity) {
-            is PlayerEntity -> ProtectedIfNot(Region::AllowsPvP)
-            is VehicleEntity -> ProtectedIfNot(Region::AllowsVehicleUse)
-            !is Monster -> ProtectedIfNot(Region::AllowsAttackingFriendlyEntities)
-            else -> false
+            is Monster -> true
+            is PlayerEntity -> Allow(Region::AllowsPvP)
+            is VehicleEntity -> Allow(Region::AllowsVehicleUse)
+            else -> Allow(Region::AllowsAttackingFriendlyEntities)
         }
     }
 
@@ -355,7 +355,7 @@ object ProtectionManager {
         // Otherwise, use established protection rules, making sure
         // that we forward the attacker if there is one.
         val A = DS.attacker
-        return if (A is PlayerEntity) AllowEntityAttack(A, E) else IsProtectedEntity(E)
+        return if (A is PlayerEntity) !AllowEntityAttack(A, E) else IsProtectedEntity(E)
     }
 
     /** Check if an item stack is a vehicle. */

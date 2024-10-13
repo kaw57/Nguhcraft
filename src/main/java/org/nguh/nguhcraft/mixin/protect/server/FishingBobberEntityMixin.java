@@ -19,6 +19,6 @@ public abstract class FishingBobberEntityMixin {
     private void inject$onEntityHit(EntityHitResult EHR, CallbackInfo CI) {
         var PE = getPlayerOwner();
         if (PE == null) return;
-        if (ProtectionManager.AllowEntityAttack(PE, EHR.getEntity())) CI.cancel();
+        if (!ProtectionManager.AllowEntityAttack(PE, EHR.getEntity())) CI.cancel();
     }
 }

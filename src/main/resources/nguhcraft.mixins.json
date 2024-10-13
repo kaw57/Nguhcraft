@@ -38,6 +38,7 @@
 		"protect.server.LecternBlockEntityMixin",
 		"protect.server.LecternScreenHandlerMixin",
 		"protect.server.LightningEntityMixin",
+		"protect.server.PlayerInteractEntityC2SPacketMixin",
 		"protect.server.PotionEntityMixin",
 		"protect.server.ReplaceDiskEnchantmentEffectMixin",
 		"protect.server.ServerPlayerInteractionManagerMixin",
