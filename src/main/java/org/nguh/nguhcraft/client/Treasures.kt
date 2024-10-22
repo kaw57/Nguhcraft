@@ -110,7 +110,8 @@ object Treasures {
         .set(DataComponentTypes.POTION_CONTENTS, PotionContentsComponent(
             Optional.empty(),
             Optional.of(Colour),
-            listOf(*Effects)
+            listOf(*Effects),
+            Optional.empty()
         ))
 
 
@@ -124,7 +125,7 @@ object Treasures {
 
         /** Enchant the item stack. */
         fun enchant(Enchantment: RegistryKey<Enchantment>, Level: Int = 1): Builder {
-            val RL = Ctx.lookup.createRegistryLookup().getOrThrow(RegistryKeys.ENCHANTMENT)
+            val RL = Ctx.lookup.getOrThrow(RegistryKeys.ENCHANTMENT)
             val Entry = RL.getOrThrow(Enchantment)
             return apply { S.addEnchantment(Entry, Level) }
         }

@@ -96,8 +96,8 @@ object Utils {
     /** Get the level of an enchantment on an item stack. */
     @JvmStatic
     fun EnchantLvl(W: World, Stack: ItemStack, E: RegistryKey<Enchantment>): Int {
-        val R = W.registryManager.get(RegistryKeys.ENCHANTMENT)
-        return EnchantmentHelper.getLevel(R.entryOf(E), Stack)
+        val R = W.registryManager.getOrThrow(RegistryKeys.ENCHANTMENT)
+        return EnchantmentHelper.getLevel(R.getOrThrow(E), Stack)
     }
 
     /** Normalise a string for fuzzy matching against another string  */

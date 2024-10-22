@@ -47,11 +47,8 @@ public abstract class RangedWeaponItemMixin {
         if (W.isClient) return;
 
         // Apply homing.
-        if (EnchantLvl(W, Weapon, NguhcraftEnchantments.HOMING) != 0) {
-            W.getProfiler().push("homingArrows");
+        if (EnchantLvl(W, Weapon, NguhcraftEnchantments.HOMING) != 0)
             HomingTarget.set(ServerUtils.MaybeMakeHomingArrow(W, Shooter));
-            W.getProfiler().pop();
-        }
 
         // If we’re not already in a hypershot context, apply hypershot. In
         // any case, make the arrow a hypershot arrow if we end up in a hypershot

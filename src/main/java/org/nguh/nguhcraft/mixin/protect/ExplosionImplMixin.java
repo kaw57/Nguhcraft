@@ -7,6 +7,7 @@ import net.minecraft.world.BlockView;
 import net.minecraft.world.World;
 import net.minecraft.world.explosion.Explosion;
 import net.minecraft.world.explosion.ExplosionBehavior;
+import net.minecraft.world.explosion.ExplosionImpl;
 import org.nguh.nguhcraft.Constants;
 import org.nguh.nguhcraft.protect.ProtectionManager;
 import org.spongepowered.asm.mixin.Mixin;
@@ -15,11 +16,11 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 
 import java.util.Optional;
 
-@Mixin(Explosion.class)
-public abstract class ExplosionMixin {
+@Mixin(ExplosionImpl.class)
+public abstract class ExplosionImplMixin {
     /** Disable exploding protected blocks. */
     @Redirect(
-        method = "collectBlocksAndDamageEntities",
+        method = "getBlocksToDestroy",
         at = @At(
             value = "INVOKE",
             target = "net/minecraft/world/explosion/ExplosionBehavior.getBlastResistance (Lnet/minecraft/world/explosion/Explosion;Lnet/minecraft/world/BlockView;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;Lnet/minecraft/fluid/FluidState;)Ljava/util/Optional;",

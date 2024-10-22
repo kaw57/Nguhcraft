@@ -8,6 +8,7 @@ import net.minecraft.block.BlockState
 import net.minecraft.block.entity.BlockEntity
 import net.minecraft.entity.EntityType
 import net.minecraft.entity.LivingEntity
+import net.minecraft.entity.SpawnReason
 import net.minecraft.entity.mob.AbstractPiglinEntity
 import net.minecraft.entity.mob.Monster
 import net.minecraft.entity.passive.IronGolemEntity
@@ -20,6 +21,7 @@ import net.minecraft.network.packet.CustomPayload
 import net.minecraft.network.packet.s2c.play.SubtitleS2CPacket
 import net.minecraft.network.packet.s2c.play.TitleS2CPacket
 import net.minecraft.recipe.RecipeType
+import net.minecraft.recipe.SmeltingRecipe
 import net.minecraft.recipe.input.SingleStackRecipeInput
 import net.minecraft.server.command.ServerCommandSource
 import net.minecraft.server.network.ServerPlayerEntity
@@ -235,11 +237,14 @@ object ServerUtils {
 
     /** Unconditionally strike lightning. */
     fun StrikeLighting(W: ServerWorld, Where: Vec3d, TE: TridentEntity? = null) {
-        val Lightning = EntityType.LIGHTNING_BOLT.create(W)
+        val Lightning = EntityType.LIGHTNING_BOLT.spawn(
+            W,
+            BlockPos.ofFloored(Where),
+            SpawnReason.SPAWN_ITEM_USE
+        )
+
         if (Lightning != null) {
-            Lightning.refreshPositionAfterTeleport(Where)
             Lightning.channeler = TE?.owner as? ServerPlayerEntity
-            W.spawnEntity(Lightning)
             if (TE != null) (TE as TridentEntityAccessor).`Nguhcraft$SetStruckLightning`()
         }
     }
@@ -248,15 +253,16 @@ object ServerUtils {
 
     /** Try to smelt this block as an item. */
     @JvmStatic
-    fun TrySmeltBlock(W: World, Block: BlockState): SmeltingResult? {
+    fun TrySmeltBlock(W: ServerWorld, Block: BlockState): SmeltingResult? {
         val I = ItemStack(Block.block.asItem())
         if (I.isEmpty) return null
 
-        val optional = W.recipeManager.getFirstMatch(RecipeType.SMELTING, SingleStackRecipeInput(I), W)
+        val Input = SingleStackRecipeInput(I)
+        val optional = W.recipeManager.getFirstMatch(RecipeType.SMELTING, Input, W)
         if (optional.isEmpty) return null
 
-        val Recipe = optional.get().value()
-        val Smelted: ItemStack = Recipe.getResult(W.registryManager)
+        val Recipe: SmeltingRecipe = optional.get().value()
+        val Smelted: ItemStack = Recipe.craft(Input, W.registryManager)
         if (Smelted.isEmpty) return null
         return SmeltingResult(Smelted.copyWithCount(I.count), RoundExp(Recipe.experience))
     }

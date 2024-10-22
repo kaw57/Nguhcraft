@@ -65,7 +65,6 @@ object TridentUtils {
         val HS = MaybeEnterHypershotContext(PE, PE.activeHand, S, listOf(), 2.5F, 1F, false)
 
         // Launch tridents.
-        W.profiler.push("multishotTridents")
         for (I in 0 until Lvl + Extra) {
             val TE = TridentEntity(W, PE, S)
             TE.setVelocity(PE, Pitch, Yaw, 0F, 2.5F + K * .5F, 1F + .1F * I)
@@ -77,6 +76,5 @@ object TridentUtils {
             if (HS) (TE as ProjectileEntityAccessor).MakeHypershotProjectile()
             W.spawnEntity(TE)
         }
-        W.profiler.pop()
     }
 }

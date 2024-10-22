@@ -19,8 +19,8 @@ public abstract class EntityMixin {
     @Unique private Entity This() { return (Entity)(Object)this; }
 
     /** Prevent damage to protected entities. */
-    @Inject(method = "isInvulnerableTo", at = @At("HEAD"), cancellable = true)
-    private void inject$isInvulnerableTo(DamageSource DS, CallbackInfoReturnable<Boolean> CIR) {
+    @Inject(method = "isAlwaysInvulnerableTo", at = @At("HEAD"), cancellable = true)
+    private void inject$isAlwaysInvulnerableTo(DamageSource DS, CallbackInfoReturnable<Boolean> CIR) {
         if (ProtectionManager.IsProtectedEntity(This(), DS))
             CIR.setReturnValue(true);
     }

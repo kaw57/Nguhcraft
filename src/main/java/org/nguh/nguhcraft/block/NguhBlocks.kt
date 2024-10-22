@@ -1,6 +1,7 @@
 package org.nguh.nguhcraft.block
 
 import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents
+import net.fabricmc.fabric.api.`object`.builder.v1.block.entity.FabricBlockEntityTypeBuilder
 import net.minecraft.block.AbstractBlock
 import net.minecraft.block.Block
 import net.minecraft.block.Blocks
@@ -14,26 +15,34 @@ import net.minecraft.item.ItemGroups
 import net.minecraft.item.TallBlockItem
 import net.minecraft.registry.Registries
 import net.minecraft.registry.Registry
+import net.minecraft.registry.RegistryKey
+import net.minecraft.registry.RegistryKeys
 import org.nguh.nguhcraft.Nguhcraft.Companion.Id
 
 object NguhBlocks {
     // Blocks.
     val DECORATIVE_HOPPER = Register(
         "decorative_hopper",
-        DecorativeHopperBlock(AbstractBlock.Settings.copy(Blocks.HOPPER))
+        ::DecorativeHopperBlock,
+        AbstractBlock.Settings.copy(Blocks.HOPPER)
     )
 
-    val LOCKED_DOOR = LockedDoorBlock(AbstractBlock.Settings.create()
-        .mapColor(MapColor.GOLD)
-        .requiresTool().strength(5.0f, 3600000.0F)
-        .nonOpaque()
-        .pistonBehavior(PistonBehavior.IGNORE)
-    ).also { Register("locked_door", it, TallBlockItem(it, Item.Settings())) }
+    val LOCKED_DOOR =  Register(
+        "locked_door",
+        ::LockedDoorBlock,
+        AbstractBlock.Settings.create()
+            .mapColor(MapColor.GOLD)
+            .requiresTool().strength(5.0f, 3600000.0F)
+            .nonOpaque()
+            .pistonBehavior(PistonBehavior.IGNORE)
+    )
 
     // Block entities.
     val LOCKED_DOOR_BLOCK_ENTITY = RegisterEntity(
         "lockable_door",
-        BlockEntityType.Builder.create(::LockedDoorBlockEntity, LOCKED_DOOR).build()
+        FabricBlockEntityTypeBuilder
+            .create(::LockedDoorBlockEntity, LOCKED_DOOR)
+            .build()
     )
 
     fun Init() {
@@ -44,13 +53,34 @@ object NguhBlocks {
         ItemGroupEvents.modifyEntriesEvent(ItemGroups.BUILDING_BLOCKS).register {
             it.add(LOCKED_DOOR)
         }
+
+        LOCKED_DOOR_BLOCK_ENTITY.addSupportedBlock(LOCKED_DOOR)
     }
 
-    private fun Register(Key: String, B: Block) = Register(Key, B, BlockItem(B, Item.Settings()))
-    private fun Register(Key: String, B: Block, It: Item): Block {
-        val I = Id(Key)
-        Registry.register(Registries.ITEM, I, It)
-        return Registry.register(Registries.BLOCK, I, B)
+    private fun Register(
+        Key: String,
+        Ctor: (S: AbstractBlock.Settings) -> Block,
+        S: AbstractBlock.Settings,
+        ItemCtor: (B: Block, S: Item.Settings) -> Item = ::BlockItem
+    ): Block {
+        // Create registry keys.
+        val ItemKey = RegistryKey.of(RegistryKeys.ITEM, Id(Key))
+        val BlockKey = RegistryKey.of(RegistryKeys.BLOCK, Id(Key))
+
+        // Set the registry key for the block settings.
+        S.registryKey(BlockKey)
+
+        // Create and register the block.
+        val B = Ctor(S)
+        Registry.register(Registries.BLOCK, BlockKey, B)
+
+        // Create and register the item.
+        val ItemSettings = Item.Settings()
+            .useBlockPrefixedTranslationKey()
+            .registryKey(ItemKey)
+        val I = ItemCtor(B, ItemSettings)
+        Registry.register(Registries.ITEM, ItemKey, I)
+        return B
     }
 
     private fun <C : BlockEntity> RegisterEntity(

@@ -19,5 +19,5 @@ object NguhDamageTypes {
 
     private fun register(Key: String) = RegistryKey.of(RegistryKeys.DAMAGE_TYPE, Id(Key))
     private fun entry(W: World, Key: RegistryKey<DamageType>) =
-        W.registryManager.get(RegistryKeys.DAMAGE_TYPE).entryOf(Key)
+        W.registryManager.getOrThrow(RegistryKeys.DAMAGE_TYPE).getOrThrow(Key)
 }

@@ -1,5 +1,6 @@
 package org.nguh.nguhcraft.mixin.common;
 
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.data.DataTracker;
@@ -43,7 +44,7 @@ public abstract class TridentEntityMixin extends PersistentProjectileEntity impl
         Copy = true;
         pickupType = PickupPermission.CREATIVE_ONLY;
         dataTracker.set(LOYALTY, (byte) 0);
-        setOwner(null);
+        setOwner((Entity) null);
     }
 
     /** Mark this as having struck lightning. */

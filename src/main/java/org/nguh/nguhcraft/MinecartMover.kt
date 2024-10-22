@@ -205,7 +205,7 @@ class MinecartMover private constructor(
             val Dmg = max(Speed, OtherSpeed) * 4
             if (OtherPlayer != null && !OtherPlayer.isCreative && OtherPlayer.hurtTime == 0) {
                 val DS = GetDamageSource(Level, OtherMC != null, OurPlayer)
-                OtherPlayer.damage(DS, Dmg)
+                OtherPlayer.damage(Level, DS, Dmg)
                 DealtDamage = true
             }
 
@@ -219,14 +219,14 @@ class MinecartMover private constructor(
                     !OurPlayer.isCreative &&
                     OurPlayer.hurtTime == 0
                 ) {
-                    OurPlayer.damage(GetDamageSource(Level, true, OtherPlayer), Dmg)
+                    OurPlayer.damage(Level, GetDamageSource(Level, true, OtherPlayer), Dmg)
                     DealtDamage = true
                 }
 
                 DropMinecart(Level, C, X, Y, Z)
                 DropMinecart(Level, OtherMC, X, Y, Z)
-                OtherMC.kill()
-                C.kill()
+                OtherMC.kill(Level)
+                C.kill(Level)
             }
 
             // Play sound and particles.
@@ -545,7 +545,7 @@ class MinecartMover private constructor(
             // Derail on this block. Note that there will be no track here, so
             // we actually need to move down one block.
             C.CentreOn(Block)
-            (C as AbstractMinecartEntityAccessor).`Nguhcraft$MoveOffRail`()
+            (C as AbstractMinecartEntityAccessor).`Nguhcraft$MoveOffRail`(C.world as ServerWorld)
             return true
         }
 
@@ -647,7 +647,9 @@ class MinecartMover private constructor(
             C.onLanding()
 
             // Snap down onto rails if need be.
-            val Pos = C.snapPositionToRail(C.x, C.y, C.z)?.also { C.setPosition(it) } ?: C.pos
+            // FIXME: Enable minecart improvements instead of this:
+            // val Pos = C.snapPositionToRail(C.x, C.y, C.z)?.also { C.setPosition(it) } ?: C.pos
+            val Pos = C.pos
 
             // Compute player acceleration.
             //

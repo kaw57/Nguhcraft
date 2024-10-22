@@ -26,7 +26,7 @@ public class EnderEyeItemMixin {
     private void inject$useOnBlock(ItemUsageContext C, CallbackInfoReturnable<ActionResult> CI) {
         var W = C.getWorld();
         if (!SyncedGameRule.END_ENABLED.IsSet()) {
-            if (W.isClient) C.getPlayer().sendMessage(END_DISABLED_MESSAGE);
+            if (W.isClient) C.getPlayer().sendMessage(END_DISABLED_MESSAGE, true);
             CI.setReturnValue(ActionResult.FAIL);
         }
     }

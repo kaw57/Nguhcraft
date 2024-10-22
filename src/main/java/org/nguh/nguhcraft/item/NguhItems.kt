@@ -3,7 +3,7 @@ package org.nguh.nguhcraft.item
 import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents
 import net.minecraft.item.Item
 import net.minecraft.item.ItemGroups
-import net.minecraft.recipe.SpecialRecipeSerializer
+import net.minecraft.recipe.SpecialCraftingRecipe.SpecialRecipeSerializer
 import net.minecraft.registry.Registries
 import net.minecraft.registry.Registry
 import org.nguh.nguhcraft.Nguhcraft.Companion.Id
