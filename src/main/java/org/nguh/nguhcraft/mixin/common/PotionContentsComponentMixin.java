@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.injection.ModifyArg;
 import static org.nguh.nguhcraft.Utils.RomanNumeral;
 
 @Mixin(net.minecraft.component.type.PotionContentsComponent.class)
-public abstract class PotionContentsComponent {
+public abstract class PotionContentsComponentMixin {
     @ModifyArg(
         method = "buildTooltip(Ljava/lang/Iterable;Ljava/util/function/Consumer;FF)V",
         index = 1,
