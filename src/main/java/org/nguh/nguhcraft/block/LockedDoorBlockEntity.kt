@@ -11,6 +11,7 @@ import net.minecraft.network.packet.Packet
 import net.minecraft.network.packet.s2c.play.BlockEntityUpdateS2CPacket
 import net.minecraft.registry.RegistryWrapper.WrapperLookup
 import net.minecraft.util.math.BlockPos
+import org.nguh.nguhcraft.item.GetKey
 
 class LockedDoorBlockEntity(
     Pos: BlockPos,
@@ -21,12 +22,12 @@ class LockedDoorBlockEntity(
 
     override fun readNbt(Tag: NbtCompound, RL: WrapperLookup) {
         super.readNbt(Tag, RL)
-        Lock = ContainerLock.fromNbt(Tag)
+        Lock = ContainerLock.fromNbt(Tag, RL)
     }
 
     override fun writeNbt(Tag: NbtCompound, RL: WrapperLookup) {
         super.writeNbt(Tag, RL)
-        Lock.writeNbt(Tag)
+        Lock.writeNbt(Tag, RL)
     }
 
     override fun readComponents(CA: ComponentsAccess) {
@@ -41,10 +42,8 @@ class LockedDoorBlockEntity(
 
     /** Send lock in initial chunk data.  */
     override fun toInitialChunkDataNbt(WL: WrapperLookup): NbtCompound {
-        // An empty lock isn’t written by default, but we need it to indicate
-        // that the container is unlocked, so write it manually.
         val Tag = NbtCompound()
-        Tag.putString(ContainerLock.LOCK_KEY, Lock.key)
+        Lock.writeNbt(Tag, WL)
         return Tag
     }
 

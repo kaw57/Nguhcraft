@@ -5,6 +5,7 @@ import net.minecraft.block.*
 import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.item.ItemPlacementContext
 import net.minecraft.item.ItemStack
+import net.minecraft.server.world.ServerWorld
 import net.minecraft.sound.SoundCategory
 import net.minecraft.sound.SoundEvents
 import net.minecraft.text.Text
@@ -12,6 +13,7 @@ import net.minecraft.util.ActionResult
 import net.minecraft.util.hit.BlockHitResult
 import net.minecraft.util.math.BlockPos
 import net.minecraft.world.World
+import net.minecraft.world.block.WireOrientation
 import net.minecraft.world.event.GameEvent
 import net.minecraft.world.explosion.Explosion
 import org.nguh.nguhcraft.item.KeyItem
@@ -33,7 +35,7 @@ class LockedDoorBlock(S: Settings) : DoorBlock(BlockSetType.IRON, S), BlockEntit
     */
     override fun onExploded(
         St: BlockState,
-        W: World,
+        W: ServerWorld,
         Pos: BlockPos,
         E: Explosion,
         SM: BiConsumer<ItemStack, BlockPos>
@@ -50,7 +52,7 @@ class LockedDoorBlock(S: Settings) : DoorBlock(BlockSetType.IRON, S), BlockEntit
         world: World?,
         pos: BlockPos?,
         sourceBlock: Block?,
-        sourcePos: BlockPos?,
+        sourcePos: WireOrientation?,
         notify: Boolean
     ) {}
 
@@ -71,11 +73,11 @@ class LockedDoorBlock(S: Settings) : DoorBlock(BlockSetType.IRON, S), BlockEntit
         // the door is locked, we can’t open it.
         if (
             !ProtectionManager.BypassesRegionProtection(PE) &&
-            !KeyItem.CanOpen(PE.mainHandStack, BE.Lock.key)
+            !BE.lock.canOpen(PE.mainHandStack)
         ) {
             PE.sendMessage(LockItem.FormatLockedMessage(BE.Lock, DOOR_TEXT), true)
             if (W.isClient) PE.playSoundToPlayer(SoundEvents.BLOCK_CHEST_LOCKED, SoundCategory.BLOCKS, 1.0F, 1.0F)
-            return ActionResult.success(W.isClient)
+            return ActionResult.SUCCESS
         }
 
         // Ugly code duplication from onUse(), but the canOpenByHand() check
@@ -93,7 +95,7 @@ class LockedDoorBlock(S: Settings) : DoorBlock(BlockSetType.IRON, S), BlockEntit
         )
 
         W.emitGameEvent(PE, if (isOpen(St)) GameEvent.BLOCK_OPEN else GameEvent.BLOCK_CLOSE, Pos)
-        return ActionResult.success(W.isClient)
+        return ActionResult.SUCCESS
     }
 
     override fun getCodec() = CODEC

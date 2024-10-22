@@ -12,6 +12,7 @@ import net.minecraft.entity.mob.Monster
 import net.minecraft.entity.passive.VillagerEntity
 import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.entity.vehicle.VehicleEntity
+import net.minecraft.inventory.ContainerLock
 import net.minecraft.item.BoatItem
 import net.minecraft.item.ItemStack
 import net.minecraft.item.MinecartItem
@@ -304,7 +305,7 @@ object ProtectionManager {
     /** Check if a block is a locked chest. */
     private fun IsLockedBlock(W: World, Pos: BlockPos): Boolean {
         val BE = KeyItem.GetLockableEntity(W, Pos)
-        return BE is LockableBlockEntity && BE.lock.key.isNotEmpty()
+        return BE is LockableBlockEntity && BE.lock != ContainerLock.EMPTY
     }
 
     /** Check if a pressure plate is enabled. */

@@ -6,9 +6,10 @@ import net.minecraft.item.Item
 import net.minecraft.item.ItemStack
 import net.minecraft.item.ItemUsageContext
 import net.minecraft.item.tooltip.TooltipType
+import net.minecraft.predicate.ComponentPredicate
+import net.minecraft.predicate.item.ItemPredicate
 import net.minecraft.sound.SoundCategory
 import net.minecraft.sound.SoundEvents
-import net.minecraft.text.MutableText
 import net.minecraft.text.Text
 import net.minecraft.util.ActionResult
 import net.minecraft.util.Formatting
@@ -18,7 +19,6 @@ import org.nguh.nguhcraft.server.ServerUtils.UpdateLock
 class LockItem : Item(
     Settings()
     .rarity(Rarity.UNCOMMON)
-    .component(DataComponentTypes.LOCK, ContainerLock.EMPTY)
 ) {
     override fun appendTooltip(
         S: ItemStack,
@@ -33,15 +33,15 @@ class LockItem : Item(
         val BE = KeyItem.GetLockableEntity(W, Pos)
         if (BE != null) {
             // Already locked.
-            if (BE.lock.key.isNotEmpty()) return ActionResult.FAIL
+            if (BE.lock != ContainerLock.EMPTY) return ActionResult.FAIL
 
             // Check if the lock is paired.
-            val Comp = Ctx.stack.get(DataComponentTypes.LOCK)
-            if (Comp == null || Comp.key.isEmpty()) return ActionResult.FAIL
+            val Key = Ctx.stack.getOrDefault(KeyItem.COMPONENT, null)
+            if (Key == null) return ActionResult.FAIL
 
             // Apply the lock.
             if (!W.isClient) {
-                UpdateLock(BE, Comp)
+                UpdateLock(BE, CreateContainerLock(Key))
                 Ctx.stack.decrement(1)
             }
 
@@ -54,7 +54,7 @@ class LockItem : Item(
                 1.0f
             )
 
-            return ActionResult.success(W.isClient)
+            return ActionResult.SUCCESS
         }
         return ActionResult.PASS
     }
@@ -62,12 +62,21 @@ class LockItem : Item(
     companion object {
         private val LOCK_PREFIX = Text.literal("Id: ").formatted(Formatting.YELLOW)
 
-        /** Create a lock item stack with the specified container lock. */
-        fun Create(Lock: ContainerLock): ItemStack {
+        /** Create a lock item stack with the specified key. */
+        fun Create(Key: String): ItemStack {
             val St = ItemStack(NguhItems.LOCK)
-            St.set(DataComponentTypes.LOCK, Lock)
+            St.set(KeyItem.COMPONENT, Key)
             St.set(DataComponentTypes.ENCHANTMENT_GLINT_OVERRIDE, true)
             return St
+        }
+
+        /** Create a container lock from a key. */
+        fun CreateContainerLock(Key: String): ContainerLock {
+            val Predicate = ItemPredicate.Builder.create()
+                .component(ComponentPredicate.builder().add(KeyItem.COMPONENT, Key).build())
+                .build()
+
+            return ContainerLock(Predicate)
         }
 
         /** Format the message that indicates why a container is locked. */
@@ -75,7 +84,7 @@ class LockItem : Item(
         fun FormatLockedMessage(Lock: ContainerLock, BlockName: Text) = Text.translatable(
             "nguhcraft.block.locked",
             BlockName,
-            Text.literal(Lock.key).formatted(Formatting.LIGHT_PURPLE)
+            Text.literal(Lock.GetKey()).formatted(Formatting.LIGHT_PURPLE)
         )
     }
 }

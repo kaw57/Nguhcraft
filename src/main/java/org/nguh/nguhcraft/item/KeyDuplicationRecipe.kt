@@ -17,12 +17,11 @@ class KeyDuplicationRecipe(C: CraftingRecipeCategory) : SpecialCraftingRecipe(C)
         var Paired: ItemStack? = null
         var Unpaired: ItemStack? = null
 
-        for (Slot in 0..<Input.size) {
+        for (Slot in 0..<Input.size()) {
             val St = Input.getStackInSlot(Slot)
             if (St.isEmpty) continue
             if (!St.isOf(NguhItems.KEY)) return null
-            val Lock = St.get(DataComponentTypes.LOCK)
-            if (Lock == null || Lock.key.isEmpty()) {
+            if (!St.contains(KeyItem.COMPONENT)) {
                 if (Unpaired != null) return null
                 Unpaired = St
             } else {
@@ -45,25 +44,18 @@ class KeyDuplicationRecipe(C: CraftingRecipeCategory) : SpecialCraftingRecipe(C)
         return Paired.copyWithCount(1)
     }
 
-    override fun fits(width: Int, height: Int): Boolean {
-        return width * height >= 2
-    }
-
-    override fun getRemainder(Input: CraftingRecipeInput): DefaultedList<ItemStack> {
-        val L = DefaultedList.ofSize(Input.size, ItemStack.EMPTY)
-        for (Slot in 0..<Input.size) {
+    override fun getRecipeRemainders(Input: CraftingRecipeInput): DefaultedList<ItemStack> {
+        val L = DefaultedList.ofSize(Input.size(), ItemStack.EMPTY)
+        for (Slot in 0..<Input.size()) {
             val St = Input.getStackInSlot(Slot)
-            if (St.isOf(NguhItems.KEY)) {
-                val Lock = St.get(DataComponentTypes.LOCK)
-                if (Lock != null && Lock.key.isNotEmpty()) {
-                    L[Slot] = St.copyWithCount(1)
-                    break
-                }
+            if (St.isOf(NguhItems.KEY) && St.contains(KeyItem.COMPONENT)) {
+                L[Slot] = St.copyWithCount(1)
+                break
             }
         }
         return L
     }
 
     override fun getSerializer() = SERIALISER
-    companion object { lateinit var SERIALISER: RecipeSerializer<*> }
+    companion object { lateinit var SERIALISER: RecipeSerializer<KeyDuplicationRecipe> }
 }

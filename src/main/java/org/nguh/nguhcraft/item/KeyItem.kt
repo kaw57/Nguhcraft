@@ -1,5 +1,6 @@
 package org.nguh.nguhcraft.item
 
+import com.mojang.serialization.Codec
 import net.minecraft.block.Block
 import net.minecraft.block.ChestBlock
 import net.minecraft.block.DoorBlock
@@ -8,12 +9,18 @@ import net.minecraft.block.entity.BlockEntity
 import net.minecraft.block.entity.ChestBlockEntity
 import net.minecraft.block.entity.LockableContainerBlockEntity
 import net.minecraft.block.enums.DoubleBlockHalf
+import net.minecraft.component.Component
+import net.minecraft.component.ComponentType
 import net.minecraft.component.DataComponentTypes
 import net.minecraft.inventory.ContainerLock
 import net.minecraft.item.Item
 import net.minecraft.item.ItemStack
 import net.minecraft.item.ItemUsageContext
 import net.minecraft.item.tooltip.TooltipType
+import net.minecraft.predicate.item.ComponentSubPredicate
+import net.minecraft.predicate.item.ItemSubPredicate
+import net.minecraft.registry.Registries
+import net.minecraft.registry.Registry
 import net.minecraft.server.world.ServerWorld
 import net.minecraft.sound.SoundCategory
 import net.minecraft.sound.SoundEvents
@@ -23,15 +30,28 @@ import net.minecraft.util.Formatting
 import net.minecraft.util.Rarity
 import net.minecraft.util.math.BlockPos
 import net.minecraft.world.World
+import org.nguh.nguhcraft.Nguhcraft.Companion.Id
 import org.nguh.nguhcraft.block.LockableBlockEntity
 import org.nguh.nguhcraft.block.LockedDoorBlockEntity
+import org.nguh.nguhcraft.mixin.common.ComponentPredicateAccessor
 import org.nguh.nguhcraft.server.ServerUtils.UpdateLock
+
+/**
+ * Get the key associated with a container lock.
+ *
+ * If the lock somehow has multiple lock components, only the
+ * first one is returned.
+ */
+fun ContainerLock.GetKey(): String? {
+    val Comps = this.predicate.components()
+    if (Comps.isEmpty) return null
+    return ((Comps as ComponentPredicateAccessor).components[0] as Component<*>).value as String
+}
 
 class KeyItem : Item(
     Settings()
     .fireproof()
     .rarity(Rarity.UNCOMMON)
-    .component(DataComponentTypes.LOCK, ContainerLock.EMPTY)
 ) {
     override fun appendTooltip(
         S: ItemStack,
@@ -45,17 +65,26 @@ class KeyItem : Item(
         val W = Ctx.world
         val BE = GetLockableEntity(W, Ctx.blockPos) ?: return ActionResult.PASS
 
-        // If the block is not locked, do nothing.
-        if (BE.lock.key.isEmpty()) return ActionResult.PASS
+        // TODO: Item fixer to upgrade container lock components on doors, keys, and locks
+        //       as well as locked containers.
 
-        // If it is, and the key doesn’t match, then we fail here.
-        val Key = Ctx.stack.get(DataComponentTypes.LOCK)?.key
-        if (Key != BE.lock.key) return ActionResult.FAIL
+        // If the block is not locked, do nothing; if it is, and the
+        // key doesn’t match, then we fail here.
+        if (BE.lock == ContainerLock.EMPTY) return ActionResult.PASS
+        if (!BE.lock.canOpen(Ctx.stack)) return ActionResult.FAIL
 
         // Key matches. Drop the lock and clear it.
         if (W is ServerWorld) {
-            val Lock = LockItem.Create(BE.lock)
-            Block.dropStack(W, Ctx.blockPos, Lock)
+            // This could theoretically fail if someone creates a container
+            // lock that uses some other random item predicate, so only drop
+            // a lock if we can extract a stored key.
+            val Key = BE.lock.GetKey()
+            if (Key != null) {
+                val Lock = LockItem.Create(Key)
+                Block.dropStack(W, Ctx.blockPos, Lock)
+            }
+
+            // Remove the component from the block entity either way.
             UpdateLock(BE, ContainerLock.EMPTY)
         }
 
@@ -68,10 +97,29 @@ class KeyItem : Item(
             1.0f
         )
 
-        return ActionResult.success(W.isClient)
+        return ActionResult.SUCCESS
     }
 
     companion object {
+/*        // Item predicate to test container lock against a key.
+        class Predicate(val StoredKey: String) : ComponentSubPredicate<String> {
+            override fun getComponentType() = COMPONENT
+            override fun test(S: ItemStack, Key: String) = StoredKey == Key
+            companion object { val CODEC = Codec.STRING.xmap(::Predicate, Predicate::StoredKey) }
+        }*/
+
+        val COMPONENT: ComponentType<String> = Registry.register(
+            Registries.DATA_COMPONENT_TYPE,
+            Id("key"),
+            ComponentType.builder<String>().codec(Codec.STRING).build()
+        )
+/*
+        val PREDICATE = Registry.register(
+            Registries.ITEM_SUB_PREDICATE_TYPE,
+            Id("key"),
+            ItemSubPredicate.Type(Predicate.CODEC)
+        )*/
+
         private val KEY_PREFIX = Text.literal("Id: ").formatted(Formatting.YELLOW)
 
         private object Accessor : DoubleBlockProperties.PropertyRetriever<ChestBlockEntity, ChestBlockEntity?> {
@@ -79,7 +127,7 @@ class KeyItem : Item(
                 Left: ChestBlockEntity,
                 Right: ChestBlockEntity
             ): ChestBlockEntity {
-                if ((Left as LockableBlockEntity).lock.key.isNotEmpty()) return Left
+                if ((Left as LockableBlockEntity).lock != ContainerLock.EMPTY) return Left
                 return Right
             }
 
@@ -88,18 +136,17 @@ class KeyItem : Item(
         }
 
         fun AppendLockTooltip(S: ItemStack, TT: MutableList<Text>, Ty: TooltipType, Prefix: Text) {
-            val Lock = S.get(DataComponentTypes.LOCK) ?: return
-            if (Lock.key.isEmpty()) return
-            val Key = Text.literal(if (Ty.isAdvanced) Lock.key else Lock.key.substring(0..<13) + "...")
-            TT.add(Prefix.copy().append(Key.formatted(Formatting.LIGHT_PURPLE)))
+            val Key = S.get(COMPONENT) ?: return
+            val Str = Text.literal(if (Ty.isAdvanced) Key else Key.substring(0..<13) + "...")
+            TT.add(Prefix.copy().append(Str.formatted(Formatting.LIGHT_PURPLE)))
         }
 
-        @JvmStatic
-        fun CanOpen(S: ItemStack, Lock: String): Boolean {
-            if (Lock.isEmpty()) return true
-            if (!S.isOf(NguhItems.KEY)) return false
-            val Key = S.get(DataComponentTypes.LOCK)?.key ?: return false
-            return Key == Lock
+        /** Create an instance with the specified key. */
+        fun Create(Key: String): ItemStack {
+            val St = ItemStack(NguhItems.KEY)
+            St.set(COMPONENT, Key)
+            St.set(DataComponentTypes.ENCHANTMENT_GLINT_OVERRIDE, true)
+            return St
         }
 
         /**
@@ -144,7 +191,7 @@ class KeyItem : Item(
         fun IsChestLocked(BE: BlockEntity): Boolean {
             val W = BE.world ?: return false
             val E = GetLockableEntity(W, BE.pos) ?: return false
-            return E.lock.key.isNotEmpty()
+            return E.lock != ContainerLock.EMPTY
         }
     }
 }

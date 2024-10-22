@@ -19,7 +19,6 @@ import net.minecraft.component.DataComponentTypes
 import net.minecraft.enchantment.Enchantment
 import net.minecraft.entity.Entity
 import net.minecraft.entity.LightningEntity
-import net.minecraft.inventory.ContainerLock
 import net.minecraft.item.ItemStack
 import net.minecraft.registry.RegistryKeys
 import net.minecraft.registry.entry.RegistryEntry
@@ -41,7 +40,7 @@ import net.minecraft.world.chunk.ChunkStatus
 import org.nguh.nguhcraft.Constants
 import org.nguh.nguhcraft.Nguhcraft.Companion.Id
 import org.nguh.nguhcraft.SyncedGameRule
-import org.nguh.nguhcraft.item.NguhItems
+import org.nguh.nguhcraft.item.KeyItem
 import org.nguh.nguhcraft.network.ClientboundSyncProtectionBypassPacket
 import org.nguh.nguhcraft.protect.ProtectionManager
 import org.nguh.nguhcraft.protect.Region
@@ -271,9 +270,7 @@ object Commands {
                 return 0
             }
 
-            val St = ItemStack(NguhItems.KEY)
-            St.set(DataComponentTypes.LOCK, ContainerLock(Key))
-            SP.inventory.insertStack(St)
+            SP.inventory.insertStack(KeyItem.Create(Key))
             SP.currentScreenHandler.sendContentUpdates()
             S.sendMessage(
                 Text.literal("Generated key ").formatted(Formatting.YELLOW)

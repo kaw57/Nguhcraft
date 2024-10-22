@@ -17,7 +17,7 @@ class KeyLockPairingRecipe(C: CraftingRecipeCategory) : SpecialCraftingRecipe(C)
         var Key: ItemStack? = null
         var Locks = 0
 
-        for (Slot in 0..<Input.size) {
+        for (Slot in 0..<Input.size()) {
             val St = Input.getStackInSlot(Slot)
             if (St.isEmpty) continue
             when (St.item) {
@@ -33,10 +33,10 @@ class KeyLockPairingRecipe(C: CraftingRecipeCategory) : SpecialCraftingRecipe(C)
         return Key to Locks
     }
 
-    private fun GetOrCreateContainerLock(Key: ItemStack): ContainerLock {
-        if (Key.get(DataComponentTypes.LOCK)!!.key.isEmpty())
-            Key.set(DataComponentTypes.LOCK, ContainerLock(UUID.randomUUID().toString()))
-        return Key.get(DataComponentTypes.LOCK)!!
+    private fun GetOrCreateContainerLock(Key: ItemStack): String {
+        if (!Key.contains(KeyItem.COMPONENT))
+            Key.set(KeyItem.COMPONENT, UUID.randomUUID().toString())
+        return Key.get(KeyItem.COMPONENT)!!
     }
 
     override fun craft(Input: CraftingRecipeInput, Lookup: RegistryWrapper.WrapperLookup): ItemStack {
@@ -47,16 +47,12 @@ class KeyLockPairingRecipe(C: CraftingRecipeCategory) : SpecialCraftingRecipe(C)
         // Pair them.
         val LockComponent = GetOrCreateContainerLock(Key)
         val Lock = ItemStack(NguhItems.LOCK, Locks)
-        Lock.set(DataComponentTypes.LOCK, LockComponent)
+        Lock.set(KeyItem.COMPONENT, LockComponent)
 
         // Make both glow so we know that they’re paired.
         Key.set(DataComponentTypes.ENCHANTMENT_GLINT_OVERRIDE, true)
         Lock.set(DataComponentTypes.ENCHANTMENT_GLINT_OVERRIDE, true)
         return Lock
-    }
-
-    override fun fits(width: Int, height: Int): Boolean {
-        return width * height >= 2
     }
 
     override fun matches(Input: CraftingRecipeInput, W: World): Boolean {
@@ -66,9 +62,9 @@ class KeyLockPairingRecipe(C: CraftingRecipeCategory) : SpecialCraftingRecipe(C)
         return Key != null && Locks > 0
     }
 
-    override fun getRemainder(Input: CraftingRecipeInput): DefaultedList<ItemStack> {
-        val L = DefaultedList.ofSize(Input.size, ItemStack.EMPTY)
-        for (Slot in 0..<Input.size) {
+    override fun getRecipeRemainders(Input: CraftingRecipeInput): DefaultedList<ItemStack> {
+        val L = DefaultedList.ofSize(Input.size(), ItemStack.EMPTY)
+        for (Slot in 0..<Input.size()) {
             val St = Input.getStackInSlot(Slot)
             if (St.isOf(NguhItems.KEY)) {
                 // Copy with a count of 1 because this is the remainder after
@@ -82,5 +78,5 @@ class KeyLockPairingRecipe(C: CraftingRecipeCategory) : SpecialCraftingRecipe(C)
     }
 
     override fun getSerializer() = SERIALISER
-    companion object { lateinit var SERIALISER: RecipeSerializer<*> }
+    companion object { lateinit var SERIALISER: RecipeSerializer<KeyLockPairingRecipe> }
 }

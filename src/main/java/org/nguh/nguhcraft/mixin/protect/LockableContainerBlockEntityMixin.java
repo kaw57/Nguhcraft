@@ -74,16 +74,6 @@ public abstract class LockableContainerBlockEntityMixin extends BlockEntity impl
         return LockItem.FormatLockedMessage(Lock.get(), (Text)Args[0]);
     }
 
-    /** Send lock in initial chunk data. */
-    @Override
-    public NbtCompound toInitialChunkDataNbt(RegistryWrapper.WrapperLookup WL) {
-        // An empty lock isn’t written by default, but we need it to indicate
-        // that the container is unlocked, so write it manually.
-        var Tag = new NbtCompound();
-        Tag.putString(ContainerLock.LOCK_KEY, lock.key());
-        return Tag;
-    }
-
     /** Actually send the packet. */
     @Override
     public Packet<ClientPlayPacketListener> toUpdatePacket() {
