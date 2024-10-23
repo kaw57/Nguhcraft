@@ -143,7 +143,7 @@ class KeyItem : Item(
 
         fun AppendLockTooltip(S: ItemStack, TT: MutableList<Text>, Ty: TooltipType, Prefix: Text) {
             val Key = S.get(COMPONENT) ?: return
-            val Str = Text.literal(if (Ty.isAdvanced) Key else Key.substring(0..<13) + "...")
+            val Str = Text.literal(if (Ty.isAdvanced || Key.length < 13) Key else Key.substring(0..<13) + "...")
             TT.add(Prefix.copy().append(Str.formatted(Formatting.LIGHT_PURPLE)))
         }
 
