@@ -57,7 +57,7 @@ object TridentUtils {
     @JvmStatic
     fun ActOnTridentThrown(W: World, PE: PlayerEntity, S: ItemStack, Extra: Int = 0) {
         val Lvl = EnchantLvl(W, S, Enchantments.MULTISHOT)
-        val K = W.getRandom().nextFloat() / 10f // ADDED WITHOUT TESTING; WAS ALWAYS 0 BEFORE.
+        val K = W.getRandom().nextFloat() / 10f // Random value I picked that works well enough.
         val Yaw = PE.yaw
         val Pitch = PE.pitch
 

@@ -8,17 +8,21 @@ import net.minecraft.item.ItemUsageContext
 import net.minecraft.item.tooltip.TooltipType
 import net.minecraft.predicate.ComponentPredicate
 import net.minecraft.predicate.item.ItemPredicate
+import net.minecraft.registry.RegistryKey
+import net.minecraft.registry.RegistryKeys
 import net.minecraft.sound.SoundCategory
 import net.minecraft.sound.SoundEvents
 import net.minecraft.text.Text
 import net.minecraft.util.ActionResult
 import net.minecraft.util.Formatting
 import net.minecraft.util.Rarity
+import org.nguh.nguhcraft.Nguhcraft.Companion.Id
 import org.nguh.nguhcraft.server.ServerUtils.UpdateLock
 
 class LockItem : Item(
     Settings()
     .rarity(Rarity.UNCOMMON)
+    .registryKey(RegistryKey.of(RegistryKeys.ITEM, ID))
 ) {
     override fun appendTooltip(
         S: ItemStack,
@@ -61,6 +65,7 @@ class LockItem : Item(
 
     companion object {
         private val LOCK_PREFIX = Text.literal("Id: ").formatted(Formatting.YELLOW)
+        val ID = Id("lock")
 
         /** Create a lock item stack with the specified key. */
         fun Create(Key: String): ItemStack {

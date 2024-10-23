@@ -2,12 +2,8 @@
 	"type": "minecraft:crafting_shapeless",
 	"category": "redstone",
 	"ingredients": [
-		{
-			"item": "nguhcraft:decorative_hopper"
-		},
-		{
-			"item": "minecraft:chest"
-		}
+		"nguhcraft:decorative_hopper",
+		"minecraft:chest"
 	],
 	"result": {
 		"count": 1,

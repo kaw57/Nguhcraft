@@ -7,9 +7,7 @@
 		" i "
 	],
 	"key": {
-		"i": {
-			"item": "minecraft:iron_ingot"
-		}
+		"i": "minecraft:iron_ingot"
 	},
 	"result": {
 		"id": "nguhcraft:decorative_hopper",

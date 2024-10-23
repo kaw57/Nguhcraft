@@ -84,9 +84,9 @@ data class HypershotContext(
             // Also play a sound effect.
             if (Shooter is PlayerEntity) SW.playSound(
                 null,
-                Shooter.getX(),
-                Shooter.getY(),
-                Shooter.getZ(),
+                Shooter.x,
+                Shooter.y,
+                Shooter.z,
                 SoundEvents.ENTITY_ARROW_SHOOT,
                 SoundCategory.PLAYERS,
                 1.0f,

@@ -1,6 +1,5 @@
 package org.nguh.nguhcraft.mixin.server;
 
-import com.llamalad7.mixinextras.sugar.Local;
 import com.llamalad7.mixinextras.sugar.Share;
 import com.llamalad7.mixinextras.sugar.ref.LocalRef;
 import net.minecraft.entity.LivingEntity;
@@ -10,7 +9,6 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.RangedWeaponItem;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Hand;
-import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 import org.nguh.nguhcraft.accessors.ProjectileEntityAccessor;
 import org.nguh.nguhcraft.enchantment.NguhcraftEnchantments;
@@ -19,9 +17,11 @@ import org.nguh.nguhcraft.server.accessors.LivingEntityAccessor;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.List;
+import java.util.function.Consumer;
 
 import static org.nguh.nguhcraft.Utils.EnchantLvl;
 
@@ -44,8 +44,6 @@ public abstract class RangedWeaponItemMixin {
         @Share("Hypershot") LocalRef<Boolean> IsHypershot,
         @Share("DisallowItemPickup") LocalRef<Boolean> DisallowItemPickup
     ) {
-        if (W.isClient) return;
-
         // Apply homing.
         if (EnchantLvl(W, Weapon, NguhcraftEnchantments.HOMING) != 0)
             HomingTarget.set(ServerUtils.MaybeMakeHomingArrow(W, Shooter));
@@ -64,37 +62,31 @@ public abstract class RangedWeaponItemMixin {
     }
 
     /** Then, when we shoot an arrow, set the target appropriately. */
-    @Inject(
+    @Redirect(
         method = "shootAll",
         at = @At(
             value = "INVOKE",
-            target = "net/minecraft/item/RangedWeaponItem.shoot (Lnet/minecraft/entity/LivingEntity;Lnet/minecraft/entity/projectile/ProjectileEntity;IFFFLnet/minecraft/entity/LivingEntity;)V",
+            target = "Lnet/minecraft/entity/projectile/ProjectileEntity;spawn(Lnet/minecraft/entity/projectile/ProjectileEntity;Lnet/minecraft/server/world/ServerWorld;Lnet/minecraft/item/ItemStack;Ljava/util/function/Consumer;)Lnet/minecraft/entity/projectile/ProjectileEntity;",
             ordinal = 0
         )
     )
-    private void inject$shootAll$1(
-        ServerWorld W,
-        LivingEntity Shooter,
-        Hand Hand,
-        ItemStack Weapon,
-        List<ItemStack> Projectiles,
-        float Speed,
-        float Div,
-        boolean Crit,
-        @Nullable LivingEntity Tgt,
-        CallbackInfo CI,
-        @Local ProjectileEntity Proj,
+    private ProjectileEntity inject$shootAll$1(
+        ProjectileEntity Proj,
+        ServerWorld SW,
+        ItemStack Stack,
+        Consumer<ProjectileEntity> OnBeforeSpawn,
         @Share("HomingTarget") LocalRef<LivingEntity> HomingTarget,
         @Share("Hypershot") LocalRef<Boolean> IsHypershot,
         @Share("DisallowItemPickup") LocalRef<Boolean> DisallowItemPickup
     ) {
-        if (W.isClient) return;
-
         // Apply settings computed above to the projectiles.
         var PPE = (ProjectileEntityAccessor)Proj;
         PPE.SetHomingTarget(HomingTarget.get());
         if (IsHypershot.get()) PPE.MakeHypershotProjectile();
         if (DisallowItemPickup.get() && Proj instanceof PersistentProjectileEntity E)
             E.pickupType = PersistentProjectileEntity.PickupPermission.CREATIVE_ONLY;
+
+        // And call the original method.
+        return ProjectileEntity.spawn(Proj, SW, Stack, OnBeforeSpawn);
     }
 }

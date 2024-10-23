@@ -6,11 +6,12 @@ import net.minecraft.item.ItemGroups
 import net.minecraft.recipe.SpecialCraftingRecipe.SpecialRecipeSerializer
 import net.minecraft.registry.Registries
 import net.minecraft.registry.Registry
+import net.minecraft.util.Identifier
 import org.nguh.nguhcraft.Nguhcraft.Companion.Id
 
 object NguhItems {
-    val LOCK: Item = CreateItem("lock", LockItem())
-    val KEY: Item = CreateItem("key", KeyItem())
+    val LOCK: Item = CreateItem(LockItem.ID, LockItem())
+    val KEY: Item = CreateItem(KeyItem.ID, KeyItem())
 
     fun Init() {
         ItemGroupEvents.modifyEntriesEvent(ItemGroups.FUNCTIONAL).register {
@@ -31,6 +32,6 @@ object NguhItems {
         )
     }
 
-    private fun CreateItem(S: String, I: Item): Item =
-        Registry.register(Registries.ITEM, Id(S), I)
+    private fun CreateItem(S: Identifier, I: Item): Item =
+        Registry.register(Registries.ITEM, S, I)
 }

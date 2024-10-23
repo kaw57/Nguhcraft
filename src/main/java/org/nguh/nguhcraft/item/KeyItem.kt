@@ -21,6 +21,8 @@ import net.minecraft.predicate.item.ComponentSubPredicate
 import net.minecraft.predicate.item.ItemSubPredicate
 import net.minecraft.registry.Registries
 import net.minecraft.registry.Registry
+import net.minecraft.registry.RegistryKey
+import net.minecraft.registry.RegistryKeys
 import net.minecraft.server.world.ServerWorld
 import net.minecraft.sound.SoundCategory
 import net.minecraft.sound.SoundEvents
@@ -52,6 +54,7 @@ class KeyItem : Item(
     Settings()
     .fireproof()
     .rarity(Rarity.UNCOMMON)
+    .registryKey(RegistryKey.of(RegistryKeys.ITEM, ID))
 ) {
     override fun appendTooltip(
         S: ItemStack,
@@ -108,7 +111,8 @@ class KeyItem : Item(
             companion object { val CODEC = Codec.STRING.xmap(::Predicate, Predicate::StoredKey) }
         }*/
 
-        @JvmField val COMPONENT_ID = Id("key")
+        val ID = Id("key")
+        @JvmField val COMPONENT_ID = ID
 
         val COMPONENT: ComponentType<String> = Registry.register(
             Registries.DATA_COMPONENT_TYPE,

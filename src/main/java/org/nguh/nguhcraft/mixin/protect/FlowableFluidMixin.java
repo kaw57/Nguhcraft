@@ -15,8 +15,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(FlowableFluid.class)
 public abstract class FlowableFluidMixin {
     /** Prevent fluids from flowing in(to) protected areas. */
-    @Inject(method = "canFill", at = @At("HEAD"), cancellable = true)
-    private void inject$canFill(
+    @Inject(
+        method = "canFill(Lnet/minecraft/world/BlockView;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;Lnet/minecraft/fluid/Fluid;)Z",
+        at = @At("HEAD"),
+        cancellable = true
+    )
+    private static void inject$canFill(
         BlockView BV,
         BlockPos Pos,
         BlockState St,
