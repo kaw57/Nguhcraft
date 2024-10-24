@@ -25,9 +25,8 @@ public abstract class LockComponentPredicateFixMixin {
     public static Dynamic<?> fixLock(Dynamic<?> D) {
         var Key = D.asString().result();
         if (Key.isEmpty()) return D.emptyMap();
-        var WrappedKey = D.createString("\"" + ESCAPER.escape(Key.get()) + "\"");
         return D.emptyMap()
             .set("items", D.createString(KeyItem.ID.toString()))
-            .set("components", D.emptyMap().set(KeyItem.COMPONENT_ID.toString(), WrappedKey));
+            .set("components", D.emptyMap().set(KeyItem.COMPONENT_ID.toString(), D));
     }
 }

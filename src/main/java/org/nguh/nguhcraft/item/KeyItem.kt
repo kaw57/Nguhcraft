@@ -68,9 +68,6 @@ class KeyItem : Item(
         val W = Ctx.world
         val BE = GetLockableEntity(W, Ctx.blockPos) ?: return ActionResult.PASS
 
-        // TODO: Item fixer to upgrade container lock components on doors, keys, and locks
-        //       as well as locked containers.
-
         // If the block is not locked, do nothing; if it is, and the
         // key doesn’t match, then we fail here.
         if (BE.lock == ContainerLock.EMPTY) return ActionResult.PASS
@@ -104,13 +101,6 @@ class KeyItem : Item(
     }
 
     companion object {
-/*        // Item predicate to test container lock against a key.
-        class Predicate(val StoredKey: String) : ComponentSubPredicate<String> {
-            override fun getComponentType() = COMPONENT
-            override fun test(S: ItemStack, Key: String) = StoredKey == Key
-            companion object { val CODEC = Codec.STRING.xmap(::Predicate, Predicate::StoredKey) }
-        }*/
-
         @JvmField val ID = Id("key")
         @JvmField val COMPONENT_ID = ID
 
@@ -119,12 +109,6 @@ class KeyItem : Item(
             COMPONENT_ID,
             ComponentType.builder<String>().codec(Codec.STRING).build()
         )
-/*
-        val PREDICATE = Registry.register(
-            Registries.ITEM_SUB_PREDICATE_TYPE,
-            Id("key"),
-            ItemSubPredicate.Type(Predicate.CODEC)
-        )*/
 
         private val KEY_PREFIX = Text.literal("Id: ").formatted(Formatting.YELLOW)
 
