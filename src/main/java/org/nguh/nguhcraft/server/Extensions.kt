@@ -1,7 +1,9 @@
 package org.nguh.nguhcraft.server
 
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
+import net.minecraft.block.entity.BlockEntity
 import net.minecraft.entity.Entity
+import net.minecraft.nbt.NbtCompound
 import net.minecraft.network.packet.CustomPayload
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.network.ServerPlayerEntity
@@ -11,6 +13,17 @@ import net.minecraft.util.math.Vec3d
 import net.minecraft.world.TeleportTarget
 import org.nguh.nguhcraft.server.accessors.ServerPlayerAccessor
 import java.util.*
+
+@JvmStatic
+fun BlockEntity.CreateUpdate(Update: (Tag: NbtCompound) -> Unit) : NbtCompound {
+    val Tag = NbtCompound()
+    Update(Tag)
+
+    // An empty tag prevents deserialisation on the client, so
+    // ensure that this is never empty.
+    if (Tag.isEmpty) Tag.putBoolean("nguhcraft_ensure_deserialised", true)
+    return Tag
+}
 
 fun Entity.CentreOn(Block: BlockPos) {
     setPos(Block.x + 0.5, (Block.y + 1).toDouble(), Block.z + 0.5)

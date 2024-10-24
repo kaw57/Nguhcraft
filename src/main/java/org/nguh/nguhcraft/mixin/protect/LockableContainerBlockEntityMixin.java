@@ -2,6 +2,7 @@ package org.nguh.nguhcraft.mixin.protect;
 
 import com.llamalad7.mixinextras.sugar.Share;
 import com.llamalad7.mixinextras.sugar.ref.LocalRef;
+import kotlin.Unit;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.BlockEntityType;
@@ -25,7 +26,10 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+
+import static org.nguh.nguhcraft.server.ExtensionsKt.CreateUpdate;
 
 @Mixin(LockableContainerBlockEntity.class)
 public abstract class LockableContainerBlockEntityMixin extends BlockEntity implements LockableBlockEntity {
@@ -37,6 +41,11 @@ public abstract class LockableContainerBlockEntityMixin extends BlockEntity impl
 
     @Override public ContainerLock getLock() { return lock; }
     @Override public void SetLockInternal(ContainerLock lock) { this.lock = lock; }
+
+    @Inject(method = "readNbt", at = @At("HEAD"))
+    private void $$(NbtCompound nbt, RegistryWrapper.WrapperLookup registries, CallbackInfo ci) {
+        System.out.println("Reading NBT: " + nbt);
+    }
 
     /** Allow opening locked chests in /bypass mode. */
     @Inject(
@@ -77,9 +86,10 @@ public abstract class LockableContainerBlockEntityMixin extends BlockEntity impl
     /** Send lock in initial chunk data. */
     @Override
     public NbtCompound toInitialChunkDataNbt(RegistryWrapper.WrapperLookup WL) {
-        var Tag = new NbtCompound();
-        lock.writeNbt(Tag, WL);
-        return Tag;
+        return CreateUpdate(this, Tag -> {
+            lock.writeNbt(Tag, WL);
+            return Unit.INSTANCE;
+        });
     }
 
     /** Actually send the packet. */

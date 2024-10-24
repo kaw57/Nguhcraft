@@ -12,6 +12,7 @@ import net.minecraft.network.packet.s2c.play.BlockEntityUpdateS2CPacket
 import net.minecraft.registry.RegistryWrapper.WrapperLookup
 import net.minecraft.util.math.BlockPos
 import org.nguh.nguhcraft.item.LockItem
+import org.nguh.nguhcraft.server.CreateUpdate
 
 class LockedDoorBlockEntity(
     Pos: BlockPos,
@@ -51,10 +52,8 @@ class LockedDoorBlockEntity(
     }
 
     /** Send lock in initial chunk data.  */
-    override fun toInitialChunkDataNbt(WL: WrapperLookup): NbtCompound {
-        val Tag = NbtCompound()
-        Lock.writeNbt(Tag, WL)
-        return Tag
+    override fun toInitialChunkDataNbt(WL: WrapperLookup) = CreateUpdate {
+        Lock.writeNbt(it, WL)
     }
 
     /** Actually send the packet.  */
