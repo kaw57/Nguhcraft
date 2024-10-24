@@ -11,7 +11,7 @@ import net.minecraft.network.packet.Packet
 import net.minecraft.network.packet.s2c.play.BlockEntityUpdateS2CPacket
 import net.minecraft.registry.RegistryWrapper.WrapperLookup
 import net.minecraft.util.math.BlockPos
-import org.nguh.nguhcraft.item.GetKey
+import org.nguh.nguhcraft.item.LockItem
 
 class LockedDoorBlockEntity(
     Pos: BlockPos,
@@ -22,7 +22,17 @@ class LockedDoorBlockEntity(
 
     override fun readNbt(Tag: NbtCompound, RL: WrapperLookup) {
         super.readNbt(Tag, RL)
-        Lock = ContainerLock.fromNbt(Tag, RL)
+
+        // I’m done dealing with stupid data fixer nonsense to try
+        // and rename this field properly, so we’re doing this the
+        // dumb way.
+        //
+        // This field was previously called 'Lock' and was a string;
+        // it is now called 'lock' and is an item predicate; deal
+        // with this accordingly.
+        val OldStyleLock = Tag.get("Lock")
+        Lock = if (OldStyleLock != null) LockItem.CreateContainerLock(OldStyleLock.asString())
+        else ContainerLock.fromNbt(Tag, RL)
     }
 
     override fun writeNbt(Tag: NbtCompound, RL: WrapperLookup) {
@@ -54,7 +64,7 @@ class LockedDoorBlockEntity(
 
     @Suppress("OVERRIDE_DEPRECATION")
     override fun removeFromCopiedStackNbt(nbt: NbtCompound) {
-        nbt.remove("Lock")
+        nbt.remove("lock")
     }
 
     override fun getLock() = Lock

@@ -8,6 +8,7 @@ import net.minecraft.item.ItemUsageContext
 import net.minecraft.item.tooltip.TooltipType
 import net.minecraft.predicate.ComponentPredicate
 import net.minecraft.predicate.item.ItemPredicate
+import net.minecraft.registry.Registries
 import net.minecraft.registry.RegistryKey
 import net.minecraft.registry.RegistryKeys
 import net.minecraft.sound.SoundCategory
@@ -78,6 +79,7 @@ class LockItem : Item(
         /** Create a container lock from a key. */
         fun CreateContainerLock(Key: String): ContainerLock {
             val Predicate = ItemPredicate.Builder.create()
+                .items(Registries.ITEM, NguhItems.KEY)
                 .component(ComponentPredicate.builder().add(KeyItem.COMPONENT, Key).build())
                 .build()
 

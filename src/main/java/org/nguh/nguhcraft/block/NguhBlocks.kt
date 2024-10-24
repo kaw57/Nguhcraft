@@ -12,7 +12,6 @@ import net.minecraft.block.piston.PistonBehavior
 import net.minecraft.item.BlockItem
 import net.minecraft.item.Item
 import net.minecraft.item.ItemGroups
-import net.minecraft.item.TallBlockItem
 import net.minecraft.registry.Registries
 import net.minecraft.registry.Registry
 import net.minecraft.registry.RegistryKey
@@ -53,8 +52,6 @@ object NguhBlocks {
         ItemGroupEvents.modifyEntriesEvent(ItemGroups.BUILDING_BLOCKS).register {
             it.add(LOCKED_DOOR)
         }
-
-        LOCKED_DOOR_BLOCK_ENTITY.addSupportedBlock(LOCKED_DOOR)
     }
 
     private fun Register(

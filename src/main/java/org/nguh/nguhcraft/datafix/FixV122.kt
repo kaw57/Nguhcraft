@@ -17,12 +17,10 @@ class KeyLockItemComponentisationFix(S: Schema) : ComponentFix(
     "minecraft:lock",
     "nguhcraft:key"
 ) {
-    init { println("[Nguhcraft] Installing KeyLockItemComponentisationFix.") }
-
     /**
-    * The renaming is handled by the ComponentFix
-    * implementation, so just return the value
-    * unchanged here.
-    */
+     * The renaming is handled by the ComponentFix
+     * implementation, so just return the value
+     * unchanged here.
+     */
     override fun <T> fixComponent(D: Dynamic<T>) = D
 }

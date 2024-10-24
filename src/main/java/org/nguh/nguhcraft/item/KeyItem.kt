@@ -111,7 +111,7 @@ class KeyItem : Item(
             companion object { val CODEC = Codec.STRING.xmap(::Predicate, Predicate::StoredKey) }
         }*/
 
-        val ID = Id("key")
+        @JvmField val ID = Id("key")
         @JvmField val COMPONENT_ID = ID
 
         val COMPONENT: ComponentType<String> = Registry.register(
