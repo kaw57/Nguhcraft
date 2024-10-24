@@ -74,6 +74,14 @@ public abstract class LockableContainerBlockEntityMixin extends BlockEntity impl
         return LockItem.FormatLockedMessage(Lock.get(), (Text)Args[0]);
     }
 
+    /** Send lock in initial chunk data. */
+    @Override
+    public NbtCompound toInitialChunkDataNbt(RegistryWrapper.WrapperLookup WL) {
+        var Tag = new NbtCompound();
+        lock.writeNbt(Tag, WL);
+        return Tag;
+    }
+
     /** Actually send the packet. */
     @Override
     public Packet<ClientPlayPacketListener> toUpdatePacket() {
