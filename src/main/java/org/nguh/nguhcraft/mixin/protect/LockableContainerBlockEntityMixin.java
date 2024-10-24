@@ -42,11 +42,6 @@ public abstract class LockableContainerBlockEntityMixin extends BlockEntity impl
     @Override public ContainerLock getLock() { return lock; }
     @Override public void SetLockInternal(ContainerLock lock) { this.lock = lock; }
 
-    @Inject(method = "readNbt", at = @At("HEAD"))
-    private void $$(NbtCompound nbt, RegistryWrapper.WrapperLookup registries, CallbackInfo ci) {
-        System.out.println("Reading NBT: " + nbt);
-    }
-
     /** Allow opening locked chests in /bypass mode. */
     @Inject(
         method = "checkUnlocked(Lnet/minecraft/entity/player/PlayerEntity;Lnet/minecraft/inventory/ContainerLock;Lnet/minecraft/text/Text;)Z",
