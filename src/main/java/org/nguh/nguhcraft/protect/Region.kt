@@ -195,6 +195,9 @@ class Region(
     /** Check if this region allows trading with villagers. */
     fun AllowsVillagerTrading() = Test(Flags.ENTITY_INTERACT) || Test(Flags.TRADE)
 
+    /** Get the centre of a region. */
+    val Center: BlockPos get() = BlockPos((MinX + MaxX) / 2, 0, (MinZ + MaxZ) / 2)
+
     /** Check if this region contains a block. */
     fun Contains(Pos: BlockPos): Boolean {
         val X = Pos.x
