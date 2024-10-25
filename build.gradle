@@ -32,7 +32,7 @@ dependencies {
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
     // Kotlin
-    modImplementation "net.fabricmc:fabric-language-kotlin:1.10.19+kotlin.1.9.23"
+    modImplementation "net.fabricmc:fabric-language-kotlin:1.12.3+kotlin.2.0.21"
     implementation 'org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.1'
 
     // Discord API

@@ -4,11 +4,11 @@
 	"package": "org.nguh.nguhcraft.mixin",
 	"compatibilityLevel": "JAVA_21",
 	"mixins": [
-		"common.AbstractMinecartMixin",
 		"common.AnvilScreenHandlerMixin",
 		"common.ComponentPredicateAccessor",
 		"common.EnchantmentMixin",
 		"common.EnderEyeItemMixin",
+		"common.ExperimentalMinecartControllerMixin",
 		"common.HopperBlockAcessor",
 		"common.PotionContentsComponentMixin",
 		"common.TridentEntityMixin",

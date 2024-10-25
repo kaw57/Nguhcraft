@@ -21,6 +21,13 @@ typealias MojangPair<A, B> = com.mojang.datafixers.util.Pair<A, B>
 operator fun <A, B> MojangPair<A, B>.component1(): A = this.first
 operator fun <A, B> MojangPair<A, B>.component2(): B = this.second
 
+/**
+* Transform 'this' using a function iff 'Cond' is true and return
+* 'this' unchanged otherwise.
+*/
+inline fun <T> T.mapIf(Cond: Boolean, Block: (T) -> T): T
+    = if (Cond) Block(this) else this
+
 object Utils {
     val LOGGER = LogUtils.getLogger()
 
