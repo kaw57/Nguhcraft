@@ -10,7 +10,12 @@ import net.minecraft.client.render.VertexFormat
 import net.minecraft.client.render.VertexFormats
 import net.minecraft.util.Colors
 import net.minecraft.util.math.BlockPos
+import net.minecraft.util.math.MathHelper
+import net.minecraft.util.math.RotationAxis
 import net.minecraft.util.math.Vec3d
+import org.joml.Matrix4f
+import org.joml.Quaternionf
+import org.joml.Vector3d
 import org.nguh.nguhcraft.client.ClientUtils.Client
 import org.nguh.nguhcraft.protect.ProtectionManager
 import kotlin.math.min
@@ -26,7 +31,7 @@ object RegionRenderer {
         val CW = Ctx.world()
         val WR = Ctx.worldRenderer()
         val MinY = CW.bottomY
-        val MaxY = CW.topYInclusive
+        val MaxY = CW.topYInclusive + 1
 
         // Transform all points relative to the camera position.
         val Pos = Ctx.camera().pos
@@ -36,7 +41,7 @@ object RegionRenderer {
         val MTX = MS.peek().positionMatrix
 
         // Set up rendering params.
-        RenderSystem.setShader(ShaderProgramKeys.RENDERTYPE_LINES)
+        RenderSystem.setShader(ShaderProgramKeys.POSITION_COLOR)
         RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f)
         RenderSystem.lineWidth(1F)
         RenderSystem.disableCull()
