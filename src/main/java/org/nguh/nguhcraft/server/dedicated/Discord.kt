@@ -236,7 +236,7 @@ internal class Discord : ListenerAdapter() {
         private lateinit var MessageChannel: TextChannel
         private lateinit var AgmaSchwaGuild: Guild
         private lateinit var NguhcrafterRole: Role
-        private lateinit var RequiredRole: Role
+        private lateinit var RequiredRoles: List<Role>
 
         @Volatile private var ServerAvatarURL: String = DEFAULT_AVATARS[0]
         @Volatile private var Ready = false
@@ -249,7 +249,7 @@ internal class Discord : ListenerAdapter() {
             val channelId: Long,
             val webhookId: Long,
             val playerRoleId: Long,
-            val requiredRoleId: Long
+            val requiredRoleIds: List<Long>
         )
 
         @JvmStatic
@@ -274,10 +274,10 @@ internal class Discord : ListenerAdapter() {
             MessageChannel = Get("channel") { Client.getTextChannelById(Config.channelId) }
             MessageWebhook = Get("webhook") { Client.retrieveWebhookById(Config.webhookId).complete() }
             NguhcrafterRole = Get("player role") { AgmaSchwaGuild.getRoleById(Config.playerRoleId) }
-            RequiredRole = Get("required role") { AgmaSchwaGuild.getRoleById(Config.requiredRoleId) }
+            RequiredRoles = Config.requiredRoleIds.map { Get ("required role") { AgmaSchwaGuild.getRoleById(it) } }
             ServerAvatarURL = AgmaSchwaGuild.iconUrl ?: Client.selfUser.effectiveAvatarUrl
             Ready = true
-            SendSimpleEmbed(null, "Starting server...", Constants.Lavender);
+            SendSimpleEmbed(null, "Starting server...", Constants.Lavender)
         }
 
         @JvmStatic
@@ -409,7 +409,8 @@ internal class Discord : ListenerAdapter() {
         }
 
         /** Check if a server member is allowed to link their account at all. */
-        private fun IsAllowedToLink(M: Member): Boolean = M.roles.contains(RequiredRole)
+        private fun IsAllowedToLink(M: Member): Boolean =
+            M.roles.any { RequiredRoles.contains(it) }
 
         /** DO NOT USE. */
         fun __IsLinkedOrOperatorImpl(SP: ServerPlayerEntity): Boolean = SP.isLinkedOrOperator
@@ -421,7 +422,7 @@ internal class Discord : ListenerAdapter() {
             val Member = MemberByID(Source, ID) ?: return
 
             // Check if the player is allowed to link their account.
-            if (!IsAllowedToLink(Member)) throw ROLE_REQUIREMENTS_NOT_MET.create(RequiredRole.name)
+            if (!IsAllowedToLink(Member)) throw ROLE_REQUIREMENTS_NOT_MET.create(RequiredRoles.first().name)
 
             // Some geniuses may have decided to make it so people can’t DM them;
             // display an error in that case instead of crashing.
@@ -450,7 +451,7 @@ internal class Discord : ListenerAdapter() {
         }
 
         private fun LinkedPlayerForMember(ID: Long): ServerPlayerEntity?
-            = Server.playerManager.playerList.find { it.discordId == ID}
+            = Server.playerManager.playerList.find { it.discordId == ID }
 
         private fun MemberByID(Source: ServerCommandSource, ID: Long): Member? {
             try {
