@@ -36,6 +36,7 @@
 		"protect.server.HopperBlockEntityAccessor",
 		"protect.server.HopperBlockEntityMixin",
 		"protect.server.IceBlockMixin",
+		"protect.server.LavaFluidMixin",
 		"protect.server.LecternBlockEntityMixin",
 		"protect.server.LecternScreenHandlerMixin",
 		"protect.server.LightningEntityMixin",
