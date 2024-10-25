@@ -14,4 +14,14 @@ public abstract class MessageIndicatorMixin {
     */
     @Overwrite
     public static MessageIndicator system() { return null; }
+
+    /**
+     * Remove the single player message indicator.
+     *
+     * @author Sirraide
+     * @reason The message indicator is useless. All messages are now system messages.
+     */
+    @Overwrite
+    public static MessageIndicator singlePlayer() { return null; }
+
 }
