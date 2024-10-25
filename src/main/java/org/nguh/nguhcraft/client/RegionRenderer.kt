@@ -3,19 +3,24 @@ package org.nguh.nguhcraft.client
 import com.mojang.blaze3d.systems.RenderSystem
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderContext
 import net.minecraft.client.gl.ShaderProgramKeys
+import net.minecraft.client.gui.DrawContext
 import net.minecraft.client.render.BufferRenderer
-import net.minecraft.client.render.RenderLayer
 import net.minecraft.client.render.Tessellator
 import net.minecraft.client.render.VertexFormat
 import net.minecraft.client.render.VertexFormats
 import net.minecraft.util.Colors
+import net.minecraft.util.math.BlockPos
 import net.minecraft.util.math.Vec3d
+import org.nguh.nguhcraft.client.ClientUtils.Client
 import org.nguh.nguhcraft.protect.ProtectionManager
 import kotlin.math.min
 
 
 object RegionRenderer {
+    const val PADDING = 2
+    const val COLOUR = Colors.LIGHT_YELLOW
     var ShouldRender = false
+
     fun Render(Ctx: WorldRenderContext) {
         if (!ShouldRender) return
         val CW = Ctx.world()
@@ -64,39 +69,62 @@ object RegionRenderer {
                 X.toFloat(),
                 Y.toFloat(),
                 Z.toFloat()
-            ).color(Colors.LIGHT_RED)
+            ).color(COLOUR)
 
             // Vertical lines along X axis.
             for (X in MinX.toInt()..MaxX.toInt()) {
-                Vertex(X, MinY, MinZ).color(Colors.LIGHT_RED)
-                Vertex(X, MaxY, MinZ).color(Colors.LIGHT_RED)
-                Vertex(X, MinY, MaxZ).color(Colors.LIGHT_RED)
-                Vertex(X, MaxY, MaxZ).color(Colors.LIGHT_RED)
+                Vertex(X, MinY, MinZ).color(COLOUR)
+                Vertex(X, MaxY, MinZ).color(COLOUR)
+                Vertex(X, MinY, MaxZ).color(COLOUR)
+                Vertex(X, MaxY, MaxZ).color(COLOUR)
             }
 
             // Vertical lines along Z axis.
             for (Z in MinZ.toInt()..MaxZ.toInt()) {
-                Vertex(MinX, MinY, Z).color(Colors.LIGHT_RED)
-                Vertex(MinX, MaxY, Z).color(Colors.LIGHT_RED)
-                Vertex(MaxX, MinY, Z).color(Colors.LIGHT_RED)
-                Vertex(MaxX, MaxY, Z).color(Colors.LIGHT_RED)
+                Vertex(MinX, MinY, Z).color(COLOUR)
+                Vertex(MinX, MaxY, Z).color(COLOUR)
+                Vertex(MaxX, MinY, Z).color(COLOUR)
+                Vertex(MaxX, MaxY, Z).color(COLOUR)
             }
 
             // Horizontal lines.
             for (Y in MinY.toInt()..MaxY.toInt()) {
-                Vertex(MinX, Y, MinZ).color(Colors.LIGHT_RED)
-                Vertex(MaxX, Y, MinZ).color(Colors.LIGHT_RED)
-                Vertex(MinX, Y, MaxZ).color(Colors.LIGHT_RED)
-                Vertex(MaxX, Y, MaxZ).color(Colors.LIGHT_RED)
-                Vertex(MinX, Y, MinZ).color(Colors.LIGHT_RED)
-                Vertex(MinX, Y, MaxZ).color(Colors.LIGHT_RED)
-                Vertex(MaxX, Y, MinZ).color(Colors.LIGHT_RED)
-                Vertex(MaxX, Y, MaxZ).color(Colors.LIGHT_RED)
+                Vertex(MinX, Y, MinZ).color(COLOUR)
+                Vertex(MaxX, Y, MinZ).color(COLOUR)
+                Vertex(MinX, Y, MaxZ).color(COLOUR)
+                Vertex(MaxX, Y, MaxZ).color(COLOUR)
+                Vertex(MinX, Y, MinZ).color(COLOUR)
+                Vertex(MinX, Y, MaxZ).color(COLOUR)
+                Vertex(MaxX, Y, MinZ).color(COLOUR)
+                Vertex(MaxX, Y, MaxZ).color(COLOUR)
             }
 
             BufferRenderer.drawWithGlobalProgram(VC.end())
         }
 
         MS.pop()
+    }
+
+    fun RenderHUD(Ctx: DrawContext) {
+        if (!ShouldRender) return
+
+        // Check if we’re in a region.
+        val C = Client()
+        val PlayerPos = BlockPos.ofFloored(C.player?.pos ?: return)
+        val PlayerRegion = ProtectionManager.FindRegionContainingBlock(C.world!!, PlayerPos)
+        if (PlayerRegion == null) return
+
+        // If so, draw it in the bottom-right corner.
+        val TextToRender = "Region: ${PlayerRegion.Name}"
+        val Width = C.textRenderer.getWidth(TextToRender)
+        val Height = C.textRenderer.fontHeight
+        Ctx.drawText(
+            C.textRenderer,
+            TextToRender,
+            Ctx.scaledWindowWidth - PADDING - Width,
+            Ctx.scaledWindowHeight - PADDING - Height,
+            COLOUR,
+            true
+        )
     }
 }

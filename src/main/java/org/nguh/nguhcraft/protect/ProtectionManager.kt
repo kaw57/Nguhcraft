@@ -374,7 +374,7 @@ object ProtectionManager {
     }
 
     /** Find the region that contains a block. */
-    private fun FindRegionContainingBlock(W: World, Pos: BlockPos) = RegionList(W).find { it.Contains(Pos) }
+    fun FindRegionContainingBlock(W: World, Pos: BlockPos) = RegionList(W).find { it.Contains(Pos) }
 
     /**
     * Get the regions for a world.

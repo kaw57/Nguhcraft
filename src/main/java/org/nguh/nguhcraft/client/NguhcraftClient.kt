@@ -8,6 +8,7 @@ import net.fabricmc.api.Environment
 import net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource
+import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents
 import net.minecraft.client.render.RenderLayer
 import net.minecraft.item.ItemGroup
@@ -18,16 +19,9 @@ import net.minecraft.registry.Registry
 import net.minecraft.server.integrated.IntegratedServer
 import net.minecraft.text.Text
 import net.minecraft.util.Formatting
-import net.minecraft.util.hit.HitResult
 import net.minecraft.util.math.BlockPos
-import net.minecraft.world.RaycastContext
-import org.lwjgl.glfw.GLFW
-import org.nguh.nguhcraft.Constants.MAX_HOMING_DISTANCE
 import org.nguh.nguhcraft.Nguhcraft.Companion.Id
-import org.nguh.nguhcraft.Utils.Debug
 import org.nguh.nguhcraft.block.NguhBlocks
-import org.nguh.nguhcraft.client.ClientUtils.Client
-
 
 @Environment(EnvType.CLIENT)
 class NguhcraftClient : ClientModInitializer {
@@ -35,6 +29,7 @@ class NguhcraftClient : ClientModInitializer {
         ClientNetworkHandler.Init()
 
         WorldRenderEvents.BEFORE_DEBUG_RENDER.register { RegionRenderer.Render(it) }
+        HudRenderCallback.EVENT.register { Ctx, _ -> RegionRenderer.RenderHUD(Ctx) }
 
         Registry.register(Registries.ITEM_GROUP, Id("treasures"), TREASURES_ITEM_GROUP)
 
