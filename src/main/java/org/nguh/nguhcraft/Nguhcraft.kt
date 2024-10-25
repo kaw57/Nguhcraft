@@ -154,6 +154,7 @@ class Nguhcraft : ModInitializer {
         Commands.Register()
         NguhItems.Init()
         NguhBlocks.Init()
+        NguhSounds.Init()
         ServerNetworkHandler.Init()
     }
 
