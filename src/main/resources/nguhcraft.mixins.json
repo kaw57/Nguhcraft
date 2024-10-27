@@ -75,6 +75,7 @@
 		"server.command.SayCommandMixin",
 		"server.command.ServerCommandSourceMixin",
 		"server.command.TeamMsgCommandMixin",
+		"server.command.TeleportCommandMixin",
 		"server.command.TriggerCommandMixin"
 	],
 	"client": [

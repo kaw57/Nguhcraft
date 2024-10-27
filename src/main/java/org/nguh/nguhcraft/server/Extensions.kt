@@ -25,17 +25,28 @@ fun BlockEntity.CreateUpdate(Update: (Tag: NbtCompound) -> Unit) : NbtCompound {
     return Tag
 }
 
-fun Entity.CentreOn(Block: BlockPos) {
-    setPos(Block.x + 0.5, (Block.y + 1).toDouble(), Block.z + 0.5)
-}
-
-fun Entity.Teleport(ToWorld: ServerWorld, OnTopOf: BlockPos) {
+fun Entity.Teleport(
+    ToWorld: ServerWorld,
+    OnTopOf: BlockPos,
+    SaveLastPos: Boolean = false
+) {
     val Vec = Vec3d(OnTopOf.x.toDouble(), OnTopOf.y.toDouble() + 1, OnTopOf.z.toDouble())
-    teleportTo(TeleportTarget(ToWorld, Vec, Vec3d.ZERO, 0F, 0F, TeleportTarget.NO_OP))
+    Teleport(TeleportTarget(ToWorld, Vec, Vec3d.ZERO, 0F, 0F, TeleportTarget.NO_OP), SaveLastPos)
 }
 
-fun Entity.Teleport(ToWorld: ServerWorld, To: Vec3d, Yaw: Float, Pitch: Float) {
-    teleportTo(TeleportTarget(ToWorld, To, Vec3d.ZERO, Yaw, Pitch, TeleportTarget.NO_OP))
+fun Entity.Teleport(
+    ToWorld: ServerWorld,
+    To: Vec3d,
+    Yaw: Float,
+    Pitch: Float,
+    SaveLastPos: Boolean = false
+) {
+    Teleport(TeleportTarget(ToWorld, To, Vec3d.ZERO, Yaw, Pitch, TeleportTarget.NO_OP), SaveLastPos)
+}
+
+fun Entity.Teleport(Target: TeleportTarget, SaveLastPos: Boolean) {
+    if (SaveLastPos && this is ServerPlayerEntity) SavePositionBeforeTeleport()
+    teleportTo(Target)
 }
 
 /** Send a packet to every client except one. */
@@ -72,3 +83,16 @@ fun MinecraftServer.PlayerByUUID(ID: String?): ServerPlayerEntity? {
 var ServerPlayerEntity.IsModerator
     get() = (this as ServerPlayerAccessor).isModerator
     set(value) { (this as ServerPlayerAccessor).setIsModerator(value) }
+
+/** Save the player’s current position as a teleport target. */
+@JvmStatic
+fun ServerPlayerEntity.SavePositionBeforeTeleport() {
+    (this as ServerPlayerAccessor).lastPositionBeforeTeleport = TeleportTarget(
+        this.serverWorld,
+        this.pos,
+        Vec3d.ZERO,
+        this.yaw,
+        this.pitch,
+        TeleportTarget.NO_OP
+    )
+}

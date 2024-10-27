@@ -9,11 +9,15 @@ import net.minecraft.nbt.NbtList;
 import net.minecraft.network.message.MessageType;
 import net.minecraft.network.message.SentMessage;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.TeleportTarget;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.nguh.nguhcraft.server.Home;
+import org.nguh.nguhcraft.server.ServerUtils;
 import org.nguh.nguhcraft.server.accessors.ServerPlayerAccessor;
 import org.slf4j.Logger;
 import org.spongepowered.asm.mixin.Mixin;
@@ -36,6 +40,7 @@ public abstract class ServerPlayerMixin extends PlayerEntity implements ServerPl
     @Unique private boolean Vanished = false;
     @Unique private boolean IsModerator = false;
     @Unique private boolean BypassesRegionProtection = false;
+    @Unique private TeleportTarget LastPositionBeforeTeleport = null;
     @Unique private List<Home> Homes = new ArrayList<>();
 
     @Unique static private final Logger LOGGER = LogUtils.getLogger();
@@ -53,6 +58,9 @@ public abstract class ServerPlayerMixin extends PlayerEntity implements ServerPl
         BypassesRegionProtection = bypassesProtection;
     }
 
+    @Override @Nullable public TeleportTarget getLastPositionBeforeTeleport() { return LastPositionBeforeTeleport; }
+    @Override public void setLastPositionBeforeTeleport(TeleportTarget target) { LastPositionBeforeTeleport = target; }
+
     @Override
     public List<Home> Homes() { return Homes; }
 
@@ -64,6 +72,9 @@ public abstract class ServerPlayerMixin extends PlayerEntity implements ServerPl
             Vanished = Nguh.getBoolean(TAG_VANISHED);
             IsModerator = Nguh.getBoolean(TAG_IS_MODERATOR);
             BypassesRegionProtection = Nguh.getBoolean(TAG_BYPASSES_REGION_PROTECTION);
+            LastPositionBeforeTeleport = Nguh.contains(TAG_LAST_POSITION_BEFORE_TELEPORT)
+                ? ServerUtils.TeleportTargetFromNbt(getServer(), Nguh.getCompound(TAG_LAST_POSITION_BEFORE_TELEPORT))
+                : null;
             if (Nguh.contains(TAG_HOMES)) {
                 var HomesTag = Nguh.getList(TAG_HOMES, NbtElement.COMPOUND_TYPE);
                 for (var H : HomesTag) Homes.add(Home.Load((NbtCompound) H));
@@ -90,6 +101,7 @@ public abstract class ServerPlayerMixin extends PlayerEntity implements ServerPl
         IsModerator = OldNSP.isModerator();
         BypassesRegionProtection = OldNSP.getBypassesRegionProtection();
         Homes = OldNSP.Homes();
+        LastPositionBeforeTeleport = OldNSP.getLastPositionBeforeTeleport();
     }
 
     /** Save Nbt data to the player file. */
@@ -100,6 +112,8 @@ public abstract class ServerPlayerMixin extends PlayerEntity implements ServerPl
         Nguh.putBoolean(TAG_VANISHED, Vanished);
         Nguh.putBoolean(TAG_IS_MODERATOR, IsModerator);
         Nguh.putBoolean(TAG_BYPASSES_REGION_PROTECTION, BypassesRegionProtection);
+        if (LastPositionBeforeTeleport != null)
+            Nguh.put(TAG_LAST_POSITION_BEFORE_TELEPORT, ServerUtils.TeleportTargetToNbt(LastPositionBeforeTeleport));
 
         // Save homes.
         var HomesTag = new NbtList();

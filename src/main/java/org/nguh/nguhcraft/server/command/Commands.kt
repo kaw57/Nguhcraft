@@ -66,6 +66,7 @@ object Commands {
                 D.register(ModCommand())              // /mod
             }
 
+            D.register(BackCommand())                 // /back
             D.register(BypassCommand())               // /bypass
             D.register(DelHomeCommand())              // /delhome
             D.register(DiscardCommand())              // /discard
@@ -102,6 +103,17 @@ object Commands {
     // =========================================================================
     //  Command Implementations
     // =========================================================================
+    object BackCommand {
+        private val ERR_NO_TARGET = Exn("No saved target to teleport back to!")
+
+        fun Teleport(SP: ServerPlayerEntity): Int {
+            val Pos = (SP as ServerPlayerAccessor).lastPositionBeforeTeleport
+            if (Pos == null) throw ERR_NO_TARGET.create()
+            SP.Teleport(Pos, true)
+            return 1
+        }
+    }
+
     object BypassCommand {
         private val BYPASSING = Text.literal("Now bypassing region protection.").formatted(Formatting.YELLOW)
         private val NOT_BYPASSING = Text.literal("No longer bypassing region protection.").formatted(Formatting.YELLOW)
@@ -251,7 +263,7 @@ object Commands {
         }
 
         fun Teleport(SP: ServerPlayerEntity, H: Home): Int {
-            SP.Teleport(SP.server.getWorld(H.World)!!, H.Pos)
+            SP.Teleport(SP.server.getWorld(H.World)!!, H.Pos, true)
             return 1
         }
 
@@ -561,7 +573,7 @@ object Commands {
                     Chunk.getBlockState(Up1).isAir &&
                     Chunk.getBlockState(Up2).isAir
                 ) {
-                    SP.Teleport(SW, Pos)
+                    SP.Teleport(SW, Pos, true)
                     return 1
                 }
             }
@@ -575,6 +587,10 @@ object Commands {
     // =========================================================================
     //  Command Trees
     // =========================================================================
+    private fun BackCommand(): LiteralArgumentBuilder<ServerCommandSource> = literal("back")
+        .requires { it.isExecutedByPlayer && it.hasPermissionLevel(4) }
+        .executes { BackCommand.Teleport(it.source.playerOrThrow) }
+
     private fun BypassCommand(): LiteralArgumentBuilder<ServerCommandSource> = literal("bypass")
         .requires { it.isExecutedByPlayer && it.hasPermissionLevel(4) }
         .executes { BypassCommand.Toggle(it.source, it.source.playerOrThrow) }
@@ -957,7 +973,7 @@ object Commands {
             // Make sure the block is solid.
             val Pos = BlockPos(SP.x.toInt(), TopY, SP.z.toInt())
             val St = SW.getBlockState(Pos)
-            if (!St.isAir) SP.Teleport(SW, Pos)
+            if (!St.isAir) SP.Teleport(SW, Pos, true)
             else it.source.sendError(Text.literal("Couldn’t find a suitable location to teleport to!"))
             1
         }
@@ -983,7 +999,7 @@ object Commands {
             .executes {
                 val W = WarpArgumentType.Resolve(it, "warp")
                 val SP = it.source.playerOrThrow
-                SP.Teleport(SP.server.getWorld(W.World)!!, W.Pos, W.Yaw, W.Pitch)
+                SP.Teleport(SP.server.getWorld(W.World)!!, W.Pos, W.Yaw, W.Pitch, true)
                 1
             }
         )

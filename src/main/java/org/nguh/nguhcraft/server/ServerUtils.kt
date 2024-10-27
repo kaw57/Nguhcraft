@@ -17,24 +17,32 @@ import net.minecraft.entity.projectile.ProjectileUtil
 import net.minecraft.entity.projectile.TridentEntity
 import net.minecraft.inventory.ContainerLock
 import net.minecraft.item.ItemStack
+import net.minecraft.nbt.NbtCompound
 import net.minecraft.network.packet.CustomPayload
 import net.minecraft.network.packet.s2c.play.SubtitleS2CPacket
 import net.minecraft.network.packet.s2c.play.TitleS2CPacket
 import net.minecraft.recipe.RecipeType
 import net.minecraft.recipe.SmeltingRecipe
 import net.minecraft.recipe.input.SingleStackRecipeInput
+import net.minecraft.registry.Registries
+import net.minecraft.registry.RegistryKey
+import net.minecraft.registry.RegistryKeys
+import net.minecraft.server.MinecraftServer
 import net.minecraft.server.command.ServerCommandSource
 import net.minecraft.server.network.ServerPlayerEntity
 import net.minecraft.server.world.ServerWorld
 import net.minecraft.text.Text
 import net.minecraft.util.Formatting
 import net.minecraft.util.Hand
+import net.minecraft.util.Identifier
+import net.minecraft.util.dynamic.Codecs
 import net.minecraft.util.hit.HitResult
 import net.minecraft.util.math.BlockPos
 import net.minecraft.util.math.Box
 import net.minecraft.util.math.MathHelper
 import net.minecraft.util.math.Vec3d
 import net.minecraft.world.RaycastContext
+import net.minecraft.world.TeleportTarget
 import net.minecraft.world.World
 import org.nguh.nguhcraft.Constants.MAX_HOMING_DISTANCE
 import org.nguh.nguhcraft.SyncedGameRule
@@ -249,6 +257,31 @@ object ServerUtils {
         }
     }
 
+    /** Load a teleport target from NBT data. */
+    @JvmStatic
+    fun TeleportTargetFromNbt(Server: MinecraftServer, Tag : NbtCompound): TeleportTarget? {
+        val Pos = Vec3d(Tag.getDouble("X"), Tag.getDouble("Y"), Tag.getDouble("Z"))
+        val Yaw = Tag.getFloat("Yaw")
+        val Pitch = Tag.getFloat("Pitch")
+        val Dim = RegistryKey.of(RegistryKeys.WORLD, Identifier.of(Tag.getString("World")))
+        val SW = Server.getWorld(Dim) ?: return null
+        return TeleportTarget(SW, Pos, Vec3d.ZERO, Yaw, Pitch, TeleportTarget.NO_OP)
+    }
+
+    /** Save a teleport target to NBT data. */
+    @JvmStatic
+    fun TeleportTargetToNbt(Target: TeleportTarget): NbtCompound {
+        val Tag = NbtCompound()
+        Tag.putDouble("X", Target.position.x)
+        Tag.putDouble("Y", Target.position.y)
+        Tag.putDouble("Z", Target.position.z)
+        Tag.putFloat("Yaw", Target.yaw)
+        Tag.putFloat("Pitch", Target.pitch)
+        Tag.putString("World", Target.world.registryKey.value.toString())
+        return Tag
+    }
+
+    /** Result of smelting a stack. */
     data class SmeltingResult(val Stack: ItemStack, val Experience: Int)
 
     /** Try to smelt this block as an item. */
