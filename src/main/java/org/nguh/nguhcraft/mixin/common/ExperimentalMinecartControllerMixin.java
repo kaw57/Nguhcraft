@@ -11,14 +11,21 @@ import net.minecraft.util.math.Vec3d;
 import org.nguh.nguhcraft.entity.MinecartUtils;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.Unique;
+import org.spongepowered.asm.mixin.injection.*;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(ExperimentalMinecartController.class)
 public abstract class ExperimentalMinecartControllerMixin extends MinecartController {
     ExperimentalMinecartControllerMixin(AbstractMinecartEntity minecart) { super(minecart); }
+
+    @Unique private static final double POWERED_RAIL_BOOST = 0.2;
+
+    /** Increase powered rail acceleration. */
+    @ModifyConstant(method = "accelerateFromPoweredRail", constant = @Constant(doubleValue = 0.06))
+    private double inject$accelerateFromPoweredRail(double value) {
+        return POWERED_RAIL_BOOST;
+    }
 
     /** Increase initial velocity. */
     @Redirect(
