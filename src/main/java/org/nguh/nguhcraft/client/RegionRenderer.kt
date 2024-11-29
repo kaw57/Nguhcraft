@@ -63,7 +63,6 @@ object RegionRenderer {
                 val Z = abs(Pos.z.toFloat() - C.z.toFloat())
                 val Radius = R.Radius
                 val Dist = Vec2f(max(X - Radius.x, 0f), max(Z - Radius.y, 0f)).length()
-                println("C: $C, R: $R, P: $Pos, Dist: $Dist")
                 if (Dist > ViewDistanceBlocks) continue
             }
 
