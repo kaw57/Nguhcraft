@@ -7,6 +7,7 @@ import net.minecraft.server.MinecraftServer
 import net.minecraft.text.Text
 import net.minecraft.util.Formatting
 import net.minecraft.util.math.BlockPos
+import net.minecraft.util.math.Vec2f
 import net.minecraft.world.World
 import org.nguh.nguhcraft.Constants
 import kotlin.math.max
@@ -216,6 +217,13 @@ class Region(
     /** Check if a region intersects a rectangle. */
     fun Intersects(MinX: Int, MinZ: Int, MaxX: Int, MaxZ: Int) =
         MinX <= this.MaxX && MaxX >= this.MinX && MinZ <= this.MaxZ && MaxZ >= this.MinZ
+
+    /** Get the radius of the region. */
+    val Radius: Vec2f get() {
+        val X = (MaxX - MinX) / 2
+        val Z = (MaxZ - MinZ) / 2
+        return Vec2f(X.toFloat(), Z.toFloat())
+    }
 
     /** Save this region. */
     fun Save(): NbtCompound {

@@ -12,12 +12,15 @@ import net.minecraft.util.Colors
 import net.minecraft.util.math.BlockPos
 import net.minecraft.util.math.MathHelper
 import net.minecraft.util.math.RotationAxis
+import net.minecraft.util.math.Vec2f
 import net.minecraft.util.math.Vec3d
 import org.joml.Matrix4f
 import org.joml.Quaternionf
 import org.joml.Vector3d
 import org.nguh.nguhcraft.client.ClientUtils.Client
 import org.nguh.nguhcraft.protect.ProtectionManager
+import kotlin.math.abs
+import kotlin.math.max
 import kotlin.math.min
 
 
@@ -50,12 +53,19 @@ object RegionRenderer {
         // Render each region.
         for (R in ProtectionManager.GetRegions(CW)) {
             // Only render regions we can actually see.
-            if (
-                min(
-                    Pos.subtract(Vec3d(R.MinX.toDouble(), .0, R.MinZ.toDouble())).horizontalLength(),
-                    Pos.subtract(Vec3d(R.MaxX.toDouble(), .0, R.MaxZ.toDouble())).horizontalLength()
-                ) > WR.viewDistance * 16
-            ) continue
+            //
+            // For this, check we’re inside the region or close enough to any of its
+            // edges using a distance field.
+            if (!R.Contains(BlockPos.ofFloored(Pos))) {
+                val ViewDistanceBlocks = WR.viewDistance * 16
+                val C = R.Center
+                val X = abs(Pos.x.toFloat() - C.x.toFloat())
+                val Z = abs(Pos.z.toFloat() - C.z.toFloat())
+                val Radius = R.Radius
+                val Dist = Vec2f(max(X - Radius.x, 0f), max(Z - Radius.y, 0f)).length()
+                println("C: $C, R: $R, P: $Pos, Dist: $Dist")
+                if (Dist > ViewDistanceBlocks) continue
+            }
 
             // Coordinates in Minecraft are at the north-west (-X, -Z) corner of the block,
             // so we need to add 1 to the maximum values to include the last block within
