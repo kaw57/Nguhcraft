@@ -8,7 +8,6 @@ import net.minecraft.server.WorldGenerationProgressListener;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.ProgressListener;
 import net.minecraft.util.math.random.RandomSequencesState;
-import net.minecraft.util.profiler.Profiler;
 import net.minecraft.world.MutableWorldProperties;
 import net.minecraft.world.World;
 import net.minecraft.world.dimension.DimensionOptions;
@@ -16,6 +15,7 @@ import net.minecraft.world.dimension.DimensionType;
 import net.minecraft.world.level.ServerWorldProperties;
 import net.minecraft.world.level.storage.LevelStorage;
 import net.minecraft.world.spawner.SpecialSpawner;
+import org.nguh.nguhcraft.protect.ProtectionManager;
 import org.nguh.nguhcraft.server.SessionSetup;
 import org.nguh.nguhcraft.server.TreeToChop;
 import org.nguh.nguhcraft.server.accessors.ServerWorldAccessor;
@@ -24,11 +24,11 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executor;
-import java.util.function.Supplier;
 
 @Mixin(ServerWorld.class)
 public abstract class ServerWorldMixin extends World implements ServerWorldAccessor {

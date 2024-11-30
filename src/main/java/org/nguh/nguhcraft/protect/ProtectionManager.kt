@@ -302,6 +302,14 @@ object ProtectionManager {
         else -> false
     }
 
+    /** Check whether an entity is allowed to spawn here. */
+    @JvmStatic
+    fun IsSpawningAllowed(E: Entity): Boolean {
+        if (E !is Monster) return true
+        val R = FindRegionContainingBlock(E.world, E.blockPos) ?: return true
+        return R.AllowsHostileMobSpawning()
+    }
+
     /** Check if a block is a locked chest. */
     private fun IsLockedBlock(W: World, Pos: BlockPos): Boolean {
         val BE = KeyItem.GetLockableEntity(W, Pos)
