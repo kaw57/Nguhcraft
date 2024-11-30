@@ -21,6 +21,9 @@
 
 	"item.nguhcraft.lock": "Lock",
 	"item.nguhcraft.key": "Key",
+	"item.nguhcraft.music_disc_nguhrovision_2024": "Music Disc",
+
+	"jukebox_song.nguhcraft.nguhrovision_2024": "Marcy Sheikah – Reflection",
 
 	"nguhcraft.block.locked": "%1$s is locked (key: %2$s)!",
 	"nguhcraft.door": "Door"
