@@ -16,6 +16,7 @@
 		"datafixer.ItemStackComponentizationFixMixin",
 		"datafixer.LockComponentPredicateFixMixin",
 		"datafixer.SchemasMixin",
+		"discord.common.EntityMixin",
 		"protect.BlockItemMixin",
 		"protect.Entity_ArmorStand_Warden_IsImmuneToExplosionMixin",
 		"protect.EntityMixin",
