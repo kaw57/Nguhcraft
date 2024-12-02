@@ -15,6 +15,11 @@ import org.nguh.nguhcraft.Nguhcraft.Companion.Id
 object NguhItems {
     val LOCK: Item = CreateItem(LockItem.ID, LockItem())
     val KEY: Item = CreateItem(KeyItem.ID, KeyItem())
+    val SLABLET_1: Item = CreateItem(Id("slablet_1"), Item.Settings().maxCount(64).rarity(Rarity.RARE).fireproof())
+    val SLABLET_2: Item = CreateItem(Id("slablet_2"), Item.Settings().maxCount(64).rarity(Rarity.RARE).fireproof())
+    val SLABLET_4: Item = CreateItem(Id("slablet_4"), Item.Settings().maxCount(64).rarity(Rarity.RARE).fireproof())
+    val SLABLET_8: Item = CreateItem(Id("slablet_8"), Item.Settings().maxCount(64).rarity(Rarity.RARE).fireproof())
+    val SLABLET_16: Item = CreateItem(Id("slablet_16"), Item.Settings().maxCount(64).rarity(Rarity.RARE).fireproof())
     val NGUHROVISION_2024_DISC: Item = CreateItem(
         Id("music_disc_nguhrovision_2024"),
         Item.Settings()
@@ -27,6 +32,11 @@ object NguhItems {
         ItemGroupEvents.modifyEntriesEvent(ItemGroups.FUNCTIONAL).register {
             it.add(LOCK)
             it.add(KEY)
+            it.add(SLABLET_1)
+            it.add(SLABLET_2)
+            it.add(SLABLET_4)
+            it.add(SLABLET_8)
+            it.add(SLABLET_16)
         }
 
         ItemGroupEvents.modifyEntriesEvent(ItemGroups.TOOLS).register {
