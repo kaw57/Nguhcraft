@@ -796,15 +796,15 @@ object Commands {
 
     private fun RegionCommand(): LiteralArgumentBuilder<ServerCommandSource> {
         val RegionFlagsNameNode = argument("region", RegionArgumentType.Region())
-        Region.Flags.entries.forEach { flag ->
+        Region.Flags.entries.forEach { Flag ->
             fun Set(C: CommandContext<ServerCommandSource>, Value: Boolean) = RegionCommand.SetFlag(
                 C.source,
                 RegionArgumentType.Resolve(C, "region"),
-                flag,
+                Flag,
                 Value
             )
 
-            RegionFlagsNameNode.then(literal(flag.name.lowercase())
+            RegionFlagsNameNode.then(literal(Flag.name.lowercase())
                 .then(literal("allow").executes { Set(it, true) })
                 .then(literal("deny").executes { Set(it, false) })
                 .then(literal("disable").executes { Set(it, false) })
