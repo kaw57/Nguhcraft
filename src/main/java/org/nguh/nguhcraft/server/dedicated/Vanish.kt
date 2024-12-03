@@ -4,11 +4,13 @@ import net.fabricmc.api.EnvType
 import net.fabricmc.api.Environment
 import net.minecraft.network.packet.s2c.play.PlayerListS2CPacket
 import net.minecraft.network.packet.s2c.play.PlayerRemoveS2CPacket
+import net.minecraft.server.MinecraftServer
+import net.minecraft.server.network.ServerCommonNetworkHandler
+import net.minecraft.server.network.ServerPlayNetworkHandler
 import net.minecraft.server.network.ServerPlayerEntity
 import net.minecraft.text.Text
 import org.nguh.nguhcraft.server.Broadcast
 import org.nguh.nguhcraft.server.IsVanished
-import org.nguh.nguhcraft.server.ServerUtils
 
 /**
 * Prevents other players from seeing a player.
@@ -20,13 +22,52 @@ import org.nguh.nguhcraft.server.ServerUtils
 */
 @Environment(EnvType.SERVER)
 object Vanish {
-    fun Toggle(SP: ServerPlayerEntity) {
-        if (SP.IsVanished) ShowPlayer(SP) else HidePlayer(SP)
-        SP.IsVanished = !SP.IsVanished
+    @JvmStatic
+    fun FixPlayerListPacket(
+        S: MinecraftServer,
+        H: ServerCommonNetworkHandler,
+        PLP: PlayerListS2CPacket
+    ): PlayerListS2CPacket {
+        // I don’t think this should happen, but there is not much we can do
+        // here if we have no way to get the player from the network handler.
+        if (H !is ServerPlayNetworkHandler) return PLP
+
+        // Filter out vanished players.
+        val l = PLP.entries.filter {
+            // Always send ourselves.
+            //
+            // Note that this packet may get send before a player is added to the
+            // player manager’s list of all players, so we need to grab the player
+            // object from its network handler instead.
+            if (H.player.uuid == it.profileId) return@filter true
+
+            // If we can’t get the profile here, then something probably went wrong
+            // so send the player anyway.
+            val SP = S.playerManager.getPlayer(it.profileId)
+            SP == null || !SP.IsVanished
+        }
+
+        // If that had no effect, keep the same packet.
+        if (l.size == PLP.entries.size) return PLP
+
+        // Otherwise, build a new one. We can’t simply change the entries in
+        // the original packet since the same packet may be broadcast to multiple
+        // players, and the resulting packet may have to be different for each
+        // player.
+        return PlayerListS2CPacket.entryFromPlayer(l.map { S.playerManager.getPlayer(it.profileId) })
     }
 
     @JvmStatic
     fun IsVanished(SP: ServerPlayerEntity): Boolean = SP.IsVanished
+
+    fun Toggle(SP: ServerPlayerEntity) {
+        // Toggle this first since some of the code below depends on it
+        // having the correct value.
+        SP.IsVanished = !SP.IsVanished
+
+        // And then broadcast the appropriate packets.
+        if (!SP.IsVanished) ShowPlayer(SP) else HidePlayer(SP)
+    }
 
     private fun HidePlayer(SP: ServerPlayerEntity) {
         val P = PlayerRemoveS2CPacket(listOf(SP.uuid))

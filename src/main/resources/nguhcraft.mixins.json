@@ -113,6 +113,7 @@
 		"server.dedicated.DedicatedServerMixin",
 		"server.dedicated.PlayerAdvancementTrackerMixin",
 		"vanish.PlayerManagerMixin",
+		"vanish.ServerCommonNetworkHandlerMixin",
 		"vanish.ServerPlayerEntityMixin"
 	],
 	"injectors": {
