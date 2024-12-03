@@ -24,7 +24,6 @@ public abstract class PlayerManagerMixin {
         Packet<?> P,
         @Local(argsOnly = true) ServerPlayerEntity SP
     ) {
-        if (Vanish.IsVanished(SP)) SP.networkHandler.sendPacket(P);
-        else PM.sendToAll(P);
+        Vanish.BroadcastIfNotVanished(SP, P);
     }
 }

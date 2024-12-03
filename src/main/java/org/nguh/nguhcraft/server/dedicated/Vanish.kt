@@ -2,6 +2,9 @@ package org.nguh.nguhcraft.server.dedicated
 
 import net.fabricmc.api.EnvType
 import net.fabricmc.api.Environment
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
+import net.minecraft.network.packet.CustomPayload
+import net.minecraft.network.packet.Packet
 import net.minecraft.network.packet.s2c.play.PlayerListS2CPacket
 import net.minecraft.network.packet.s2c.play.PlayerRemoveS2CPacket
 import net.minecraft.server.MinecraftServer
@@ -9,6 +12,7 @@ import net.minecraft.server.network.ServerCommonNetworkHandler
 import net.minecraft.server.network.ServerPlayNetworkHandler
 import net.minecraft.server.network.ServerPlayerEntity
 import net.minecraft.text.Text
+import net.minecraft.util.Formatting
 import org.nguh.nguhcraft.server.Broadcast
 import org.nguh.nguhcraft.server.IsVanished
 
@@ -22,6 +26,30 @@ import org.nguh.nguhcraft.server.IsVanished
 */
 @Environment(EnvType.SERVER)
 object Vanish {
+    /**
+    * If this player is not vanished, broadcast it; otherwise, send
+    * it to the player itself only.
+    *
+    * This is a common pattern here because we want to e.g. send player
+    * name updates to everyone if the player is shown, and if they’re
+    * vanished, we still need to send the name update to that player.
+    *
+    * We don’t do this for things like join or quit messages though
+    * because those aren’t important enough to warrant that; this is
+    * mainly for packets that are necessary for gameplay.
+    */
+    @JvmStatic
+    fun BroadcastIfNotVanished(SP: ServerPlayerEntity, Packet: CustomPayload) {
+        if (SP.IsVanished) ServerPlayNetworking.send(SP, Packet)
+        else SP.server.Broadcast(Packet)
+    }
+
+    @JvmStatic
+    fun BroadcastIfNotVanished(SP: ServerPlayerEntity, Packet: Packet<*>) {
+        if (SP.IsVanished) SP.networkHandler.sendPacket(Packet)
+        else SP.server.Broadcast(Packet)
+    }
+
     @JvmStatic
     fun FixPlayerListPacket(
         S: MinecraftServer,
@@ -81,7 +109,7 @@ object Vanish {
         SP.server.Broadcast(SP, P)
 
         // As well as a fake quit message.
-        SP.server.Broadcast(Text.translatable("multiplayer.player.left", SP.displayName))
+        SP.server.Broadcast(Text.translatable("multiplayer.player.left", SP.displayName).formatted(Formatting.YELLOW))
         Discord.BroadcastJoinQuitMessage(SP, false)
     }
 
@@ -91,8 +119,14 @@ object Vanish {
         // Broadcast the packet to all players.
         SP.server.Broadcast(SP, P)
 
-        // As well as a fake join message.
-        SP.server.Broadcast(Text.translatable("multiplayer.player.joined", SP.displayName))
-        Discord.BroadcastJoinQuitMessage(SP, true)
+        // Also re-send this player’s Discord name to everyone in case this
+        // player joined while vanished (or if a player joined while they
+        // were vanished).
+        //
+        // This step also sends a join message to Discord.
+        Discord.BroadcastClientStateOnJoin(SP)
+
+        // Also send out a fake join message.
+        SP.server.Broadcast(Text.translatable("multiplayer.player.joined", SP.displayName).formatted(Formatting.YELLOW))
     }
 }
