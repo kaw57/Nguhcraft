@@ -2,6 +2,7 @@ package org.nguh.nguhcraft.server.command
 
 import com.mojang.brigadier.arguments.*
 import com.mojang.brigadier.builder.LiteralArgumentBuilder
+import com.mojang.brigadier.context.CommandContext
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType
 import net.fabricmc.api.EnvType
 import net.fabricmc.api.Environment
@@ -796,23 +797,18 @@ object Commands {
     private fun RegionCommand(): LiteralArgumentBuilder<ServerCommandSource> {
         val RegionFlagsNameNode = argument("region", RegionArgumentType.Region())
         Region.Flags.entries.forEach { flag ->
+            fun Set(C: CommandContext<ServerCommandSource>, Value: Boolean) = RegionCommand.SetFlag(
+                C.source,
+                RegionArgumentType.Resolve(C, "region"),
+                flag,
+                Value
+            )
+
             RegionFlagsNameNode.then(literal(flag.name.lowercase())
-                .then(literal("allow").executes {
-                    RegionCommand.SetFlag(
-                        it.source,
-                        RegionArgumentType.Resolve(it, "region"),
-                        flag,
-                        true
-                    )
-                })
-                .then(literal("deny").executes {
-                    RegionCommand.SetFlag(
-                        it.source,
-                        RegionArgumentType.Resolve(it, "region"),
-                        flag,
-                        false
-                    )
-                })
+                .then(literal("allow").executes { Set(it, true) })
+                .then(literal("deny").executes { Set(it, false) })
+                .then(literal("disable").executes { Set(it, false) })
+                .then(literal("enable").executes { Set(it, true) })
             )
         }
 

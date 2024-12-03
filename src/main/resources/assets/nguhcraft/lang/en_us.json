@@ -10,6 +10,9 @@
 	"death.attack.minecart_collision.player": "%1$s crashed into %2$s while riding a minecart",
 	"death.attack.minecart_poor_track_design": "%1$s suffered poor track design",
 	"death.attack.minecart_poor_track_design.player": "%1$s suffered poor track while trying to escape %2$s",
+	"death.attack.obliterated": "%1$s was obliterated",
+	"death.attack.obliterated.item": "%1$s was obliterated while trying to escape %2$s",
+	"death.attack.obliterated.player": "%1$s was obliterated while trying to escape %2$s",
 
 	"enchantment.nguhcraft.homing": "Homing",
 	"enchantment.nguhcraft.hypershot": "Hypershot",

@@ -51,6 +51,12 @@ class Region(
          */
         CHANGE_BLOCKS,
 
+        /**
+         * Disallow player existence in a region, obliterating them if
+         * they enter it.
+         */
+        DISALLOW_EXISTENCE,
+
         /** Allow opening and closing doors. */
         DOORS,
 
@@ -216,6 +222,9 @@ class Region(
         val Z = Pos.z
         return X in MinX..MaxX && Z in MinZ..MaxZ
     }
+
+    /** Check if players are allowed to be in this region. */
+    fun DisallowsExistence() = Test(Flags.DISALLOW_EXISTENCE)
 
     /** Check if a region intersects another. */
     fun Intersects(Other: Region) = Intersects(

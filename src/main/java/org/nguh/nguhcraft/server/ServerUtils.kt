@@ -44,7 +44,9 @@ import net.minecraft.util.math.Vec3d
 import net.minecraft.world.RaycastContext
 import net.minecraft.world.TeleportTarget
 import net.minecraft.world.World
+import org.nguh.nguhcraft.BypassesRegionProtection
 import org.nguh.nguhcraft.Constants.MAX_HOMING_DISTANCE
+import org.nguh.nguhcraft.NguhDamageTypes
 import org.nguh.nguhcraft.SyncedGameRule
 import org.nguh.nguhcraft.Utils.EnchantLvl
 import org.nguh.nguhcraft.accessors.TridentEntityAccessor
@@ -61,6 +63,9 @@ import org.slf4j.Logger
 object ServerUtils {
     private val BORDER_TITLE: Text = Text.literal("TURN BACK").formatted(Formatting.RED)
     private val BORDER_SUBTITLE: Text = Text.literal("You may not cross the border")
+    private val ENTRY_DISALLOWED_TITLE: Text = Text.literal("TURN BACK").formatted(Formatting.RED)
+    private val ENTRY_DISALLOWED_SUBTITLE: Text = Text.literal("You are not allowed to enter this region")
+    private val ENTRY_DISALLOWED_MESSAGE = Text.literal("You are not allowed to enter this region").formatted(Formatting.RED)
     private val LOGGER: Logger = LogUtils.getLogger()
 
     /** Living entity tick. */
@@ -102,10 +107,28 @@ object ServerUtils {
     @JvmStatic
     fun ActOnPlayerTick(SP: ServerPlayerEntity) {
         val SW = SP.serverWorld
-        if (!SP.hasPermissionLevel(4) && !SW.worldBorder.contains(SP.boundingBox)) {
+
+        // Skip checks for players that are dead, in creative or spectator
+        // mode, or who bypass region protection.
+        if (
+            SP.isDead      ||
+            SP.isSpectator ||
+            SP.isCreative  ||
+            SP.BypassesRegionProtection()
+        ) return
+
+        // Check if the player is outside the world border.
+        if (!SW.worldBorder.contains(SP.boundingBox)) {
             SP.Teleport(SW, SW.spawnPos)
             SendTitle(SP, BORDER_TITLE, BORDER_SUBTITLE)
             LOGGER.warn("Player {} tried to leave the border.", SP.displayName!!.string)
+        }
+
+        // Check if the player is in a region they’re not allowed in.
+        if (!ProtectionManager.AllowExistence(SP)) {
+            SendTitle(SP, ENTRY_DISALLOWED_TITLE, ENTRY_DISALLOWED_SUBTITLE)
+            SP.sendMessage(ENTRY_DISALLOWED_MESSAGE, false)
+            Obliterate(SP)
         }
     }
 
@@ -225,6 +248,18 @@ object ServerUtils {
         for (Player in P) ServerPlayNetworking.send(Player, Packet)
     }
 
+    /**
+     * Obliterate the player.
+     *
+     * This summons a lightning bolt at their location (which is only there
+     * for atmosphere, though), then kills them.
+     */
+    fun Obliterate(SP: ServerPlayerEntity) {
+        val SW = SP.serverWorld
+        StrikeLighting(SW, SP.pos, null, true)
+        SP.damage(SW, NguhDamageTypes.Obliterated(SW), Float.MAX_VALUE)
+    }
+
     fun RoundExp(Exp: Float): Int {
         var Int = MathHelper.floor(Exp)
         val Frac = MathHelper.fractionalPart(Exp)
@@ -244,7 +279,7 @@ object ServerUtils {
     }
 
     /** Unconditionally strike lightning. */
-    fun StrikeLighting(W: ServerWorld, Where: Vec3d, TE: TridentEntity? = null) {
+    fun StrikeLighting(W: ServerWorld, Where: Vec3d, TE: TridentEntity? = null, Cosmetic: Boolean = false) {
         val Lightning = EntityType.LIGHTNING_BOLT.spawn(
             W,
             BlockPos.ofFloored(Where),
@@ -252,6 +287,7 @@ object ServerUtils {
         )
 
         if (Lightning != null) {
+            Lightning.setCosmetic(Cosmetic)
             Lightning.channeler = TE?.owner as? ServerPlayerEntity
             if (TE != null) (TE as TridentEntityAccessor).`Nguhcraft$SetStruckLightning`()
         }

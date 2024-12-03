@@ -157,6 +157,14 @@ object ProtectionManager {
         }
     }
 
+    /** Check if a player is allowed to exist where they currently are. */
+    @JvmStatic
+    fun AllowExistence(PE: PlayerEntity): Boolean {
+        if (PE.BypassesRegionProtection()) return true
+        val R = FindRegionContainingBlock(PE.world, PE.blockPos) ?: return true
+        return !R.DisallowsExistence()
+    }
+
     /** Check if a player should suffer fall damage when landing on a block. */
     @JvmStatic
     fun AllowFallDamage(PE: PlayerEntity): Boolean {
