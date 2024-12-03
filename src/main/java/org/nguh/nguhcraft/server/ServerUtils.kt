@@ -132,6 +132,12 @@ object ServerUtils {
         }
     }
 
+    /** Broadcast a join message for a player. */
+    @JvmStatic
+    fun ActOnPlayerJoinQuitMessage(SP: ServerPlayerEntity, Msg: Text) {
+        if (!SP.IsVanished) SP.server.Broadcast(Msg)
+    }
+
     /** Check if we’re running on a dedicated server. */
     fun IsDedicatedServer() = FabricLoader.getInstance().environmentType == EnvType.SERVER
     fun IsIntegratedServer() = !IsDedicatedServer()

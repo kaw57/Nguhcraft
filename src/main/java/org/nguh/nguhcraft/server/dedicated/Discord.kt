@@ -51,6 +51,7 @@ import org.nguh.nguhcraft.mixin.server.MinecraftServerAccessor
 import org.nguh.nguhcraft.network.ClientboundChatPacket
 import org.nguh.nguhcraft.network.ClientboundLinkUpdatePacket
 import org.nguh.nguhcraft.server.Broadcast
+import org.nguh.nguhcraft.server.IsVanished
 import org.nguh.nguhcraft.server.PlayerByUUID
 import org.nguh.nguhcraft.server.accessors.ServerPlayerAccessor
 import org.nguh.nguhcraft.server.accessors.ServerPlayerDiscordAccessor
@@ -64,7 +65,7 @@ import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.Consumer
 import java.util.regex.PatternSyntaxException
-import kotlin.concurrent.Volatile
+import kotlin.Throws
 
 private val ServerPlayerEntity.isLinked get() = (this as ServerPlayerDiscordAccessor).isLinked
 private val ServerPlayerEntity.isOperator get() = hasPermissionLevel(4)
@@ -289,7 +290,8 @@ internal class Discord : ListenerAdapter() {
         }
 
         @JvmStatic
-        fun BroadcastAdvancement(SP: ServerPlayerEntity?, AdvancementMessage: Text) {
+        fun BroadcastAdvancement(SP: ServerPlayerEntity, AdvancementMessage: Text) {
+            if (SP.IsVanished) return
             if (!Ready) return
             try {
                 val Text = AdvancementMessage.string
@@ -302,6 +304,7 @@ internal class Discord : ListenerAdapter() {
 
         @JvmStatic
         fun BroadcastDeathMessage(SP: ServerPlayerEntity, DeathMessage: Text) {
+            if (SP.IsVanished) return
             if (!Ready) return
 
             // Convoluted setup to both resend an abbreviated message if the actual
@@ -327,6 +330,7 @@ internal class Discord : ListenerAdapter() {
 
         @JvmStatic
         fun BroadcastJoinQuitMessage(SP: ServerPlayerEntity, Joined: Boolean) {
+            if (SP.IsVanished) return
             if (!Ready) return
             try {
                 val Name = if (SP.isLinked) SP.discordName
@@ -341,7 +345,7 @@ internal class Discord : ListenerAdapter() {
 
         private fun BroadcastPlayerUpdate(SP: ServerPlayerEntity) {
             UpdatePlayerName(SP)
-            Server.Broadcast(
+            if (!SP.IsVanished) Server.Broadcast(
                 ClientboundLinkUpdatePacket(
                     SP.uuid,
                     SP.gameProfile.name,
@@ -643,7 +647,7 @@ internal class Discord : ListenerAdapter() {
             UpdatePlayerAsync(SP)
 
             // Broadcast this player’s name to everyone.
-            Server.Broadcast(ClientboundLinkUpdatePacket(SP))
+            if (!SP.IsVanished) Server.Broadcast(ClientboundLinkUpdatePacket(SP))
 
             // Send all other players’ names to this player.
             for (P in Server.playerManager.playerList)

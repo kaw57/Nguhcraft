@@ -50,6 +50,7 @@ import org.nguh.nguhcraft.server.ServerUtils.IsIntegratedServer
 import org.nguh.nguhcraft.server.ServerUtils.StrikeLighting
 import org.nguh.nguhcraft.server.accessors.ServerPlayerAccessor
 import org.nguh.nguhcraft.server.accessors.ServerPlayerDiscordAccessor
+import org.nguh.nguhcraft.server.dedicated.Vanish
 
 object Commands {
     private inline fun <reified T : ArgumentType<*>> ArgType(Key: String, noinline Func: () -> T) {
@@ -65,6 +66,7 @@ object Commands {
             if (E.dedicated) {
                 D.register(DiscordCommand())          // /discord
                 D.register(ModCommand())              // /mod
+                D.register(VanishCommand())           // /vanish
             }
 
             D.register(BackCommand())                 // /back
@@ -985,6 +987,18 @@ object Commands {
         )
         .executes {
             it.source.sendMessage(Text.literal("Your UUID: ${it.source.playerOrThrow.uuid}"))
+            1
+        }
+
+    @Environment(EnvType.SERVER)
+    private fun VanishCommand(): LiteralArgumentBuilder<ServerCommandSource> = literal("vanish")
+        .requires { it.isExecutedByPlayer && it.hasPermissionLevel(4) }
+        .executes {
+            val SP = it.source.playerOrThrow
+            Vanish.Toggle(SP)
+            it.source.sendMessage(Text.literal(
+                "You are ${if (SP.IsVanished) "now" else "no longer"} vanished"
+            ).formatted(Formatting.YELLOW))
             1
         }
 

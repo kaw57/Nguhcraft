@@ -5,9 +5,11 @@ import net.minecraft.block.entity.BlockEntity
 import net.minecraft.entity.Entity
 import net.minecraft.nbt.NbtCompound
 import net.minecraft.network.packet.CustomPayload
+import net.minecraft.network.packet.Packet
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.network.ServerPlayerEntity
 import net.minecraft.server.world.ServerWorld
+import net.minecraft.text.Text
 import net.minecraft.util.math.BlockPos
 import net.minecraft.util.math.Vec3d
 import net.minecraft.world.TeleportTarget
@@ -56,16 +58,37 @@ fun MinecraftServer.Broadcast(Except: ServerPlayerEntity, P: CustomPayload) {
             ServerPlayNetworking.send(Player, P)
 }
 
+fun MinecraftServer.Broadcast(Except: ServerPlayerEntity, P: Packet<*>) {
+    for (Player in playerManager.playerList)
+        if (Player != Except)
+            Player.networkHandler.sendPacket(P)
+}
+
+
 /** Send a packet to every client in a world. */
 fun MinecraftServer.Broadcast(W: ServerWorld, P: CustomPayload) {
     for (Player in W.players)
         ServerPlayNetworking.send(Player, P)
 }
 
+fun MinecraftServer.Broadcast(W: ServerWorld, P: Packet<*>) {
+    for (Player in W.players)
+        Player.networkHandler.sendPacket(P)
+}
+
 /** Send a packet to every client. */
 fun MinecraftServer.Broadcast(P: CustomPayload) {
     for (Player in playerManager.playerList)
         ServerPlayNetworking.send(Player, P)
+}
+
+fun MinecraftServer.Broadcast(P: Packet<*>) {
+    for (Player in playerManager.playerList)
+        Player.networkHandler.sendPacket(P)
+}
+
+fun MinecraftServer.Broadcast(Msg: Text) {
+    playerManager.broadcast(Msg, false)
 }
 
 /** Get a player by Name. */
@@ -83,6 +106,11 @@ fun MinecraftServer.PlayerByUUID(ID: String?): ServerPlayerEntity? {
 var ServerPlayerEntity.IsModerator
     get() = (this as ServerPlayerAccessor).isModerator
     set(value) { (this as ServerPlayerAccessor).setIsModerator(value) }
+
+/** Check if a player is a Vanished. */
+var ServerPlayerEntity.IsVanished
+    get() = (this as ServerPlayerAccessor).vanished
+    set(value) { (this as ServerPlayerAccessor).vanished = value }
 
 /** Save the player’s current position as a teleport target. */
 @JvmStatic
