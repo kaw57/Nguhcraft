@@ -20,6 +20,12 @@ public abstract class ServerPlayerEntityMixin  extends PlayerEntity {
 
     @Unique private boolean Vanished() { return Vanish.IsVanished((ServerPlayerEntity)(Object)this); }
 
+    /** Vanished players should not block projectiles. */
+    @Override
+    public boolean canBeHitByProjectile() {
+        return !Vanished() && super.canBeHitByProjectile();
+    }
+
     /** This prevents entity tracking of vanished players. */
     @Inject(method = "canBeSpectated", at = @At("HEAD"), cancellable = true)
     void inject$canBeSpectated(ServerPlayerEntity Spectator, CallbackInfoReturnable<Boolean> CIR) {
