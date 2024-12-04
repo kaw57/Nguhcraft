@@ -13,8 +13,10 @@ import net.minecraft.server.network.ServerPlayNetworkHandler
 import net.minecraft.server.network.ServerPlayerEntity
 import net.minecraft.text.Text
 import net.minecraft.util.Formatting
+import org.nguh.nguhcraft.network.ClientFlags
 import org.nguh.nguhcraft.server.Broadcast
 import org.nguh.nguhcraft.server.IsVanished
+import org.nguh.nguhcraft.server.SetClientFlag
 
 /**
 * Prevents other players from seeing a player.
@@ -95,6 +97,7 @@ object Vanish {
 
         // And then broadcast the appropriate packets.
         if (!SP.IsVanished) ShowPlayer(SP) else HidePlayer(SP)
+        SP.SetClientFlag(ClientFlags.VANISHED, SP.IsVanished)
     }
 
     private fun HidePlayer(SP: ServerPlayerEntity) {

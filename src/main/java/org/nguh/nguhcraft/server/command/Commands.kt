@@ -8,7 +8,6 @@ import net.fabricmc.api.EnvType
 import net.fabricmc.api.Environment
 import net.fabricmc.fabric.api.command.v2.ArgumentTypeRegistry
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
 import net.minecraft.command.CommandRegistryAccess
 import net.minecraft.command.argument.BlockPosArgumentType
 import net.minecraft.command.argument.ColumnPosArgumentType
@@ -42,7 +41,7 @@ import org.nguh.nguhcraft.Constants
 import org.nguh.nguhcraft.Nguhcraft.Companion.Id
 import org.nguh.nguhcraft.SyncedGameRule
 import org.nguh.nguhcraft.item.KeyItem
-import org.nguh.nguhcraft.network.ClientboundSyncProtectionBypassPacket
+import org.nguh.nguhcraft.network.ClientFlags
 import org.nguh.nguhcraft.protect.ProtectionManager
 import org.nguh.nguhcraft.protect.Region
 import org.nguh.nguhcraft.server.*
@@ -125,7 +124,7 @@ object Commands {
             val A = SP as ServerPlayerAccessor
             val NewState = !A.bypassesRegionProtection
             A.bypassesRegionProtection = NewState
-            ServerPlayNetworking.send(SP, ClientboundSyncProtectionBypassPacket(NewState))
+            SP.SetClientFlag(ClientFlags.BYPASSES_REGION_PROTECTION, NewState)
             S.sendMessage(if (NewState) BYPASSING else NOT_BYPASSING)
             return 1
         }

@@ -13,6 +13,8 @@ import net.minecraft.text.Text
 import net.minecraft.util.math.BlockPos
 import net.minecraft.util.math.Vec3d
 import net.minecraft.world.TeleportTarget
+import org.nguh.nguhcraft.network.ClientFlags
+import org.nguh.nguhcraft.network.ClientboundSyncFlagPacket
 import org.nguh.nguhcraft.server.accessors.ServerPlayerAccessor
 import java.util.*
 
@@ -123,4 +125,8 @@ fun ServerPlayerEntity.SavePositionBeforeTeleport() {
         this.pitch,
         TeleportTarget.NO_OP
     )
+}
+
+fun ServerPlayerEntity.SetClientFlag(F: ClientFlags, V: Boolean) {
+    ServerPlayNetworking.send(this, ClientboundSyncFlagPacket(F, V))
 }

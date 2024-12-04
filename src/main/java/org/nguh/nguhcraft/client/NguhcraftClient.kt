@@ -49,12 +49,14 @@ class NguhcraftClient : ClientModInitializer {
 
         @JvmField @Volatile var InHypershotContext = false
         @JvmField @Volatile var BypassesRegionProtection = false
+        @JvmField @Volatile var Vanished = false
         @JvmField @Volatile var LastInteractedLecternPos: BlockPos = BlockPos.ORIGIN
 
         @JvmStatic
         fun ActOnSessionStart(S: IntegratedServer) {
             InHypershotContext = false
             BypassesRegionProtection = false
+            Vanished = false
             LastInteractedLecternPos = BlockPos.ORIGIN
         }
 

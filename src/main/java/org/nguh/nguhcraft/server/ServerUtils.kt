@@ -24,7 +24,6 @@ import net.minecraft.network.packet.s2c.play.TitleS2CPacket
 import net.minecraft.recipe.RecipeType
 import net.minecraft.recipe.SmeltingRecipe
 import net.minecraft.recipe.input.SingleStackRecipeInput
-import net.minecraft.registry.Registries
 import net.minecraft.registry.RegistryKey
 import net.minecraft.registry.RegistryKeys
 import net.minecraft.server.MinecraftServer
@@ -35,7 +34,6 @@ import net.minecraft.text.Text
 import net.minecraft.util.Formatting
 import net.minecraft.util.Hand
 import net.minecraft.util.Identifier
-import net.minecraft.util.dynamic.Codecs
 import net.minecraft.util.hit.HitResult
 import net.minecraft.util.math.BlockPos
 import net.minecraft.util.math.Box
@@ -52,8 +50,7 @@ import org.nguh.nguhcraft.Utils.EnchantLvl
 import org.nguh.nguhcraft.accessors.TridentEntityAccessor
 import org.nguh.nguhcraft.block.LockableBlockEntity
 import org.nguh.nguhcraft.enchantment.NguhcraftEnchantments
-import org.nguh.nguhcraft.network.ClientboundSyncHypershotStatePacket
-import org.nguh.nguhcraft.network.ClientboundSyncProtectionBypassPacket
+import org.nguh.nguhcraft.network.ClientFlags
 import org.nguh.nguhcraft.protect.ProtectionManager
 import org.nguh.nguhcraft.server.accessors.LivingEntityAccessor
 import org.nguh.nguhcraft.server.accessors.ServerPlayerAccessor
@@ -95,8 +92,9 @@ object ServerUtils {
         val SPA = SP as ServerPlayerAccessor
         SyncedGameRule.Send(SP)
         ProtectionManager.Send(SP)
-        ServerPlayNetworking.send(SP, ClientboundSyncHypershotStatePacket(LEA.hypershotContext != null))
-        ServerPlayNetworking.send(SP, ClientboundSyncProtectionBypassPacket(SPA.bypassesRegionProtection))
+        SP.SetClientFlag(ClientFlags.BYPASSES_REGION_PROTECTION, SPA.bypassesRegionProtection)
+        SP.SetClientFlag(ClientFlags.IN_HYPERSHOT_CONTEXT, LEA.hypershotContext != null)
+        SP.SetClientFlag(ClientFlags.VANISHED, SP.IsVanished)
     }
 
     /**
@@ -184,9 +182,9 @@ object ServerUtils {
         )
 
         // If this is a player, tell them about this.
-        if (Shooter is ServerPlayerEntity) ServerPlayNetworking.send(
-            Shooter,
-            ClientboundSyncHypershotStatePacket(true)
+        if (Shooter is ServerPlayerEntity) Shooter.SetClientFlag(
+            ClientFlags.IN_HYPERSHOT_CONTEXT,
+            true
         )
 
         return true
