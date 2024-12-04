@@ -110,7 +110,7 @@ object Vanish {
 
         // As well as a fake quit message.
         SP.server.Broadcast(Text.translatable("multiplayer.player.left", SP.displayName).formatted(Formatting.YELLOW))
-        Discord.BroadcastJoinQuitMessage(SP, false)
+        Discord.BroadcastJoinQuitMessageImpl(SP, false)
     }
 
     private fun ShowPlayer(SP: ServerPlayerEntity) {

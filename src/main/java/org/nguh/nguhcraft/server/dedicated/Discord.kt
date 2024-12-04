@@ -347,6 +347,10 @@ internal class Discord : ListenerAdapter() {
         @JvmStatic
         fun BroadcastJoinQuitMessage(SP: ServerPlayerEntity, Joined: Boolean) {
             if (SP.IsVanished) return
+            BroadcastJoinQuitMessageImpl(SP, Joined)
+        }
+
+        fun BroadcastJoinQuitMessageImpl(SP: ServerPlayerEntity, Joined: Boolean) {
             if (!Ready) return
             try {
                 val Name = if (SP.isLinked) SP.discordName
