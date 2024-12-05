@@ -14,6 +14,11 @@ import org.nguh.nguhcraft.Constants
 import kotlin.math.max
 import kotlin.math.min
 
+
+// TODO: Add the ability to run a command when a player
+// enters/leaves/whatever a region (e.g. add an /obliterate
+// command).
+
 /** A protected region. */
 class Region(
     /** Region name. */
