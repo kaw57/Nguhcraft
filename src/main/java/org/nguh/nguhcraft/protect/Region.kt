@@ -4,6 +4,7 @@ import net.minecraft.nbt.NbtCompound
 import net.minecraft.network.RegistryByteBuf
 import net.minecraft.registry.RegistryKey
 import net.minecraft.server.MinecraftServer
+import net.minecraft.text.MutableText
 import net.minecraft.text.Text
 import net.minecraft.util.Formatting
 import net.minecraft.util.math.BlockPos
@@ -129,10 +130,10 @@ class Region(
     private var RegionFlags: Long = 0
 
     /** Bounds of the region. */
-    var MinX: Int = min(FromX, ToX); private set
-    var MinZ: Int = min(FromZ, ToZ); private set
-    var MaxX: Int = max(FromX, ToX); private set
-    var MaxZ: Int = max(FromZ, ToZ); private set
+    val MinX: Int = min(FromX, ToX)
+    val MinZ: Int = min(FromZ, ToZ)
+    val MaxX: Int = max(FromX, ToX)
+    val MaxZ: Int = max(FromZ, ToZ)
 
     /** Display this region’s stats. */
     val Stats: Text get() {
@@ -213,15 +214,24 @@ class Region(
     /** Check if this region allows trading with villagers. */
     fun AllowsVillagerTrading() = Test(Flags.ENTITY_INTERACT) || Test(Flags.TRADE)
 
+    /** Display the region’s bounds. */
+    fun AppendBounds(MT: MutableText): MutableText = MT.append(Text.literal(" ["))
+        .append(Text.literal("$MinX").formatted(Formatting.GRAY))
+        .append(", ")
+        .append(Text.literal("$MinZ").formatted(Formatting.GRAY))
+        .append("] → [")
+        .append(Text.literal("$MaxX").formatted(Formatting.GRAY))
+        .append(", ")
+        .append(Text.literal("$MaxZ").formatted(Formatting.GRAY))
+        .append("]")
+
     /** Get the centre of a region. */
     val Center: BlockPos get() = BlockPos((MinX + MaxX) / 2, 0, (MinZ + MaxZ) / 2)
 
-    /** Check if this region contains a block. */
-    fun Contains(Pos: BlockPos): Boolean {
-        val X = Pos.x
-        val Z = Pos.z
-        return X in MinX..MaxX && Z in MinZ..MaxZ
-    }
+    /** Check if this region contains a block or region. */
+    fun Contains(Pos: BlockPos): Boolean = Contains(Pos.x, Pos.z)
+    fun Contains(X: Int, Z: Int): Boolean = X in MinX..MaxX && Z in MinZ..MaxZ
+    fun Contains(R: Region) = Contains(R.MinX, R.MinZ) && Contains(R.MaxX, R.MaxZ)
 
     /** Check if players are allowed to be in this region. */
     fun DisallowsExistence() = Test(Flags.DISALLOW_EXISTENCE)

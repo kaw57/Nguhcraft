@@ -42,6 +42,7 @@ import org.nguh.nguhcraft.Nguhcraft.Companion.Id
 import org.nguh.nguhcraft.SyncedGameRule
 import org.nguh.nguhcraft.item.KeyItem
 import org.nguh.nguhcraft.network.ClientFlags
+import org.nguh.nguhcraft.protect.MalformedRegionException
 import org.nguh.nguhcraft.protect.ProtectionManager
 import org.nguh.nguhcraft.protect.Region
 import org.nguh.nguhcraft.server.*
@@ -314,12 +315,8 @@ object Commands {
 
             try {
                 ProtectionManager.AddRegion(S.server, R)
-            } catch (E: IllegalArgumentException) {
-                S.sendError(Text.literal("Region with name ")
-                    .append(Text.literal(Name).formatted(Formatting.AQUA))
-                    .append(" already exists in world ")
-                    .append(Text.literal(W.registryKey.value.path.toString()).withColor(Constants.Lavender))
-                )
+            } catch (E: MalformedRegionException) {
+                S.sendError(E.Msg)
                 return 0
             }
 
@@ -340,16 +337,6 @@ object Commands {
             )
             return 1
         }
-
-        private fun AppendRegionBounds(MT: MutableText, R:Region): MutableText = MT.append(Text.literal(" ["))
-            .append(Text.literal("${R.MinX}").formatted(Formatting.GRAY))
-            .append(", ")
-            .append(Text.literal("${R.MinZ}").formatted(Formatting.GRAY))
-            .append("] → [")
-            .append(Text.literal("${R.MaxX}").formatted(Formatting.GRAY))
-            .append(", ")
-            .append(Text.literal("${R.MaxZ}").formatted(Formatting.GRAY))
-            .append("]")
 
         private fun AppendWorldAndRegionName(MT: MutableText, R: Region): MutableText = MT
             .append(Text.literal(R.World.value.path.toString()).withColor(Constants.Lavender))
@@ -393,7 +380,7 @@ object Commands {
             for (R in Regions) {
                 List.append(Text.literal("\n  - "))
                     .append(Text.literal(R.Name).formatted(Formatting.AQUA))
-                AppendRegionBounds(List, R)
+                R.AppendBounds(List)
             }
 
             S.sendMessage(List.formatted(Formatting.YELLOW))
@@ -402,7 +389,7 @@ object Commands {
 
         fun PrintRegionInfo(S: ServerCommandSource, R: Region): Int {
             val Stats = AppendWorldAndRegionName(Text.literal("Region "), R)
-            AppendRegionBounds(Stats, R)
+            R.AppendBounds(Stats)
             Stats.append(R.Stats)
             S.sendMessage(Stats.formatted(Formatting.YELLOW))
             return 1

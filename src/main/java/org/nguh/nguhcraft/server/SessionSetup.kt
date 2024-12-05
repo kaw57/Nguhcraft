@@ -26,11 +26,9 @@ object SessionSetup {
          SaveServerState(S)
      }
 
-
     @JvmStatic
     fun LoadExtraWorldData(SW: ServerWorld) {
         LOGGER.info("Loading nguhcraft world data for {}", SW.registryKey.value)
-        ProtectionManager.Reset(SW)
         try {
             val Path = NguhWorldSavePath(SW)
             val Tag = NbtIo.readCompressed(Path, NbtSizeTracker.ofUnlimitedBytes())
