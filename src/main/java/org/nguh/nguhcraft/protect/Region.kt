@@ -1,12 +1,15 @@
 package org.nguh.nguhcraft.protect
 
 import net.minecraft.nbt.NbtCompound
+import net.minecraft.nbt.NbtElement
+import net.minecraft.nbt.NbtList
+import net.minecraft.nbt.NbtString
 import net.minecraft.network.RegistryByteBuf
 import net.minecraft.registry.RegistryKey
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.command.ServerCommandSource
 import net.minecraft.server.network.ServerPlayerEntity
-import net.minecraft.server.world.ServerWorld
+import net.minecraft.text.ClickEvent
 import net.minecraft.text.MutableText
 import net.minecraft.text.Text
 import net.minecraft.util.Formatting
@@ -14,7 +17,7 @@ import net.minecraft.util.math.BlockPos
 import net.minecraft.util.math.Vec2f
 import net.minecraft.world.World
 import org.nguh.nguhcraft.Constants
-import java.util.UUID
+import java.util.*
 import kotlin.math.max
 import kotlin.math.min
 
@@ -28,35 +31,50 @@ import kotlin.math.min
 * or leaves multiple regions in a single tick is unspecified.
 */
 data class RegionTrigger(
+    /** The name of the trigger. */
+    val Name: String,
+
     /** The command to run. */
-    val Command: String
+    val Commands: MutableList<String> = mutableListOf()
 ) {
+    /** Append a region name to a text element. */
+    fun AppendName(MT: MutableText): MutableText
+        = MT.append(Text.literal(Name).withColor(Constants.Orange))
+
+    /** Print this trigger. */
+    fun AppendCommands(R: Region, S: MutableText, Indent: Int) {
+        val IndentStr = " ".repeat(Indent)
+        if (Commands.isEmpty()) S.append(Text.literal(" <empty>").formatted(Formatting.GRAY))
+        else Commands.forEachIndexed { I, C ->
+            S.append("\n$IndentStr[$I] ").append(
+                Text.literal(C)
+                    .formatted(Formatting.AQUA)
+                    .styled { it.withClickEvent(ClickEvent(
+                        ClickEvent.Action.SUGGEST_COMMAND,
+                        "/region trigger ${R.World.value.path}:${R.Name} $Name set $I $C"
+                    )) }
+            )
+        }
+    }
+
+    /** Read a trigger from NBT. */
+    fun Read(Tag: NbtCompound) =
+        Tag.getCompound(Name)
+           .getList(TAG_COMMANDS, NbtElement.STRING_TYPE.toInt())
+           .mapTo(Commands) { it.asString() }
+
     /** Write this trigger to NBT. */
-    fun Write(Parent: NbtCompound, Key: String) {
+    fun Write(Parent: NbtCompound) {
         val Tag = NbtCompound()
-        Tag.putString(TAG_COMMAND, Command)
-        Parent.put(Key, Tag)
+        val CommandList = NbtList()
+        Tag.put(TAG_COMMANDS, CommandList)
+        Commands.forEach { CommandList.add(NbtString.of(it)) }
+        Parent.put(Name, Tag)
     }
 
     companion object {
-        const val TAG_COMMAND = "Command"
+        const val TAG_COMMANDS = "Commands"
         const val PERMISSION_LEVEL = 2
-
-        /** Print this trigger. */
-        fun Display(T: RegionTrigger?, S: MutableText, Name: String) {
-            S.append("\n - $Name: ")
-            if (T == null) S.append(Text.literal("none").formatted(Formatting.GRAY))
-            else S.append(Text.literal(T.Command).formatted(Formatting.AQUA))
-        }
-
-        /** Read a trigger from NBT. */
-        fun Read(Tag: NbtCompound, Key: String): RegionTrigger? {
-            if (!Tag.contains(Key)) return null
-            val Trigger = Tag.getCompound(Key)
-            return RegionTrigger(
-                Command = Trigger.getString(TAG_COMMAND)
-            )
-        }
     }
 }
 
@@ -72,13 +90,7 @@ class Region(
     FromX: Int,
     FromZ: Int,
     ToX: Int,
-    ToZ: Int,
-
-    /** Command that is run when a player enters the region. */
-    var PlayerEntryTrigger: RegionTrigger? = null,
-
-    /** Command that is run when a player leaves the region. */
-    var PlayerLeaveTrigger: RegionTrigger? = null
+    ToZ: Int
 ) {
     /**
     * Flags.
@@ -195,6 +207,12 @@ class Region(
     val MaxX: Int = max(FromX, ToX)
     val MaxZ: Int = max(FromZ, ToZ)
 
+    /** Command that is run when a player enters the region. */
+    val PlayerEntryTrigger = RegionTrigger("player_entry")
+
+    /** Command that is run when a player leaves the region. */
+    val PlayerLeaveTrigger = RegionTrigger("player_leave")
+
     /**
     * Players that are in this region.
     *
@@ -217,8 +235,16 @@ class Region(
                 .append(": ")
                 .append(Status)
         }
-        RegionTrigger.Display(PlayerEntryTrigger, S, "Entry Trigger")
-        RegionTrigger.Display(PlayerLeaveTrigger, S, "Leave Trigger")
+
+        fun Display(T: RegionTrigger) {
+            S.append("\n - ")
+            T.AppendName(S)
+            S.append(":")
+            T.AppendCommands(this, S, 4)
+        }
+
+        Display(PlayerEntryTrigger)
+        Display(PlayerLeaveTrigger)
         return S
     }
 
@@ -229,15 +255,20 @@ class Region(
         FromX = Tag.getInt(TAG_MIN_X),
         FromZ = Tag.getInt(TAG_MIN_Z),
         ToX = Tag.getInt(TAG_MAX_X),
-        ToZ = Tag.getInt(TAG_MAX_Z),
-        PlayerEntryTrigger = RegionTrigger.Read(Tag, TAG_TRIGGER_PLAYER_ENTRY),
-        PlayerLeaveTrigger = RegionTrigger.Read(Tag, TAG_TRIGGER_PLAYER_LEAVE)
+        ToZ = Tag.getInt(TAG_MAX_Z)
     ) {
         if (Name.isEmpty()) throw IllegalArgumentException("Region name cannot be empty!")
+
+        // Read flags.
         val FlagsTag = Tag.getCompound(TAG_FLAGS)
         RegionFlags = Flags.entries.fold(0L) { Acc, Flag ->
             if (FlagsTag.getBoolean(Flag.name.lowercase())) Acc or Flag.Bit() else Acc
         }
+
+        // Read triggers.
+        val Triggers = Tag.getCompound(TAG_TRIGGERS)
+        PlayerEntryTrigger.Read(Triggers)
+        PlayerLeaveTrigger.Read(Triggers)
     }
 
     /** Deserialise a region from a packet. */
@@ -325,6 +356,7 @@ class Region(
 
     /** Run a player trigger. */
     fun InvokePlayerTrigger(SP: ServerPlayerEntity, T: RegionTrigger) {
+        if (T.Commands.isEmpty()) return
         val S = ServerCommandSource(
             SP.server,
             SP.pos,
@@ -337,7 +369,7 @@ class Region(
             null
         )
 
-        SP.server.commandManager.executeWithPrefix(S, T.Command)
+        T.Commands.forEach { SP.server.commandManager.executeWithPrefix(S, it) }
     }
 
     /** Get the radius of the region. */
@@ -355,8 +387,12 @@ class Region(
         Tag.putInt(TAG_MIN_Z, MinZ)
         Tag.putInt(TAG_MAX_X, MaxX)
         Tag.putInt(TAG_MAX_Z, MaxZ)
-        PlayerEntryTrigger?.Write(Tag, TAG_TRIGGER_PLAYER_ENTRY)
-        PlayerLeaveTrigger?.Write(Tag, TAG_TRIGGER_PLAYER_LEAVE)
+
+        // Store triggers.
+        val Triggers = NbtCompound()
+        PlayerEntryTrigger.Write(Triggers)
+        PlayerLeaveTrigger.Write(Triggers)
+        Tag.put(TAG_TRIGGERS, Triggers)
 
         // Store flags as strings for robustness.
         val FlagsTag = NbtCompound()
@@ -394,13 +430,11 @@ class Region(
     }
 
     private fun TickPlayerEntered(SP: ServerPlayerEntity) {
-        if (PlayerEntryTrigger != null)
-            InvokePlayerTrigger(SP, PlayerEntryTrigger!!)
+        InvokePlayerTrigger(SP, PlayerEntryTrigger)
     }
 
     private fun TickPlayerLeft(SP: ServerPlayerEntity) {
-        if (PlayerLeaveTrigger != null)
-            InvokePlayerTrigger(SP, PlayerLeaveTrigger!!)
+        InvokePlayerTrigger(SP, PlayerLeaveTrigger)
     }
 
     /** Write this region to a packet. */
@@ -424,9 +458,11 @@ class Region(
         private const val TAG_MAX_X = "MaxX"
         private const val TAG_MAX_Z = "MaxZ"
         private const val TAG_FLAGS = "RegionFlags"
+        private const val TAG_TRIGGERS = "Triggers"
         private const val TAG_NAME = "Name"
-        private const val TAG_TRIGGER_PLAYER_ENTRY = "PlayerEntryTrigger"
-        private const val TAG_TRIGGER_PLAYER_LEAVE = "PlayerLeaveTrigger"
         private val REGION_TRIGGER_TEXT: Text = Text.of("Region trigger")
+
+        /** Dummy region used as part of a hack to access trigger names. */
+        val DUMMY = Region("dummy", World.END, 0, 0, 0, 0)
     }
 }
