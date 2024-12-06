@@ -817,7 +817,8 @@ object Commands {
 
         val TriggerNode = argument("region", RegionArgumentType.Region())
         listOf(
-            "player_entry" to Region::PlayerEntryTrigger
+            "player_entry" to Region::PlayerEntryTrigger,
+            "player_leave" to Region::PlayerLeaveTrigger,
         ).forEach { Trigger ->
             TriggerNode.then(literal(Trigger.first)
                 .then(argument("command", StringArgumentType.greedyString())

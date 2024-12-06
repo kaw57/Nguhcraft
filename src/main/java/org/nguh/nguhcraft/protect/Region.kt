@@ -42,6 +42,13 @@ data class RegionTrigger(
         const val TAG_COMMAND = "Command"
         const val PERMISSION_LEVEL = 2
 
+        /** Print this trigger. */
+        fun Display(T: RegionTrigger?, S: MutableText, Name: String) {
+            S.append("\n - $Name: ")
+            if (T == null) S.append(Text.literal("none").formatted(Formatting.GRAY))
+            else S.append(Text.literal(T.Command).formatted(Formatting.AQUA))
+        }
+
         /** Read a trigger from NBT. */
         fun Read(Tag: NbtCompound, Key: String): RegionTrigger? {
             if (!Tag.contains(Key)) return null
@@ -67,8 +74,11 @@ class Region(
     ToX: Int,
     ToZ: Int,
 
-    /** Command that is run when a player first enters the region. */
-    var PlayerEntryTrigger: RegionTrigger? = null
+    /** Command that is run when a player enters the region. */
+    var PlayerEntryTrigger: RegionTrigger? = null,
+
+    /** Command that is run when a player leaves the region. */
+    var PlayerLeaveTrigger: RegionTrigger? = null
 ) {
     /**
     * Flags.
@@ -207,9 +217,8 @@ class Region(
                 .append(": ")
                 .append(Status)
         }
-        S.append("\n - PlayerEntryTrigger: ")
-        if (PlayerEntryTrigger == null) S.append(Text.literal("none").formatted(Formatting.GRAY))
-        else S.append(Text.literal(PlayerEntryTrigger!!.Command).formatted(Formatting.AQUA))
+        RegionTrigger.Display(PlayerEntryTrigger, S, "Entry Trigger")
+        RegionTrigger.Display(PlayerLeaveTrigger, S, "Leave Trigger")
         return S
     }
 
@@ -221,7 +230,8 @@ class Region(
         FromZ = Tag.getInt(TAG_MIN_Z),
         ToX = Tag.getInt(TAG_MAX_X),
         ToZ = Tag.getInt(TAG_MAX_Z),
-        PlayerEntryTrigger = RegionTrigger.Read(Tag, TAG_TRIGGER_PLAYER_ENTRY)
+        PlayerEntryTrigger = RegionTrigger.Read(Tag, TAG_TRIGGER_PLAYER_ENTRY),
+        PlayerLeaveTrigger = RegionTrigger.Read(Tag, TAG_TRIGGER_PLAYER_LEAVE)
     ) {
         if (Name.isEmpty()) throw IllegalArgumentException("Region name cannot be empty!")
         val FlagsTag = Tag.getCompound(TAG_FLAGS)
@@ -346,6 +356,7 @@ class Region(
         Tag.putInt(TAG_MAX_X, MaxX)
         Tag.putInt(TAG_MAX_Z, MaxZ)
         PlayerEntryTrigger?.Write(Tag, TAG_TRIGGER_PLAYER_ENTRY)
+        PlayerLeaveTrigger?.Write(Tag, TAG_TRIGGER_PLAYER_LEAVE)
 
         // Store flags as strings for robustness.
         val FlagsTag = NbtCompound()
@@ -388,7 +399,8 @@ class Region(
     }
 
     private fun TickPlayerLeft(SP: ServerPlayerEntity) {
-        // Currently a no-op.
+        if (PlayerLeaveTrigger != null)
+            InvokePlayerTrigger(SP, PlayerLeaveTrigger!!)
     }
 
     /** Write this region to a packet. */
@@ -414,6 +426,7 @@ class Region(
         private const val TAG_FLAGS = "RegionFlags"
         private const val TAG_NAME = "Name"
         private const val TAG_TRIGGER_PLAYER_ENTRY = "PlayerEntryTrigger"
+        private const val TAG_TRIGGER_PLAYER_LEAVE = "PlayerLeaveTrigger"
         private val REGION_TRIGGER_TEXT: Text = Text.of("Region trigger")
     }
 }
