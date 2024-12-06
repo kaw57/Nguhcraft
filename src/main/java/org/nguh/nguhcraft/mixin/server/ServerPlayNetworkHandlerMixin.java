@@ -46,7 +46,7 @@ public abstract class ServerPlayNetworkHandlerMixin extends ServerCommonNetworkH
         )
     )
     private void inject$cleanUp(PlayerManager PM, Text Msg, boolean Overlay) {
-        ServerUtils.ActOnPlayerJoinQuitMessage(player, Msg);
+        ServerUtils.ActOnPlayerQuit(player, Msg);
     }
 
     /**

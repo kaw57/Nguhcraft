@@ -4,6 +4,9 @@ import net.minecraft.nbt.NbtCompound
 import net.minecraft.network.RegistryByteBuf
 import net.minecraft.registry.RegistryKey
 import net.minecraft.server.MinecraftServer
+import net.minecraft.server.command.ServerCommandSource
+import net.minecraft.server.network.ServerPlayerEntity
+import net.minecraft.server.world.ServerWorld
 import net.minecraft.text.MutableText
 import net.minecraft.text.Text
 import net.minecraft.util.Formatting
@@ -11,13 +14,44 @@ import net.minecraft.util.math.BlockPos
 import net.minecraft.util.math.Vec2f
 import net.minecraft.world.World
 import org.nguh.nguhcraft.Constants
+import java.util.UUID
 import kotlin.math.max
 import kotlin.math.min
 
+/**
+* Trigger that runs when an event happens in a region.
+*
+* These are only present on the server; attempting to access one
+* on the client will always return null.
+*
+* The order in which region triggers are fired if a player enters
+* or leaves multiple regions in a single tick is unspecified.
+*/
+data class RegionTrigger(
+    /** The command to run. */
+    val Command: String
+) {
+    /** Write this trigger to NBT. */
+    fun Write(Parent: NbtCompound, Key: String) {
+        val Tag = NbtCompound()
+        Tag.putString(TAG_COMMAND, Command)
+        Parent.put(Key, Tag)
+    }
 
-// TODO: Add the ability to run a command when a player
-// enters/leaves/whatever a region (e.g. add an /obliterate
-// command).
+    companion object {
+        const val TAG_COMMAND = "Command"
+        const val PERMISSION_LEVEL = 2
+
+        /** Read a trigger from NBT. */
+        fun Read(Tag: NbtCompound, Key: String): RegionTrigger? {
+            if (!Tag.contains(Key)) return null
+            val Trigger = Tag.getCompound(Key)
+            return RegionTrigger(
+                Command = Trigger.getString(TAG_COMMAND)
+            )
+        }
+    }
+}
 
 /** A protected region. */
 class Region(
@@ -32,6 +66,9 @@ class Region(
     FromZ: Int,
     ToX: Int,
     ToZ: Int,
+
+    /** Command that is run when a player first enters the region. */
+    var PlayerEntryTrigger: RegionTrigger? = null
 ) {
     /**
     * Flags.
@@ -60,6 +97,14 @@ class Region(
         /**
          * Disallow player existence in a region, obliterating them if
          * they enter it.
+         *
+         * This is equivalent to a region trigger that executes the
+         * /obliterate command, except that it also sends a title to
+         * the player explaining that they may not enter the region.
+         *
+         * This does not interact with player triggers at all (except
+         * of course that some triggers choose to may do nothing if the
+         * player is dead, which this will certainly cause).
          */
         DISALLOW_EXISTENCE,
 
@@ -140,17 +185,31 @@ class Region(
     val MaxX: Int = max(FromX, ToX)
     val MaxZ: Int = max(FromZ, ToZ)
 
+    /**
+    * Players that are in this region.
+    *
+    * This is used to implement leave triggers and other functionality
+    * that relies on tracking what players are in a region. It is not
+    * persisted across server restarts, so e.g. join triggers will simply
+    * fire again once a player logs back in (even in the same session,
+    * actually).
+    */
+    private var PlayersInRegion = mutableSetOf<UUID>()
+
     /** Display this region’s stats. */
     val Stats: Text get() {
         val S = Text.empty()
         Flags.entries.forEach {
             val Status = if (Test(it)) Text.literal("allow").formatted(Formatting.GREEN)
             else Text.literal("deny").formatted(Formatting.RED)
-            S.append("\n -")
+            S.append("\n - ")
                 .append(Text.literal(it.name.lowercase()).withColor(Constants.Orange))
                 .append(": ")
                 .append(Status)
         }
+        S.append("\n - PlayerEntryTrigger: ")
+        if (PlayerEntryTrigger == null) S.append(Text.literal("none").formatted(Formatting.GRAY))
+        else S.append(Text.literal(PlayerEntryTrigger!!.Command).formatted(Formatting.AQUA))
         return S
     }
 
@@ -161,7 +220,8 @@ class Region(
         FromX = Tag.getInt(TAG_MIN_X),
         FromZ = Tag.getInt(TAG_MIN_Z),
         ToX = Tag.getInt(TAG_MAX_X),
-        ToZ = Tag.getInt(TAG_MAX_Z)
+        ToZ = Tag.getInt(TAG_MAX_Z),
+        PlayerEntryTrigger = RegionTrigger.Read(Tag, TAG_TRIGGER_PLAYER_ENTRY)
     ) {
         if (Name.isEmpty()) throw IllegalArgumentException("Region name cannot be empty!")
         val FlagsTag = Tag.getCompound(TAG_FLAGS)
@@ -253,6 +313,23 @@ class Region(
     fun Intersects(MinX: Int, MinZ: Int, MaxX: Int, MaxZ: Int) =
         MinX <= this.MaxX && MaxX >= this.MinX && MinZ <= this.MaxZ && MaxZ >= this.MinZ
 
+    /** Run a player trigger. */
+    fun InvokePlayerTrigger(SP: ServerPlayerEntity, T: RegionTrigger) {
+        val S = ServerCommandSource(
+            SP.server,
+            SP.pos,
+            SP.rotationClient,
+            SP.serverWorld,
+            RegionTrigger.PERMISSION_LEVEL,
+            "Region Trigger",
+            REGION_TRIGGER_TEXT,
+            SP.server,
+            null
+        )
+
+        SP.server.commandManager.executeWithPrefix(S, T.Command)
+    }
+
     /** Get the radius of the region. */
     val Radius: Vec2f get() {
         val X = (MaxX - MinX) / 2
@@ -268,6 +345,7 @@ class Region(
         Tag.putInt(TAG_MIN_Z, MinZ)
         Tag.putInt(TAG_MAX_X, MaxX)
         Tag.putInt(TAG_MAX_Z, MaxZ)
+        PlayerEntryTrigger?.Write(Tag, TAG_TRIGGER_PLAYER_ENTRY)
 
         // Store flags as strings for robustness.
         val FlagsTag = NbtCompound()
@@ -286,6 +364,32 @@ class Region(
 
     /** Helper to simplify testing flags. */
     private fun Test(Flag: Flags) = RegionFlags and Flag.Bit() != 0L
+
+    /** Tick this region. */
+    fun TickPlayer(SP: ServerPlayerEntity) {
+        TickPlayer(SP, Contains(SP.blockPos))
+    }
+
+    /**
+    * Overload of TickPlayer() used when the position of a player cannot
+    * be used to accurately determine whether they are in the region.
+    */
+    fun TickPlayer(SP: ServerPlayerEntity, InRegion: Boolean) {
+        if (InRegion) {
+            if (PlayersInRegion.add(SP.uuid)) TickPlayerEntered(SP)
+        } else {
+            if (PlayersInRegion.remove(SP.uuid)) TickPlayerLeft(SP)
+        }
+    }
+
+    private fun TickPlayerEntered(SP: ServerPlayerEntity) {
+        if (PlayerEntryTrigger != null)
+            InvokePlayerTrigger(SP, PlayerEntryTrigger!!)
+    }
+
+    private fun TickPlayerLeft(SP: ServerPlayerEntity) {
+        // Currently a no-op.
+    }
 
     /** Write this region to a packet. */
     fun Write(buf: RegistryByteBuf) {
@@ -309,5 +413,7 @@ class Region(
         private const val TAG_MAX_Z = "MaxZ"
         private const val TAG_FLAGS = "RegionFlags"
         private const val TAG_NAME = "Name"
+        private const val TAG_TRIGGER_PLAYER_ENTRY = "PlayerEntryTrigger"
+        private val REGION_TRIGGER_TEXT: Text = Text.of("Region trigger")
     }
 }

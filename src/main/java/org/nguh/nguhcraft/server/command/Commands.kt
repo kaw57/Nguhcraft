@@ -45,6 +45,7 @@ import org.nguh.nguhcraft.network.ClientFlags
 import org.nguh.nguhcraft.protect.MalformedRegionException
 import org.nguh.nguhcraft.protect.ProtectionManager
 import org.nguh.nguhcraft.protect.Region
+import org.nguh.nguhcraft.protect.RegionTrigger
 import org.nguh.nguhcraft.server.*
 import org.nguh.nguhcraft.server.ServerUtils.IsIntegratedServer
 import org.nguh.nguhcraft.server.ServerUtils.StrikeLighting
@@ -60,6 +61,8 @@ object Commands {
             ConstantArgumentSerializer.of(Func)
         )
     }
+
+    const val OPERATOR_PERMISSION_LEVEL = 4
 
     fun Register() {
         CommandRegistrationCallback.EVENT.register { D, A, E ->
@@ -79,6 +82,7 @@ object Commands {
             D.register(HomesCommand())                // /homes
             D.register(KeyCommand())                  // /key
             val Msg = D.register(MessageCommand())    // /msg
+            D.register(ObliterateCommand())           // /obliterate
             D.register(RegionCommand())               // /region
             D.register(RuleCommand())                 // /rule
             D.register(SayCommand())                  // /say
@@ -782,6 +786,17 @@ object Commands {
             }
         )
 
+    private fun ObliterateCommand(): LiteralArgumentBuilder<ServerCommandSource> = literal("obliterate")
+        .requires { it.hasPermissionLevel(2) }
+        .then(argument("players", EntityArgumentType.players())
+            .executes {
+                val Players = EntityArgumentType.getPlayers(it, "players")
+                for (SP in Players) ServerUtils.Obliterate(SP)
+                it.source.sendMessage(Text.literal("Obliterated ${Players.size} players"))
+                Players.size
+            }
+        )
+
     private fun RegionCommand(): LiteralArgumentBuilder<ServerCommandSource> {
         val RegionFlagsNameNode = argument("region", RegionArgumentType.Region())
         Region.Flags.entries.forEach { Flag ->
@@ -797,6 +812,30 @@ object Commands {
                 .then(literal("deny").executes { Set(it, false) })
                 .then(literal("disable").executes { Set(it, false) })
                 .then(literal("enable").executes { Set(it, true) })
+            )
+        }
+
+        val TriggerNode = argument("region", RegionArgumentType.Region())
+        listOf(
+            "player_entry" to Region::PlayerEntryTrigger
+        ).forEach { Trigger ->
+            TriggerNode.then(literal(Trigger.first)
+                .then(argument("command", StringArgumentType.greedyString())
+                    .executes {
+                        val R = RegionArgumentType.Resolve(it, "region")
+                        val Command = StringArgumentType.getString(it, "command")
+                        Trigger.second.set(R, RegionTrigger(Command))
+                        it.source.sendMessage(Text.literal("Set '${Trigger.first}' for region '${R.Name}' to '$Command'"))
+                        1
+                    }
+                )
+                .executes {
+                    val R = RegionArgumentType.Resolve(it, "region")
+                    val T = Trigger.second.get(R)
+                    if (T != null) it.source.sendMessage(Text.literal("Trigger for region '${R.Name}' is '${T.Command}'"))
+                    else it.source.sendMessage(Text.literal("No trigger set for region '${R.Name}'"))
+                    1
+                }
             )
         }
 
@@ -853,6 +892,7 @@ object Commands {
                 .executes { RegionCommand.PrintRegionInfo(it.source, it.source.playerOrThrow) }
             )
             .then(literal("flags").then(RegionFlagsNameNode))
+            .then(literal("trigger").then(TriggerNode))
     }
 
     private fun RuleCommand(): LiteralArgumentBuilder<ServerCommandSource> {
@@ -876,7 +916,7 @@ object Commands {
     }
 
     private fun SayCommand(): LiteralArgumentBuilder<ServerCommandSource> = literal("say")
-        .requires { it.player == null && it.hasPermissionLevel(4) } // Console only.
+        .requires { it.hasPermissionLevel(2) }
         .then(argument("message", StringArgumentType.greedyString())
             .executes {
                 Chat.SendServerMessage(it.source.server, StringArgumentType.getString(it, "message"))
@@ -905,7 +945,7 @@ object Commands {
         }
 
     private fun SmiteCommand(): LiteralArgumentBuilder<ServerCommandSource> = literal("smite")
-        .requires { it.hasPermissionLevel(4) }
+        .requires { it.hasPermissionLevel(2) }
         .then(argument("targets", EntityArgumentType.entities())
             .executes {
                 // Smite everything that isn’t also lightning, because that becomes

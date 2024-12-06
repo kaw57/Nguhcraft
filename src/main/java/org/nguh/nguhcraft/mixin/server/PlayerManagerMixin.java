@@ -67,6 +67,6 @@ public abstract class PlayerManagerMixin {
         boolean Overlay,
         @Local(argsOnly = true) ServerPlayerEntity SP
     ) {
-        ServerUtils.ActOnPlayerJoinQuitMessage(SP, Msg);
+        ServerUtils.SendPlayerJoinQuitMessage(SP, Msg);
     }
 }

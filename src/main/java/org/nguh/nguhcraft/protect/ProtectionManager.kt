@@ -28,6 +28,7 @@ import net.minecraft.text.Text
 import net.minecraft.util.ActionResult
 import net.minecraft.util.Formatting
 import net.minecraft.util.math.BlockPos
+import net.minecraft.util.profiler.Profilers
 import net.minecraft.world.World
 import org.nguh.nguhcraft.BypassesRegionProtection
 import org.nguh.nguhcraft.Constants
@@ -215,6 +216,9 @@ class RegionList(
  */
 object ProtectionManager {
     private const val TAG_REGIONS = "Regions"
+    private val ENTRY_DISALLOWED_TITLE: Text = Text.literal("TURN BACK").formatted(Formatting.RED)
+    private val ENTRY_DISALLOWED_SUBTITLE: Text = Text.literal("You are not allowed to enter this region")
+    private val ENTRY_DISALLOWED_MESSAGE = Text.literal("You are not allowed to enter this region").formatted(Formatting.RED)
 
     /** Current manager state. */
     @Volatile private var S = State()
@@ -566,6 +570,36 @@ object ProtectionManager {
         // Don’t sync in single player since we already have the state.
         if (ServerUtils.IsDedicatedServer())
             Server.Broadcast(ClientboundSyncProtectionMgrPacket(S))
+    }
+
+    /** Fire events that need to happen when a player leaves the server. */
+    fun TickPlayerQuit(SP: ServerPlayerEntity) {
+        Profilers.get().push("Nguhcraft: Region tick")
+        for (R in RegionListFor(SP.serverWorld)) R.TickPlayer(SP, InRegion = false)
+    }
+
+    /**
+    * Fire region-based triggers for this player.
+    *
+    * We walk the region list for each player because we will never have
+    * so many regions that doing that would end up being slower than doing
+    * entity lookups for each region.
+    */
+    fun TickRegionsForPlayer(SP: ServerPlayerEntity) {
+        Profilers.get().push("Nguhcraft: Region tick")
+
+        // Tick all regions.
+        for (R in RegionListFor(SP.serverWorld)) R.TickPlayer(SP)
+
+        // Check if the player is in a region they’re not allowed in.
+        if (!AllowExistence(SP)) {
+            if (SP.isDead || SP.isSpectator || SP.isCreative) return
+            ServerUtils.SendTitle(SP, ENTRY_DISALLOWED_TITLE, ENTRY_DISALLOWED_SUBTITLE)
+            SP.sendMessage(ENTRY_DISALLOWED_MESSAGE, false)
+            ServerUtils.Obliterate(SP)
+        }
+
+        Profilers.get().pop()
     }
 
     /**

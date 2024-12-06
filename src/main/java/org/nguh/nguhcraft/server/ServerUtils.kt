@@ -60,9 +60,6 @@ import org.slf4j.Logger
 object ServerUtils {
     private val BORDER_TITLE: Text = Text.literal("TURN BACK").formatted(Formatting.RED)
     private val BORDER_SUBTITLE: Text = Text.literal("You may not cross the border")
-    private val ENTRY_DISALLOWED_TITLE: Text = Text.literal("TURN BACK").formatted(Formatting.RED)
-    private val ENTRY_DISALLOWED_SUBTITLE: Text = Text.literal("You are not allowed to enter this region")
-    private val ENTRY_DISALLOWED_MESSAGE = Text.literal("You are not allowed to enter this region").formatted(Formatting.RED)
     private val LOGGER: Logger = LogUtils.getLogger()
 
     /** Living entity tick. */
@@ -106,34 +103,26 @@ object ServerUtils {
     fun ActOnPlayerTick(SP: ServerPlayerEntity) {
         val SW = SP.serverWorld
 
-        // Skip checks for players that are dead, in creative or spectator
-        // mode, or who bypass region protection.
-        if (
-            SP.isDead      ||
-            SP.isSpectator ||
-            SP.isCreative  ||
-            SP.BypassesRegionProtection()
-        ) return
-
         // Check if the player is outside the world border.
+        // TODO: Can we make a 'global' region for the entire world
+        //       to simplify e.g. this world border check? It would
+        //       be a region that cannot be deleted and which is always
+        //       at the end of the list (and which expands first if the
+        //       world border is increased).
         if (!SW.worldBorder.contains(SP.boundingBox)) {
             SP.Teleport(SW, SW.spawnPos)
             SendTitle(SP, BORDER_TITLE, BORDER_SUBTITLE)
             LOGGER.warn("Player {} tried to leave the border.", SP.displayName!!.string)
         }
 
-        // Check if the player is in a region they’re not allowed in.
-        if (!ProtectionManager.AllowExistence(SP)) {
-            SendTitle(SP, ENTRY_DISALLOWED_TITLE, ENTRY_DISALLOWED_SUBTITLE)
-            SP.sendMessage(ENTRY_DISALLOWED_MESSAGE, false)
-            Obliterate(SP)
-        }
+        ProtectionManager.TickRegionsForPlayer(SP)
     }
 
     /** Broadcast a join message for a player. */
     @JvmStatic
-    fun ActOnPlayerJoinQuitMessage(SP: ServerPlayerEntity, Msg: Text) {
-        if (!SP.IsVanished) SP.server.Broadcast(Msg)
+    fun ActOnPlayerQuit(SP: ServerPlayerEntity, Msg: Text) {
+        ProtectionManager.TickPlayerQuit(SP)
+        SendPlayerJoinQuitMessage(SP, Msg)
     }
 
     /** Check if we’re running on a dedicated server. */
@@ -259,6 +248,7 @@ object ServerUtils {
      * for atmosphere, though), then kills them.
      */
     fun Obliterate(SP: ServerPlayerEntity) {
+        if (SP.isDead || SP.isSpectator || SP.isCreative) return
         val SW = SP.serverWorld
         StrikeLighting(SW, SP.pos, null, true)
         SP.damage(SW, NguhDamageTypes.Obliterated(SW), Float.MAX_VALUE)
@@ -269,6 +259,12 @@ object ServerUtils {
         val Frac = MathHelper.fractionalPart(Exp)
         if (Frac != 0.0f && Math.random() < Frac.toDouble()) Int++
         return Int
+    }
+
+    /** Broadcast a join message for a player. */
+    @JvmStatic
+    fun SendPlayerJoinQuitMessage(SP: ServerPlayerEntity, Msg: Text) {
+        if (!SP.IsVanished) SP.server.Broadcast(Msg)
     }
 
     /**
