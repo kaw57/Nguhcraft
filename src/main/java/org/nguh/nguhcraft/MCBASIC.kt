@@ -1,6 +1,11 @@
 package org.nguh.nguhcraft
 
+import com.mojang.brigadier.StringReader
+import net.minecraft.command.EntitySelector
+import net.minecraft.command.argument.EntityArgumentType
+import net.minecraft.entity.Entity
 import net.minecraft.server.command.ServerCommandSource
+import net.minecraft.server.network.ServerPlayerEntity
 import net.minecraft.text.ClickEvent
 import net.minecraft.text.MutableText
 import net.minecraft.text.Text
@@ -107,10 +112,10 @@ object MCBASIC {
         }
 
         /**
-        * Execute the program.
-        *
-        * @throws Exception If there was a syntax error or an unexpected error executing the program.
-        */
+         * Execute the program.
+         *
+         * @throws Exception If there was a syntax error or an unexpected error executing the program.
+         */
         @Throws(Exception::class)
         fun ExecuteAndThrow(S: ServerCommandSource) {
             when (AST) {
@@ -156,13 +161,21 @@ object MCBASIC {
         }
     }
 
+    enum class Builtin {
+        /** Test whether Entity::isAlive is true. */
+        IS_ENTITY_ALIVE,
+
+        /** Test whether Entity is a ‘GM’, i.e. a player in creative or spectator mode. */
+        IS_GM,
+    }
+
     /** Root of the AST class hierarchy. */
     private abstract class Stmt {
         abstract fun Execute(E: Executor)
     }
 
     /** A statement that returns a value. */
-    private abstract class Expr: Stmt() {
+    private abstract class Expr : Stmt() {
         final override fun Execute(E: Executor) { Evaluate(E) }
         abstract fun Evaluate(E: Executor): Any
     }
@@ -174,13 +187,55 @@ object MCBASIC {
         }
     }
 
-    /** A statement that is actually a Minecraft command. */
+    /** A call to a builtin function. */
+    private class BuiltinCallExpr(val Func: Builtin, val Args: List<Expr>) : Expr() {
+        init {
+            when (Func) {
+                Builtin.IS_ENTITY_ALIVE -> {
+                    if (Args.size != 1) throw SyntaxException("'alive?' expects exactly one argument")
+                    if (Args[0] !is EntitySelectorExpr) throw SyntaxException("'alive?' expects an entity selector")
+                }
+                Builtin.IS_GM -> {
+                    if (Args.size != 1) throw SyntaxException("'gm?' expects exactly one argument")
+                    if (Args[0] !is EntitySelectorExpr) throw SyntaxException("'gm?' expects an entity selector")
+                }
+            }
+        }
+
+        override fun Evaluate(E: Executor): Any {
+            when (Func) {
+                Builtin.IS_ENTITY_ALIVE -> {
+                    val Ent: Entity = (Args[0] as EntitySelectorExpr).EvaluateToSingleEntity(E)
+                    return if (Ent.isAlive) 1 else 0
+                }
+                Builtin.IS_GM -> {
+                    val Ent: Entity = (Args[0] as EntitySelectorExpr).EvaluateToSingleEntity(E)
+                    return if (Ent is ServerPlayerEntity && (Ent.isCreative || Ent.isSpectator)) 1 else 0
+                }
+            }
+        }
+    }
+
+    /** An expression that is actually a Minecraft command. */
     private class CommandExpr(val Command: String) : Expr() {
         override fun Evaluate(E: Executor): Any {
             val CM = E.Source.server.commandManager
             val Wrapped = "return run $Command" // Wrap w/ 'return' to get the return value.
             CM.execute(CM.dispatcher.parse(Wrapped, E.Source), Wrapped)
             return E.CommandReturnValue
+        }
+    }
+
+    /** An expression that selects an entity. */
+    private class EntitySelectorExpr(val Sel: EntitySelector): Expr() {
+        override fun Evaluate(E: Executor): Any {
+            return Sel.getEntities(E.Source)
+        }
+
+        fun EvaluateToSingleEntity(E: Executor): Entity {
+            val Entities = (Evaluate(E) as List<*>)
+            if (Entities.size != 1) throw SyntaxException("Expected exactly one entity for selector '$Sel'")
+            return Entities[0] as Entity
         }
     }
 
@@ -223,6 +278,17 @@ object MCBASIC {
             // A series of characters that starts with a backquote.
             QuotedCommand,
 
+            // A parsed entity selector.
+            EntitySelector,
+
+            // Punctuators.
+            LParen,
+            RParen,
+            Comma,
+
+            // A builtin function.
+            BuiltinFunction,
+
             // Keywords.
             KwThen,
             KwIf,
@@ -238,17 +304,25 @@ object MCBASIC {
                 "return" to TokenKind.KwReturn,
                 "then" to TokenKind.KwThen,
             )
+
+            private val BUILTIN_FUNCTIONS = mapOf(
+                "alive?" to Builtin.IS_ENTITY_ALIVE,
+                "gm?" to Builtin.IS_GM,
+            )
         }
 
         data class Token(
             val Kind: TokenKind,
             val Value: String,
+            val Func: Builtin? = null,
+            val Sel: EntitySelector? = null,
         )
 
         var Code = SourceCode
-        var Tok = Next()
+        lateinit var Tok: Token
         fun CompileAST(): CachedAST {
             try {
+                Tok = Next()
                 val List = mutableListOf<Stmt>()
                 while (Tok.Kind != TokenKind.Eof) CompileStmt()?.let { List.add(it) }
                 return CachedAST.Cached(Block(List))
@@ -271,6 +345,8 @@ object MCBASIC {
             if (Code.isEmpty()) return Token(TokenKind.Eof, "")
             val C = Code.first()
             when (C) {
+                '(' -> { Code = Code.drop(1); return Token(TokenKind.LParen, "(") }
+                ')' -> { Code = Code.drop(1); return Token(TokenKind.RParen, ")") }
                 '/' -> {
                     // Yeet '/'. It must be followed by a non-whitespace character.
                     Code = Code.drop(1)
@@ -293,12 +369,28 @@ object MCBASIC {
                     Code = Code.drop(1)
                     return Token(TokenKind.QuotedCommand, Command)
                 }
+                '@' -> {
+                    val SR = StringReader(Code)
+                    val Sel = EntityArgumentType.entities().parse(SR)
+                    Code = SR.string.drop(SR.cursor)
+                    return Token(TokenKind.EntitySelector, "", Sel = Sel)
+                }
                 else -> {
-                    val Kw = Code.takeWhile { !it.isWhitespace() }
+                    val Kw = Code.takeWhile { it.isLetterOrDigit() || it == '_' || it == '?' }
+
+                    // Check for keywords.
                     KEYWORDS[Kw]?.let {
                         Code = Code.drop(Kw.length)
                         return Token(it, Kw)
                     }
+
+                    // Check for built-in functions. These must be followed by a '('.
+                    BUILTIN_FUNCTIONS[Kw]?.let {
+                        Code = Code.drop(Kw.length).trimStart()
+                        if (Code.startsWith("(")) return Token(TokenKind.BuiltinFunction, Kw, it)
+                        throw SyntaxException("Reference to builtin function '$Kw' must be called")
+                    }
+
                     throw SyntaxException("Unknown token: '$Kw'")
                 }
             }
@@ -307,14 +399,36 @@ object MCBASIC {
         /**
         * Compile an expression.
         *
-        * <expr> ::= QUOTED-COMMAND
+        * <expr> ::= QUOTED-COMMAND | <expr-call>
+        * <expr-call> ::= BUILTIN-FUNCTION "(" [ <expr> ] { "," <expr> } [ "," ] ")"
         */
         private fun CompileExpr(): Expr {
             when (Tok.Kind) {
+                TokenKind.BuiltinFunction -> {
+                    val Func = Tok.Func!!
+                    val Args = mutableListOf<Expr>()
+                    Next()
+                    if (Tok.Kind != TokenKind.LParen) throw SyntaxException("Expected '(' after builtin function")
+                    Next()
+                    while (Tok.Kind != TokenKind.RParen && Tok.Kind != TokenKind.Eof) {
+                        Args.add(CompileExpr())
+                        if (Tok.Kind == TokenKind.Comma) Next()
+                    }
+                    if (Tok.Kind != TokenKind.RParen) throw SyntaxException("Expected ')'")
+                    Next()
+                    return BuiltinCallExpr(Func, Args)
+                }
+
                 TokenKind.QuotedCommand -> {
                     val Cmd = CommandExpr(Tok.Value)
                     Next()
                     return Cmd
+                }
+
+                TokenKind.EntitySelector -> {
+                    val Sel = EntitySelectorExpr(Tok.Sel!!)
+                    Next()
+                    return Sel
                 }
 
                 // In general, the input to a command will be everything until the
@@ -373,5 +487,4 @@ object MCBASIC {
             return true
         }
     }
-
 }

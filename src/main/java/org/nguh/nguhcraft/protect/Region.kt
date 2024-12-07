@@ -1,5 +1,6 @@
 package org.nguh.nguhcraft.protect
 
+import com.mojang.logging.LogUtils
 import net.minecraft.nbt.NbtCompound
 import net.minecraft.network.RegistryByteBuf
 import net.minecraft.registry.RegistryKey
@@ -351,7 +352,7 @@ class Region(
             val Path = Text.literal("Error\n    In trigger ")
             T.AppendName(AppendWorldAndName(Path).append(":"))
             Path.append("\n    Invoked by player '").append(SP.displayName)
-                .append("':\n    ").append(E.message)
+                .append("':\n    ").append(E.message ?: "Unknown error")
             S.sendError(Path)
             SP.server.BroadcastToOperators(Path.formatted(Formatting.RED))
         }
@@ -438,6 +439,7 @@ class Region(
     }
 
     companion object {
+        private val LOGGER = LogUtils.getLogger()
         private const val TAG_MIN_X = "MinX"
         private const val TAG_MIN_Z = "MinZ"
         private const val TAG_MAX_X = "MaxX"
