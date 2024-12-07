@@ -88,6 +88,7 @@ object Commands {
             D.register(SetHomeCommand())              // /sethome
             D.register(SmiteCommand())                // /smite
             D.register(SpeedCommand())                // /speed
+            D.register(SubscribeToConsoleCommand())   // /subscribe_to_console
             D.register(literal("tell").redirect(Msg)) // /tell
             D.register(TopCommand())                  // /top
             D.register(UUIDCommand())                 // /uuid
@@ -1076,6 +1077,17 @@ object Commands {
                 )
             }
         )
+
+    private fun SubscribeToConsoleCommand(): LiteralArgumentBuilder<ServerCommandSource> = literal("subscribe_to_console")
+        .requires { it.isExecutedByPlayer && it.hasPermissionLevel(4) }
+        .executes {
+            val SP = it.source.playerOrThrow
+            SP.IsSubscribedToConsole = !SP.IsSubscribedToConsole
+            it.source.sendMessage(Text.literal(
+                "You are ${if (SP.IsSubscribedToConsole) "now" else "no longer"} receiving console messages"
+            ).formatted(Formatting.YELLOW))
+            1
+        }
 
     private fun TopCommand(): LiteralArgumentBuilder<ServerCommandSource> = literal("top")
         .requires { it.hasPermissionLevel(4) && it.isExecutedByPlayer }

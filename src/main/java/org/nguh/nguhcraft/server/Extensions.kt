@@ -105,7 +105,7 @@ fun MinecraftServer.BroadcastToOperators(Msg: Text, Except: ServerPlayerEntity? 
         .append(Msg)
 
     for (P in playerManager.playerList)
-        if (/*P != Except && */P.hasPermissionLevel(4))
+        if (/*P != Except && */P.IsSubscribedToConsole && P.hasPermissionLevel(4))
             P.sendMessage(Decorated, false)
 }
 
@@ -129,6 +129,11 @@ var ServerPlayerEntity.IsModerator
 var ServerPlayerEntity.IsVanished
     get() = (this as ServerPlayerAccessor).vanished
     set(value) { (this as ServerPlayerAccessor).vanished = value }
+
+/** Check if a player is subscribed to console output. */
+var ServerPlayerEntity.IsSubscribedToConsole
+    get() = (this as ServerPlayerAccessor).isSubscribedToConsole
+    set(value) { (this as ServerPlayerAccessor).setIsSubscribedToConsole(value) }
 
 /** Save the player’s current position as a teleport target. */
 @JvmStatic
