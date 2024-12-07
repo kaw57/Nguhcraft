@@ -392,12 +392,13 @@ object Commands {
             return 1
         }
 
-        fun DeleteTriggerLine(C: CommandContext<ServerCommandSource>, Trigger: RegionTriggerProperty): Int {
+        fun DeleteTriggerLine(C: CommandContext<ServerCommandSource>, Trigger: RegionTriggerProperty, Until: Int? = null): Int {
             val R = RegionArgumentType.Resolve(C, REGION_ARG_NAME)
             val Program = Trigger.get(R).Commands
             val Line = IntegerArgumentType.getInteger(C, LINE_ARG_NAME)
             if (Line >= Program.LineCount()) throw INVALID_LINE_NUMBER.create()
-            Program.Delete(Line)
+            if (Until != null && Until >= Program.LineCount()) throw INVALID_LINE_NUMBER.create()
+            Program.Delete(Line..(Until ?: Line))
             C.source.sendMessage(Text.literal("Removed command at index $Line"))
             return 1
         }
@@ -899,6 +900,7 @@ object Commands {
             Region::PlayerEntryTrigger,
             Region::PlayerLeaveTrigger,
         ).forEach { Trigger ->
+            // TODO: These should probably be moved to a generic 'procedure' command,
             TriggerNode.then(literal(Trigger.get(Region.DUMMY).Name)
                 .then(literal("append")
                     .then(argument(RegionCommand.COMMAND_ARG_NAME, StringArgumentType.greedyString())
@@ -908,6 +910,15 @@ object Commands {
                 .then(literal("clear").executes { RegionCommand.ClearTrigger(it, Trigger) })
                 .then(literal("del")
                     .then(argument(RegionCommand.LINE_ARG_NAME, IntegerArgumentType.integer())
+                        .then(literal("to")
+                            .then(argument("until", IntegerArgumentType.integer())
+                                .executes { RegionCommand.DeleteTriggerLine(
+                                    it,
+                                    Trigger,
+                                    IntegerArgumentType.getInteger(it, "until")
+                                ) }
+                            )
+                        )
                         .executes { RegionCommand.DeleteTriggerLine(it, Trigger) }
                     )
                 )

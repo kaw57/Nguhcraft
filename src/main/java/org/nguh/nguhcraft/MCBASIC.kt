@@ -77,7 +77,7 @@ object MCBASIC {
         }
 
         /** Delete a line from the program. */
-        fun Delete(Line: Int) = ClearCache().also { SourceLines.removeAt(Line) }
+        fun Delete(R: ClosedRange<Int>) = ClearCache().also { SourceLines.subList(R.start, R.endInclusive + 1).clear() }
 
         /** The indicator that displays the programs state. */
         fun DisplayIndicator() = when (AST) {
@@ -482,9 +482,15 @@ object MCBASIC {
 
         /** Check whether an expression can be used as a condition. */
         private fun IsCondition(E: Expr): Boolean {
-            // Currently, the only type of expression we have is
-            // a command, which is always a valid condition.
-            return true
+            return when (E) {
+                is EntitySelectorExpr -> false
+                is CommandExpr -> true
+                is BuiltinCallExpr -> when (E.Func) {
+                    Builtin.IS_ENTITY_ALIVE, Builtin.IS_GM -> true
+                }
+
+                else -> throw SyntaxException("Expected expression")
+            }
         }
     }
 }

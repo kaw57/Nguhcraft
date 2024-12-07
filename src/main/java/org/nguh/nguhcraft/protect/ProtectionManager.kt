@@ -216,9 +216,6 @@ class RegionList(
  */
 object ProtectionManager {
     private const val TAG_REGIONS = "Regions"
-    private val ENTRY_DISALLOWED_TITLE: Text = Text.literal("TURN BACK").formatted(Formatting.RED)
-    private val ENTRY_DISALLOWED_SUBTITLE: Text = Text.literal("You are not allowed to enter this region")
-    private val ENTRY_DISALLOWED_MESSAGE = Text.literal("You are not allowed to enter this region").formatted(Formatting.RED)
 
     /** Current manager state. */
     @Volatile private var S = State()
