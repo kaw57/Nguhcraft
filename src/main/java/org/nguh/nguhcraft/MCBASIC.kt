@@ -21,6 +21,7 @@ import net.minecraft.util.Formatting
  */
 object MCBASIC {
     private const val SERIALISED_STMT_SEPARATOR = "\u0001"
+    private val WHITESPACE_REGEX = "\\s+".toRegex()
 
     /**
      * A program that can be executed and modified.
@@ -65,7 +66,7 @@ object MCBASIC {
             try {
                 val List = mutableListOf<Stmt>()
                 for (Line in SourceLines) {
-                    List.add(CompileStmt(Line))
+                    CompileStmt(Line.trim())?.let { List.add(it) }
                     L++
                 }
                 AST = CachedAST.Cached(Block(List))
@@ -180,6 +181,13 @@ object MCBASIC {
         }
     }
 
+    /** A statement that returns from the current procedure or program. */
+    private class ReturnStmt() : Stmt() {
+        override fun Execute(E: Executor) {
+            throw ReturnException.INSTANCE
+        }
+    }
+
     /**
      * Why bother implementing returning from out of several levels
      * deep in an AST that we walk recursively to evaluate it if we
@@ -195,8 +203,25 @@ object MCBASIC {
     private class SyntaxException(Msg: String) : Exception(Msg)
 
     /** Compile a statement. */
-    private fun CompileStmt(S: String): Stmt {
-        if (S.startsWith("/")) return CommandStmt(S.substring(1))
+    private fun CompileStmt(S: String): Stmt? {
+        val Tokens = S.split(WHITESPACE_REGEX)
+        if (Tokens.isEmpty()) return null
+        val Cmd = Tokens.first()
+
+        // This is not supported because it won’t work properly.
+        if (Cmd == "/return") throw SyntaxException("Use 'return' instead of '/return'")
+
+        // Compile a Minecraft command.
+        if (Cmd.startsWith("/")) return CommandStmt(S.substring(1))
+
+        // Compile a return statement.
+        if (Cmd == "return") return CompileReturnStmt(Tokens.drop(1))
         throw SyntaxException("Unknown statement: '$S'")
+    }
+
+    /** Compile a 'return' statement. */
+    private fun CompileReturnStmt(Tokens: List<String>): Stmt {
+        if (Tokens.isNotEmpty()) throw SyntaxException("Unexpected tokens after 'return'")
+        return ReturnStmt()
     }
 }
