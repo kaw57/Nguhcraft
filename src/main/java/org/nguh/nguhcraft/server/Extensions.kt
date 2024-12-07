@@ -97,7 +97,7 @@ fun MinecraftServer.Broadcast(Msg: Text) {
 }
 
 /** Broadcast a message in the operator chat. */
-fun MinecraftServer.BroadcastToOperators(Msg: Text) {
+fun MinecraftServer.BroadcastToOperators(Msg: Text, Except: ServerPlayerEntity? = null) {
     val Decorated = Text.empty()
         .append(Text.literal("[").withColor(Constants.Orange))
         .append(Text.literal("Console").formatted(Formatting.YELLOW))
@@ -105,7 +105,7 @@ fun MinecraftServer.BroadcastToOperators(Msg: Text) {
         .append(Msg)
 
     for (P in playerManager.playerList)
-        if (P.hasPermissionLevel(4))
+        if (/*P != Except && */P.hasPermissionLevel(4))
             P.sendMessage(Decorated, false)
 }
 

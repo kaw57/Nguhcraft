@@ -67,6 +67,14 @@ object Chat {
     /** Log a chat message. */
     fun LogChat(SP: ServerPlayerEntity, Message: String, IsCommand: Boolean) {
         val Linked = IsLinkedOrOperator(SP)
+        if (IsCommand) SP.server.BroadcastToOperators(Text.empty()
+            .append(SP.displayName)
+            .append(" ran /")
+            .append(Message)
+            .formatted(Formatting.YELLOW),
+            SP
+        )
+
         LOGGER.info(
             "[CHAT] {}{}{}: {}{}",
             SP.displayName?.string,
