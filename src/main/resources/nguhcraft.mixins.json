@@ -68,6 +68,7 @@
 		"server.TridentItemMixin",
 		"server.command.BanCommandMixin",
 		"server.command.BanIpCommandMixin",
+		"server.command.CommandBlockExecutorMixin",
 		"server.command.EnchantCommandMixin",
 		"server.command.KickCommandMixin",
 		"server.command.MeCommandMixin",
