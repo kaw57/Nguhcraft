@@ -9,10 +9,13 @@ import net.minecraft.network.packet.Packet
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.network.ServerPlayerEntity
 import net.minecraft.server.world.ServerWorld
+import net.minecraft.text.MutableText
 import net.minecraft.text.Text
+import net.minecraft.util.Formatting
 import net.minecraft.util.math.BlockPos
 import net.minecraft.util.math.Vec3d
 import net.minecraft.world.TeleportTarget
+import org.nguh.nguhcraft.Constants
 import org.nguh.nguhcraft.network.ClientFlags
 import org.nguh.nguhcraft.network.ClientboundSyncFlagPacket
 import org.nguh.nguhcraft.server.accessors.ServerPlayerAccessor
@@ -91,6 +94,19 @@ fun MinecraftServer.Broadcast(P: Packet<*>) {
 
 fun MinecraftServer.Broadcast(Msg: Text) {
     playerManager.broadcast(Msg, false)
+}
+
+/** Broadcast a message in the operator chat. */
+fun MinecraftServer.BroadcastToOperators(Msg: Text) {
+    val Decorated = Text.empty()
+        .append(Text.literal("[").withColor(Constants.Orange))
+        .append(Text.literal("Console").formatted(Formatting.YELLOW))
+        .append(Text.literal("] ").withColor(Constants.Orange))
+        .append(Msg)
+
+    for (P in playerManager.playerList)
+        if (P.hasPermissionLevel(4))
+            P.sendMessage(Decorated, false)
 }
 
 /** Get a player by Name. */

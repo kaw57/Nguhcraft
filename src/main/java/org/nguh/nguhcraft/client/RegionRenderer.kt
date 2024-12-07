@@ -30,7 +30,7 @@ object RegionRenderer {
     var ShouldRender = false
 
     private fun ColourFor(R: Region) =
-        if (R.DisallowsExistence()) Colors.LIGHT_RED
+        if (false) Colors.LIGHT_RED
         else Colors.LIGHT_YELLOW
 
     fun Render(Ctx: WorldRenderContext) {

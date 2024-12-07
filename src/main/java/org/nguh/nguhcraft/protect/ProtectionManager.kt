@@ -302,14 +302,6 @@ object ProtectionManager {
         }
     }
 
-    /** Check if a player is allowed to exist where they currently are. */
-    @JvmStatic
-    fun AllowExistence(PE: PlayerEntity): Boolean {
-        if (PE.BypassesRegionProtection()) return true
-        val R = FindRegionContainingBlock(PE.world, PE.blockPos) ?: return true
-        return !R.DisallowsExistence()
-    }
-
     /** Check if a player should suffer fall damage when landing on a block. */
     @JvmStatic
     fun AllowFallDamage(PE: PlayerEntity): Boolean {
@@ -590,14 +582,6 @@ object ProtectionManager {
 
         // Tick all regions.
         for (R in RegionListFor(SP.serverWorld)) R.TickPlayer(SP)
-
-        // Check if the player is in a region they’re not allowed in.
-        if (!AllowExistence(SP)) {
-            if (SP.isDead || SP.isSpectator || SP.isCreative) return
-            ServerUtils.SendTitle(SP, ENTRY_DISALLOWED_TITLE, ENTRY_DISALLOWED_SUBTITLE)
-            SP.sendMessage(ENTRY_DISALLOWED_MESSAGE, false)
-            ServerUtils.Obliterate(SP)
-        }
 
         Profilers.get().pop()
     }

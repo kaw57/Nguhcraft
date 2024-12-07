@@ -1,15 +1,11 @@
 package org.nguh.nguhcraft.protect
 
 import net.minecraft.nbt.NbtCompound
-import net.minecraft.nbt.NbtElement
-import net.minecraft.nbt.NbtList
-import net.minecraft.nbt.NbtString
 import net.minecraft.network.RegistryByteBuf
 import net.minecraft.registry.RegistryKey
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.command.ServerCommandSource
 import net.minecraft.server.network.ServerPlayerEntity
-import net.minecraft.text.ClickEvent
 import net.minecraft.text.MutableText
 import net.minecraft.text.Text
 import net.minecraft.util.Formatting
@@ -17,6 +13,8 @@ import net.minecraft.util.math.BlockPos
 import net.minecraft.util.math.Vec2f
 import net.minecraft.world.World
 import org.nguh.nguhcraft.Constants
+import org.nguh.nguhcraft.MCBASIC
+import org.nguh.nguhcraft.server.BroadcastToOperators
 import java.util.*
 import kotlin.math.max
 import kotlin.math.min
@@ -35,40 +33,28 @@ data class RegionTrigger(
     val Name: String,
 
     /** The command to run. */
-    val Commands: MutableList<String> = mutableListOf()
+    val Commands: MCBASIC.Program = MCBASIC.Program()
 ) {
     /** Append a region name to a text element. */
     fun AppendName(MT: MutableText): MutableText
-        = MT.append(Text.literal(Name).withColor(Constants.Orange))
+        = MT.append(Text.literal("$Name${Commands.DisplayIndicator()}").withColor(Constants.Orange))
 
     /** Print this trigger. */
-    fun AppendCommands(R: Region, S: MutableText, Indent: Int) {
-        val IndentStr = " ".repeat(Indent)
-        if (Commands.isEmpty()) S.append(Text.literal(" <empty>").formatted(Formatting.GRAY))
-        else Commands.forEachIndexed { I, C ->
-            S.append("\n$IndentStr[$I] ").append(
-                Text.literal(C)
-                    .formatted(Formatting.AQUA)
-                    .styled { it.withClickEvent(ClickEvent(
-                        ClickEvent.Action.SUGGEST_COMMAND,
-                        "/region trigger ${R.World.value.path}:${R.Name} $Name set $I $C"
-                    )) }
-            )
+    fun AppendCommands(R: Region, MT: MutableText, Indent: Int): MutableText {
+        return Commands.DisplaySource(MT, Indent) { Line, Text ->
+            "/region trigger ${R.World.value.path}:${R.Name} $Name set $Line $Text"
         }
     }
 
     /** Read a trigger from NBT. */
-    fun Read(Tag: NbtCompound) =
-        Tag.getCompound(Name)
-           .getList(TAG_COMMANDS, NbtElement.STRING_TYPE.toInt())
-           .mapTo(Commands) { it.asString() }
+    fun Read(Tag: NbtCompound) {
+        Commands.DeserialiseFrom(Tag.getCompound(Name).getString(TAG_COMMANDS))
+    }
 
     /** Write this trigger to NBT. */
     fun Write(Parent: NbtCompound) {
         val Tag = NbtCompound()
-        val CommandList = NbtList()
-        Tag.put(TAG_COMMANDS, CommandList)
-        Commands.forEach { CommandList.add(NbtString.of(it)) }
+        Tag.putString(TAG_COMMANDS, Commands.Save())
         Parent.put(Name, Tag)
     }
 
@@ -115,20 +101,6 @@ class Region(
          * at all.
          */
         CHANGE_BLOCKS,
-
-        /**
-         * Disallow player existence in a region, obliterating them if
-         * they enter it.
-         *
-         * This is equivalent to a region trigger that executes the
-         * /obliterate command, except that it also sends a title to
-         * the player explaining that they may not enter the region.
-         *
-         * This does not interact with player triggers at all (except
-         * of course that some triggers choose to may do nothing if the
-         * player is dead, which this will certainly cause).
-         */
-        DISALLOW_EXISTENCE,
 
         /** Allow opening and closing doors. */
         DOORS,
@@ -331,6 +303,13 @@ class Region(
         .append(Text.literal("$MaxZ").formatted(Formatting.GRAY))
         .append("]")
 
+
+    /** Append the world and name of this region. */
+    fun AppendWorldAndName(MT: MutableText): MutableText = MT
+        .append(Text.literal(World.value.path.toString()).withColor(Constants.Lavender))
+        .append(":")
+        .append(Text.literal(Name).formatted(Formatting.AQUA))
+
     /** Get the centre of a region. */
     val Center: BlockPos get() = BlockPos((MinX + MaxX) / 2, 0, (MinZ + MaxZ) / 2)
 
@@ -338,9 +317,6 @@ class Region(
     fun Contains(Pos: BlockPos): Boolean = Contains(Pos.x, Pos.z)
     fun Contains(X: Int, Z: Int): Boolean = X in MinX..MaxX && Z in MinZ..MaxZ
     fun Contains(R: Region) = Contains(R.MinX, R.MinZ) && Contains(R.MaxX, R.MaxZ)
-
-    /** Check if players are allowed to be in this region. */
-    fun DisallowsExistence() = Test(Flags.DISALLOW_EXISTENCE)
 
     /** Check if a region intersects another. */
     fun Intersects(Other: Region) = Intersects(
@@ -356,7 +332,7 @@ class Region(
 
     /** Run a player trigger. */
     fun InvokePlayerTrigger(SP: ServerPlayerEntity, T: RegionTrigger) {
-        if (T.Commands.isEmpty()) return
+        if (T.Commands.IsEmpty()) return
         val S = ServerCommandSource(
             SP.server,
             SP.pos,
@@ -369,7 +345,16 @@ class Region(
             null
         )
 
-        T.Commands.forEach { SP.server.commandManager.executeWithPrefix(S, it) }
+        try {
+            T.Commands.ExecuteAndThrow(S)
+        } catch (E: Exception) {
+            val Path = Text.literal("Error\n    In trigger ")
+            T.AppendName(AppendWorldAndName(Path).append(":"))
+            Path.append("\n    Invoked by player '").append(SP.displayName)
+                .append("':\n    ").append(E.message)
+            S.sendError(Path)
+            SP.server.BroadcastToOperators(Path.formatted(Formatting.RED))
+        }
     }
 
     /** Get the radius of the region. */

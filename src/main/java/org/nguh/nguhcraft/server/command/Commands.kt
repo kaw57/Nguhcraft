@@ -23,7 +23,6 @@ import net.minecraft.server.command.CommandManager.literal
 import net.minecraft.server.command.ServerCommandSource
 import net.minecraft.server.network.ServerPlayerEntity
 import net.minecraft.server.world.ServerWorld
-import net.minecraft.text.MutableText
 import net.minecraft.text.Text
 import net.minecraft.util.Formatting
 import net.minecraft.util.math.BlockPos
@@ -34,6 +33,7 @@ import net.minecraft.world.Heightmap
 import net.minecraft.world.World
 import net.minecraft.world.chunk.ChunkStatus
 import org.nguh.nguhcraft.Constants
+import org.nguh.nguhcraft.MCBASIC
 import org.nguh.nguhcraft.Nguhcraft.Companion.Id
 import org.nguh.nguhcraft.SyncedGameRule
 import org.nguh.nguhcraft.item.KeyItem
@@ -348,49 +348,44 @@ object Commands {
 
         fun AddTriggerLine(C: CommandContext<ServerCommandSource>, Trigger: RegionTriggerProperty): Int {
             val R = RegionArgumentType.Resolve(C, REGION_ARG_NAME)
-            val List = Trigger.get(R).Commands
+            val Program = Trigger.get(R).Commands
             val Line = IntegerArgumentType.getInteger(C, LINE_ARG_NAME)
-            InsertTriggerCommand(C, List, Line)
+            InsertTriggerCommand(C, Program, Line)
             return 1
         }
 
         fun AppendTriggerLine(C: CommandContext<ServerCommandSource>, Trigger: RegionTriggerProperty): Int {
             val R = RegionArgumentType.Resolve(C, REGION_ARG_NAME)
-            val List = Trigger.get(R).Commands
-            InsertTriggerCommand(C, List, List.size)
+            val Program = Trigger.get(R).Commands
+            InsertTriggerCommand(C, Program, Program.LineCount())
             return 1
         }
-
-        private fun AppendWorldAndRegionName(MT: MutableText, R: Region): MutableText = MT
-            .append(Text.literal(R.World.value.path.toString()).withColor(Constants.Lavender))
-            .append(":")
-            .append(Text.literal(R.Name).formatted(Formatting.AQUA))
 
         fun ClearTrigger(C: CommandContext<ServerCommandSource>, Trigger: RegionTriggerProperty): Int {
             val R = RegionArgumentType.Resolve(C, REGION_ARG_NAME)
             val T = Trigger.get(R)
-            if (T.Commands.isEmpty()) {
+            if (T.Commands.IsEmpty()) {
                 C.source.sendMessage(TRIGGER_EMPTY)
                 return 0
             }
 
-            T.Commands.clear()
+            T.Commands.Clear()
             val Msg = Text.literal("Cleared ")
             T.AppendName(Msg)
             Msg.append(" for region ")
-            AppendWorldAndRegionName(Msg, R)
+            R.AppendWorldAndName(Msg)
             C.source.sendMessage(Msg.formatted(Formatting.GREEN))
             return 1
         }
 
         fun DeleteRegion(S: ServerCommandSource, R: Region): Int {
             if (!ProtectionManager.DeleteRegion(S.server, R)) {
-                S.sendError(AppendWorldAndRegionName(Text.literal("No such region: "), R))
+                S.sendError(R.AppendWorldAndName(Text.literal("No such region: ")))
                 return 0
             }
 
             S.sendMessage(
-                AppendWorldAndRegionName(Text.literal("Deleted region "), R)
+                R.AppendWorldAndName(Text.literal("Deleted region "))
                 .formatted(Formatting.GREEN)
             )
             return 1
@@ -398,23 +393,17 @@ object Commands {
 
         fun DeleteTriggerLine(C: CommandContext<ServerCommandSource>, Trigger: RegionTriggerProperty): Int {
             val R = RegionArgumentType.Resolve(C, REGION_ARG_NAME)
-            val List = Trigger.get(R).Commands
+            val Program = Trigger.get(R).Commands
             val Line = IntegerArgumentType.getInteger(C, LINE_ARG_NAME)
-            if (Line >= List.size) throw INVALID_LINE_NUMBER.create()
-            List.removeAt(Line)
+            if (Line >= Program.LineCount()) throw INVALID_LINE_NUMBER.create()
+            Program.Delete(Line)
             C.source.sendMessage(Text.literal("Removed command at index $Line"))
             return 1
         }
 
-        private fun GetCommandArg(C: CommandContext<ServerCommandSource>): String {
-            // Add '/' because it looks nicer.
-            val Command = StringArgumentType.getString(C, COMMAND_ARG_NAME).trim()
-            return if (Command.startsWith("/")) Command else "/$Command"
-        }
-
-        private fun InsertTriggerCommand(C: CommandContext<ServerCommandSource>, List: MutableList<String>, Index: Int) {
-            if (Index > List.size || Index < 0) throw INVALID_LINE_NUMBER.create() // '>', not '>='!
-            List.add(Index, GetCommandArg(C))
+        private fun InsertTriggerCommand(C: CommandContext<ServerCommandSource>, Program: MCBASIC.Program, Index: Int) {
+            if (Index > Program.LineCount() || Index < 0) throw INVALID_LINE_NUMBER.create() // '>', not '>='!
+            Program.Insert(Index, StringArgumentType.getString(C, COMMAND_ARG_NAME))
             C.source.sendMessage(Text.literal("Added command at index $Index"))
         }
 
@@ -450,7 +439,7 @@ object Commands {
         }
 
         fun PrintRegionInfo(S: ServerCommandSource, R: Region): Int {
-            val Stats = AppendWorldAndRegionName(Text.literal("Region "), R)
+            val Stats = R.AppendWorldAndName(Text.literal("Region "))
             R.AppendBounds(Stats)
             Stats.append(R.Stats)
             S.sendMessage(Stats.formatted(Formatting.YELLOW))
@@ -485,16 +474,16 @@ object Commands {
                 )
                 .append(" for region ")
 
-            AppendWorldAndRegionName(Mess, R)
+            R.AppendWorldAndName(Mess)
             S.sendMessage(Mess.formatted(Formatting.YELLOW))
             return 1
         }
 
         fun SetTrigger(C: CommandContext<ServerCommandSource>, Trigger: RegionTriggerProperty): Int {
             val R = RegionArgumentType.Resolve(C, REGION_ARG_NAME)
-            val List = Trigger.get(R).Commands
-            List.clear()
-            InsertTriggerCommand(C, List, 0)
+            val Program = Trigger.get(R).Commands
+            Program.Clear()
+            InsertTriggerCommand(C, Program, 0)
             return 1
         }
 
@@ -502,8 +491,8 @@ object Commands {
             val R = RegionArgumentType.Resolve(C, REGION_ARG_NAME)
             val List = Trigger.get(R).Commands
             val Line = IntegerArgumentType.getInteger(C, LINE_ARG_NAME)
-            if (Line >= List.size) throw INVALID_LINE_NUMBER.create()
-            List[Line] = GetCommandArg(C)
+            if (Line >= List.LineCount()) throw INVALID_LINE_NUMBER.create()
+            List[Line] = StringArgumentType.getString(C, COMMAND_ARG_NAME)
             C.source.sendMessage(Text.literal("Set command at index $Line"))
             return 1
         }
@@ -514,7 +503,7 @@ object Commands {
             val Msg = Text.literal("Trigger ")
             T.AppendName(Msg)
             Msg.append(" for region ")
-            AppendWorldAndRegionName(Msg, R)
+            R.AppendWorldAndName(Msg)
             Msg.append(":")
             T.AppendCommands(R, Msg, 2)
             C.source.sendMessage(Msg.formatted(Formatting.YELLOW))
