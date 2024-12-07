@@ -1,6 +1,5 @@
 package org.nguh.nguhcraft
 
-import com.mojang.brigadier.exceptions.CommandSyntaxException
 import net.minecraft.server.command.ServerCommandSource
 import net.minecraft.text.ClickEvent
 import net.minecraft.text.MutableText
@@ -23,6 +22,18 @@ object MCBASIC {
     private const val SERIALISED_STMT_SEPARATOR = "\u0001"
     private val WHITESPACE_REGEX = "\\s+".toRegex()
 
+    /** The AST of the program. */
+    private sealed class CachedAST {
+        /** The program has not yet been compiled after it was last changed. */
+        class NotCached() : CachedAST()
+
+        /** The program has been compiled and is ready to execute. */
+        class Cached(val Root: Block) : CachedAST()
+
+        /** The program contains a syntax error. */
+        class Error(val Err: SyntaxException) : CachedAST()
+    }
+
     /**
      * A program that can be executed and modified.
      *
@@ -36,17 +47,6 @@ object MCBASIC {
          */
         private val SourceLines: MutableList<String> = mutableListOf<String>()
     ) {
-        /** The AST of the program. */
-        private sealed class CachedAST {
-            /** The program has not yet been compiled after it was last changed. */
-            class NotCached() : CachedAST()
-
-            /** The program has been compiled and is ready to execute. */
-            class Cached(val Root: Block) : CachedAST()
-
-            /** The program contains a syntax error. */
-            class Error(val Err: SyntaxException) : CachedAST()
-        }
 
         /** The compiled representation. */
         private var AST: CachedAST = CachedAST.NotCached()
@@ -62,17 +62,7 @@ object MCBASIC {
 
         /** Compile the program. */
         fun Compile() {
-            var L  = 0
-            try {
-                val List = mutableListOf<Stmt>()
-                for (Line in SourceLines) {
-                    CompileStmt(Line.trim())?.let { List.add(it) }
-                    L++
-                }
-                AST = CachedAST.Cached(Block(List))
-            } catch (E: SyntaxException) {
-                AST = CachedAST.Error(SyntaxException("In line $L: ${E.message}"))
-            }
+            AST = Compiler(SourceLines.joinToString("\n").trim()).CompileAST()
         }
 
         /** Load a program from a serialised representation. */
@@ -202,26 +192,122 @@ object MCBASIC {
     /** A syntax or semantic error. */
     private class SyntaxException(Msg: String) : Exception(Msg)
 
-    /** Compile a statement. */
-    private fun CompileStmt(S: String): Stmt? {
-        val Tokens = S.split(WHITESPACE_REGEX)
-        if (Tokens.isEmpty()) return null
-        val Cmd = Tokens.first()
+    /** Class that compiles a program. */
+    private class Compiler(val SourceCode: String) {
+        private enum class TokenKind {
+            // A series of characters that starts with '/'.
+            Command,
 
-        // This is not supported because it won’t work properly.
-        if (Cmd == "/return") throw SyntaxException("Use 'return' instead of '/return'")
+            // A series of characters that starts with a backquote.
+            QuotedCommand,
 
-        // Compile a Minecraft command.
-        if (Cmd.startsWith("/")) return CommandStmt(S.substring(1))
+            // The 'return' keyword.
+            Return,
 
-        // Compile a return statement.
-        if (Cmd == "return") return CompileReturnStmt(Tokens.drop(1))
-        throw SyntaxException("Unknown statement: '$S'")
+            // End of file.
+            Eof,
+        }
+
+        data class Token(
+            val Kind: TokenKind,
+            val Value: String,
+        )
+
+        var Code = SourceCode
+        var Tok = Next()
+        fun CompileAST(): CachedAST {
+            try {
+                val List = mutableListOf<Stmt>()
+                while (Tok.Kind != TokenKind.Eof) CompileStmt()?.let { List.add(it) }
+                return CachedAST.Cached(Block(List))
+            } catch (E: SyntaxException) {
+                // Find the line we’re on.
+                var Line = SourceCode.take(SourceCode.length - Code.length).count { it == '\n' }
+                return CachedAST.Error(SyntaxException("Near line $Line: ${E.message}"))
+            }
+        }
+
+        /** Get the next token. */
+        private fun Next(): Token {
+            Tok = NextImpl()
+            return Tok
+        }
+
+        /** Call Next() instead of this. */
+        private fun NextImpl(): Token {
+            Code = Code.trimStart()
+            if (Code.isEmpty()) return Token(TokenKind.Eof, "")
+            val C = Code.first()
+            when (C) {
+                '/' -> {
+                    // Yeet '/'. It must be followed by a non-whitespace character.
+                    Code = Code.drop(1)
+                    if (Code.isEmpty() || Code.first().isWhitespace())
+                        throw SyntaxException("Expected command name after '/'")
+
+                    // The rest of the line is the command.
+                    val Command = Code.takeWhile { it != '\n' }.trimEnd()
+                    Code = Code.drop(Command.length + 1)
+                    return Token(TokenKind.Command, Command)
+                }
+                '`' -> {
+                    // Yeet '`' and take everything up to the next '`'.
+                    Code = Code.drop(1)
+                    val Command = Code.takeWhile { it != '`' }
+                    Code = Code.drop(Command.length)
+                    if (!Code.startsWith('`')) throw SyntaxException("Expected closing backquote")
+                    Code = Code.drop(1)
+                    return Token(TokenKind.QuotedCommand, Command)
+                }
+                else -> {
+                    val Kw = Code.takeWhile { !it.isWhitespace() }
+                    when (Kw) {
+                        "return" -> {
+                            Code = Code.drop(Kw.length)
+                            return Token(TokenKind.Return, "")
+                        }
+                        else -> throw SyntaxException("Unexpected token: '$Kw'")
+                    }
+                }
+            }
+        }
+
+        /**
+         * Compile a statement.
+         *
+         * <stmt> ::= <command> | <stmt-return> | <stmt-if>
+         */
+        private fun CompileStmt(): Stmt? {
+            when (Tok.Kind) {
+                TokenKind.Eof -> return null
+
+                /** <stmt-cmd> ::= COMMAND | QUOTED-COMMAND */
+                TokenKind.Command, TokenKind.QuotedCommand -> {
+                    // '/return' is not allowed because it doesn’t work the
+                    // way you’d expect it to.
+                    if (Tok.Value.startsWith("return"))
+                        throw SyntaxException("'/return' cannot be used as a command. Use a 'return' statement instead.")
+                    val Cmd = CommandStmt(Tok.Value)
+                    Next()
+                    return Cmd
+                }
+
+                /** <stmt-return> ::= RETURN */
+                TokenKind.Return -> {
+                    Next()
+                    return ReturnStmt()
+                }
+            }
+        }
+
+        /**
+         * Compile an 'if' statement.
+         *
+         * <stmt-if> ::= IF <expr> THEN <stmt>
+         */
+        /*private fun CompileIfStmt(Tokens: List<String>): Stmt {
+
+        }*/
     }
 
-    /** Compile a 'return' statement. */
-    private fun CompileReturnStmt(Tokens: List<String>): Stmt {
-        if (Tokens.isNotEmpty()) throw SyntaxException("Unexpected tokens after 'return'")
-        return ReturnStmt()
-    }
 }
