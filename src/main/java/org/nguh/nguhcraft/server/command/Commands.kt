@@ -502,12 +502,17 @@ object Commands {
         fun ShowTrigger(C: CommandContext<ServerCommandSource>, Trigger: RegionTriggerProperty): Int {
             val R = RegionArgumentType.Resolve(C, REGION_ARG_NAME)
             val T = Trigger.get(R)
-            val Msg = Text.literal("Trigger ")
-            T.AppendName(Msg)
-            Msg.append(" for region ")
-            R.AppendWorldAndName(Msg)
-            Msg.append(":")
+            val Msg = T.AppendName(Text.literal("== Trigger ")).append(" ==\n")
             T.AppendCommands(R, Msg, 2)
+            C.source.sendMessage(Msg.formatted(Formatting.YELLOW))
+            return 1
+        }
+
+        fun ShowTriggerListing(C: CommandContext<ServerCommandSource>, Trigger: RegionTriggerProperty): Int {
+            val R = RegionArgumentType.Resolve(C, REGION_ARG_NAME)
+            val T = Trigger.get(R)
+            val Msg = T.AppendName(Text.literal("== Trigger ")).append(" ==") // No newline here!
+            T.Commands.Listing(Msg)
             C.source.sendMessage(Msg.formatted(Formatting.YELLOW))
             return 1
         }
@@ -929,6 +934,7 @@ object Commands {
                         )
                     )
                 )
+                .then(literal("listing").executes { RegionCommand.ShowTriggerListing(it, Trigger) })
                 .then(literal("set")
                     .then(argument(RegionCommand.LINE_ARG_NAME, IntegerArgumentType.integer())
                         .then(argument(RegionCommand.COMMAND_ARG_NAME, StringArgumentType.greedyString())

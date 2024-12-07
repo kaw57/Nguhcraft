@@ -33,7 +33,7 @@ object MCBASIC {
         class NotCached() : CachedAST()
 
         /** The program has been compiled and is ready to execute. */
-        class Cached(val Root: Block) : CachedAST()
+        class Cached(val Root: RootStmt) : CachedAST()
 
         /** The program contains a syntax error. */
         class Error(val Err: SyntaxException) : CachedAST()
@@ -137,6 +137,15 @@ object MCBASIC {
         /** The line count of the program. */
         fun LineCount(): Int = SourceLines.size
 
+        /** Print the AST. */
+        fun Listing(MT: MutableText) {
+            when (AST) {
+                is CachedAST.Cached -> Writer(MT).also { (AST as CachedAST.Cached).Root.Display(it) }
+                is CachedAST.Error -> MT.append(Text.literal("Listing not available due to syntax error").formatted(Formatting.RED))
+                is CachedAST.NotCached -> MT.append(Text.literal("Listing not available until compiled").formatted(Formatting.GRAY))
+            }
+        }
+
         /** Save the program as a string. */
         fun Save(): String = SourceLines.joinToString(SERIALISED_STMT_SEPARATOR)
 
@@ -150,7 +159,7 @@ object MCBASIC {
         }
 
         var CommandReturnValue: Int = 0
-        fun ExecuteAST(AST: Block) {
+        fun ExecuteAST(AST: RootStmt) {
             try {
                 AST.Execute(this)
             } catch (_: ReturnException) {
@@ -158,6 +167,24 @@ object MCBASIC {
             } catch (T: Throwable) {
                 throw T
             }
+        }
+    }
+
+    private class Writer(
+        val MT: MutableText,
+        var IndentWidth: Int = 0
+    ) {
+        fun Indent() { IndentWidth += 4 }
+        fun Outdent() { IndentWidth -= 4 }
+        fun StartLine() { MT.append("\n" + " ".repeat(IndentWidth)) }
+        fun Write(S: String, F: Formatting? = null) {
+            val T = Text.literal(S)
+            if (F != null) T.formatted(F)
+            MT.append(T)
+        }
+        fun WriteStmt(S: Stmt) {
+            StartLine()
+            S.DisplayAsStmt(this)
         }
     }
 
@@ -171,6 +198,8 @@ object MCBASIC {
 
     /** Root of the AST class hierarchy. */
     private abstract class Stmt {
+        abstract fun Display(W: Writer)
+        open fun DisplayAsStmt(W: Writer) { Display(W) }
         abstract fun Execute(E: Executor)
     }
 
@@ -180,10 +209,22 @@ object MCBASIC {
         abstract fun Evaluate(E: Executor): Any
     }
 
+    /** Root of the AST itself. */
+    private class RootStmt(val Statements: List<Stmt>) : Stmt() {
+        override fun Display(W: Writer) { for (S in Statements) W.WriteStmt(S) }
+        override fun Execute(E: Executor) { for (S in Statements) S.Execute(E) }
+    }
+
     /** A list of statements. */
     private class Block(val Statements: List<Stmt>) : Stmt() {
-        override fun Execute(E: Executor) {
-            for (S in Statements) S.Execute(E)
+        override fun Execute(E: Executor) { for (S in Statements) S.Execute(E) }
+        override fun Display(W: Writer) {
+            W.Write("begin", Formatting.GOLD)
+            W.Indent()
+            for (S in Statements) W.WriteStmt(S)
+            W.Outdent()
+            W.StartLine()
+            W.Write("end", Formatting.GOLD)
         }
     }
 
@@ -202,6 +243,20 @@ object MCBASIC {
             }
         }
 
+        override fun Display(W: Writer) {
+            W.Write(when (Func) {
+                Builtin.IS_ENTITY_ALIVE -> "alive?"
+                Builtin.IS_GM -> "gm?"
+            }, Formatting.GREEN)
+
+            W.Write("(", Formatting.GOLD)
+            for ((I, A) in Args.withIndex()) {
+                if (I != 0) W.Write(", ", Formatting.GOLD)
+                A.Display(W)
+            }
+            W.Write(")", Formatting.GOLD)
+        }
+
         override fun Evaluate(E: Executor): Any {
             when (Func) {
                 Builtin.IS_ENTITY_ALIVE -> {
@@ -218,6 +273,19 @@ object MCBASIC {
 
     /** An expression that is actually a Minecraft command. */
     private class CommandExpr(val Command: String) : Expr() {
+        override fun Display(W: Writer) {
+            W.Write("`", Formatting.GOLD)
+            DisplayAsStmt(W)
+            W.Write("`", Formatting.GOLD)
+        }
+
+        override fun DisplayAsStmt(W: Writer) {
+            val Cmd = Command.split(WHITESPACE_REGEX)[0]
+            val Rest = Command.drop(Cmd.length).trimStart()
+            W.Write("/$Cmd", Formatting.GREEN)
+            if (Rest.isNotEmpty()) W.Write(" $Rest", Formatting.YELLOW)
+        }
+
         override fun Evaluate(E: Executor): Any {
             val CM = E.Source.server.commandManager
             val Wrapped = "return run $Command" // Wrap w/ 'return' to get the return value.
@@ -227,7 +295,11 @@ object MCBASIC {
     }
 
     /** An expression that selects an entity. */
-    private class EntitySelectorExpr(val Sel: EntitySelector): Expr() {
+    private class EntitySelectorExpr(val Sel: EntitySelector, val SelStr: String): Expr() {
+        override fun Display(W: Writer) {
+            W.Write(SelStr, Formatting.AQUA)
+        }
+
         override fun Evaluate(E: Executor): Any {
             return Sel.getEntities(E.Source)
         }
@@ -241,6 +313,15 @@ object MCBASIC {
 
     /** An 'if' statement, which does what you’d expect. */
     private class IfStmt(val Cond: Expr, val Body: Stmt): Stmt() {
+        override fun Display(W: Writer) {
+            W.Write("if ", Formatting.GOLD)
+            Cond.Display(W)
+            W.Write(" then", Formatting.GOLD)
+            if (Body !is Block) W.Indent()
+            W.WriteStmt(Body)
+            if (Body !is Block) W.Outdent()
+        }
+
         override fun Execute(E: Executor) {
             val Result = Cond.Evaluate(E)
             if (Result !is Int) throw IllegalStateException("Invalid type should have been caught at compile time")
@@ -250,9 +331,8 @@ object MCBASIC {
 
     /** A statement that returns from the current procedure or program. */
     private class ReturnStmt() : Stmt() {
-        override fun Execute(E: Executor) {
-            throw ReturnException.INSTANCE
-        }
+        override fun Display(W: Writer) { W.Write("return", Formatting.GOLD) }
+        override fun Execute(E: Executor) { throw ReturnException.INSTANCE }
     }
 
     /**
@@ -325,7 +405,7 @@ object MCBASIC {
                 Tok = Next()
                 val List = mutableListOf<Stmt>()
                 while (Tok.Kind != TokenKind.Eof) CompileStmt()?.let { List.add(it) }
-                return CachedAST.Cached(Block(List))
+                return CachedAST.Cached(RootStmt(List))
             } catch (E: SyntaxException) {
                 // Find the line we’re on.
                 var Line = SourceCode.take(SourceCode.length - Code.length).count { it == '\n' }
@@ -373,7 +453,7 @@ object MCBASIC {
                     val SR = StringReader(Code)
                     val Sel = EntityArgumentType.entities().parse(SR)
                     Code = SR.string.drop(SR.cursor)
-                    return Token(TokenKind.EntitySelector, "", Sel = Sel)
+                    return Token(TokenKind.EntitySelector, SR.string.take(SR.cursor), Sel = Sel)
                 }
                 else -> {
                     val Kw = Code.takeWhile { it.isLetterOrDigit() || it == '_' || it == '?' }
@@ -426,7 +506,7 @@ object MCBASIC {
                 }
 
                 TokenKind.EntitySelector -> {
-                    val Sel = EntitySelectorExpr(Tok.Sel!!)
+                    val Sel = EntitySelectorExpr(Tok.Sel!!, Tok.Value)
                     Next()
                     return Sel
                 }
