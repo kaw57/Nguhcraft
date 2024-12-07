@@ -139,7 +139,12 @@ object MCBASIC {
         operator fun set(Line: Int, Text: String) = ClearCache().also { SourceLines[Line] = Text.trim() }
     }
 
-    private class Executor(val Source: ServerCommandSource) {
+    private class Executor(CommandSource: ServerCommandSource) {
+        val Source: ServerCommandSource = CommandSource.withReturnValueConsumer {
+            Success, Value -> CommandReturnValue = if (Success) Value else 0
+        }
+
+        var CommandReturnValue: Int = 0
         fun ExecuteAST(AST: Block) {
             try {
                 AST.Execute(this)
@@ -156,6 +161,12 @@ object MCBASIC {
         abstract fun Execute(E: Executor)
     }
 
+    /** A statement that returns a value. */
+    private abstract class Expr: Stmt() {
+        final override fun Execute(E: Executor) { Evaluate(E) }
+        abstract fun Evaluate(E: Executor): Any
+    }
+
     /** A list of statements. */
     private class Block(val Statements: List<Stmt>) : Stmt() {
         override fun Execute(E: Executor) {
@@ -164,10 +175,21 @@ object MCBASIC {
     }
 
     /** A statement that is actually a Minecraft command. */
-    private class CommandStmt(val Command: String) : Stmt() {
-        override fun Execute(E: Executor) {
+    private class CommandExpr(val Command: String) : Expr() {
+        override fun Evaluate(E: Executor): Any {
             val CM = E.Source.server.commandManager
-            CM.execute(CM.dispatcher.parse(Command, E.Source), Command)
+            val Wrapped = "return run $Command" // Wrap w/ 'return' to get the return value.
+            CM.execute(CM.dispatcher.parse(Wrapped, E.Source), Wrapped)
+            return E.CommandReturnValue
+        }
+    }
+
+    /** An 'if' statement, which does what you’d expect. */
+    private class IfStmt(val Cond: Expr, val Body: Stmt): Stmt() {
+        override fun Execute(E: Executor) {
+            val Result = Cond.Evaluate(E)
+            if (Result !is Int) throw IllegalStateException("Invalid type should have been caught at compile time")
+            if (Result != 0) Body.Execute(E)
         }
     }
 
@@ -201,11 +223,21 @@ object MCBASIC {
             // A series of characters that starts with a backquote.
             QuotedCommand,
 
-            // The 'return' keyword.
-            Return,
+            // Keywords.
+            KwThen,
+            KwIf,
+            KwReturn,
 
             // End of file.
             Eof,
+        }
+
+        companion object {
+            private val KEYWORDS = mapOf(
+                "if" to TokenKind.KwIf,
+                "return" to TokenKind.KwReturn,
+                "then" to TokenKind.KwThen,
+            )
         }
 
         data class Token(
@@ -251,8 +283,10 @@ object MCBASIC {
                     return Token(TokenKind.Command, Command)
                 }
                 '`' -> {
-                    // Yeet '`' and take everything up to the next '`'.
+                    // Yeet '`' and take everything up to the next '`'. Also yeet a
+                    // single '/' if the command starts with one.
                     Code = Code.drop(1)
+                    if (Code.startsWith('/')) Code = Code.drop(1)
                     val Command = Code.takeWhile { it != '`' }
                     Code = Code.drop(Command.length)
                     if (!Code.startsWith('`')) throw SyntaxException("Expected closing backquote")
@@ -261,21 +295,40 @@ object MCBASIC {
                 }
                 else -> {
                     val Kw = Code.takeWhile { !it.isWhitespace() }
-                    when (Kw) {
-                        "return" -> {
-                            Code = Code.drop(Kw.length)
-                            return Token(TokenKind.Return, "")
-                        }
-                        else -> throw SyntaxException("Unexpected token: '$Kw'")
+                    KEYWORDS[Kw]?.let {
+                        Code = Code.drop(Kw.length)
+                        return Token(it, Kw)
                     }
+                    throw SyntaxException("Unknown token: '$Kw'")
                 }
+            }
+        }
+
+        /**
+        * Compile an expression.
+        *
+        * <expr> ::= QUOTED-COMMAND
+        */
+        private fun CompileExpr(): Expr {
+            when (Tok.Kind) {
+                TokenKind.QuotedCommand -> {
+                    val Cmd = CommandExpr(Tok.Value)
+                    Next()
+                    return Cmd
+                }
+
+                // In general, the input to a command will be everything until the
+                // end of the line, so an unquoted command that isn’t a statement
+                // seems like a bad idea, so disallow it.
+                TokenKind.Command -> throw SyntaxException("Unquoted command is not allowed here. Enclose it in `backquotes` instead.")
+                else -> throw SyntaxException("Unexpected token: '${Tok.Value}'")
             }
         }
 
         /**
          * Compile a statement.
          *
-         * <stmt> ::= <command> | <stmt-return> | <stmt-if>
+         * <stmt> ::= <stmt-cmd> | <stmt-return> | <stmt-if>
          */
         private fun CompileStmt(): Stmt? {
             when (Tok.Kind) {
@@ -287,27 +340,38 @@ object MCBASIC {
                     // way you’d expect it to.
                     if (Tok.Value.startsWith("return"))
                         throw SyntaxException("'/return' cannot be used as a command. Use a 'return' statement instead.")
-                    val Cmd = CommandStmt(Tok.Value)
+                    val Cmd = CommandExpr(Tok.Value)
                     Next()
                     return Cmd
                 }
 
                 /** <stmt-return> ::= RETURN */
-                TokenKind.Return -> {
+                TokenKind.KwReturn -> {
                     Next()
                     return ReturnStmt()
                 }
+
+                /** <stmt-return> :: IF <expr> THEN <stmt> */
+                TokenKind.KwIf -> {
+                    Next()
+                    val Cond = CompileExpr()
+                    if (!IsCondition(Cond)) throw SyntaxException("Expected condition after 'if'")
+                    if (Tok.Kind != TokenKind.KwThen) throw SyntaxException("Expected 'then'")
+                    Next()
+                    val Body = CompileStmt() ?: throw SyntaxException("Expected statement after 'then'")
+                    return IfStmt(Cond, Body)
+                }
+
+                else -> throw SyntaxException("Unexpected token: '${Tok.Value}'")
             }
         }
 
-        /**
-         * Compile an 'if' statement.
-         *
-         * <stmt-if> ::= IF <expr> THEN <stmt>
-         */
-        /*private fun CompileIfStmt(Tokens: List<String>): Stmt {
-
-        }*/
+        /** Check whether an expression can be used as a condition. */
+        private fun IsCondition(E: Expr): Boolean {
+            // Currently, the only type of expression we have is
+            // a command, which is always a valid condition.
+            return true
+        }
     }
 
 }
