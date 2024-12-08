@@ -30,16 +30,16 @@ object SessionSetup {
     fun LoadExtraWorldData(SW: ServerWorld) {
         LOGGER.info("Loading nguhcraft world data for {}", SW.registryKey.value)
         try {
-            val Path = NguhWorldSavePath(SW)
+            val Path = NguhWorldSaveFile(SW)
+            val Nguhcraft = NguhWorldSaveDir(SW)
             val Tag = NbtIo.readCompressed(Path, NbtSizeTracker.ofUnlimitedBytes())
 
             // Load.
-            ProtectionManager.LoadRegions(SW, Tag)
+            ProtectionManager.LoadRegions(SW, Nguhcraft, Tag)
         } catch (E: Exception) {
             LOGGER.error("Nguhcraft: Failed to load extra world data: ${E.message}")
         }
     }
-
 
     private fun LoadServerState(S: MinecraftServer) {
         LOGGER.info("Setting up server state")
@@ -64,18 +64,23 @@ object SessionSetup {
         }
     }
 
-    private fun NguhWorldSavePath(SW: ServerWorld) = SW.server.getSavePath(WorldSavePath.ROOT).resolve(
+    private fun NguhWorldSaveFile(SW: ServerWorld) = SW.server.getSavePath(WorldSavePath.ROOT).resolve(
         "nguhcraft.extraworlddata.${SW.registryKey.value.path}.dat"
     )
+
+    private fun NguhWorldSaveDir(SW: ServerWorld) = SW.server.getSavePath(WorldSavePath.ROOT)
+        .resolve("nguhcraft")
+        .resolve(SW.registryKey.value.path)
 
     @JvmStatic
     fun SaveExtraWorldData(SW: ServerWorld) {
         try {
             val Tag = NbtCompound()
-            val Path = NguhWorldSavePath(SW)
+            val Path = NguhWorldSaveFile(SW)
+            val Nguhcraft = NguhWorldSaveDir(SW)
 
             // Save.
-            ProtectionManager.SaveRegions(SW, Tag)
+            ProtectionManager.SaveRegions(SW, Nguhcraft, Tag)
 
             // Write to disk.
             NbtIo.writeCompressed(Tag, Path)
@@ -83,7 +88,6 @@ object SessionSetup {
             LOGGER.error("Nguhcraft: Failed to save extra world data: ${E.message}")
         }
     }
-
 
     private fun SavePath(S: MinecraftServer): Path {
         return S.getSavePath(WorldSavePath.ROOT).resolve("nguhcraft.dat")

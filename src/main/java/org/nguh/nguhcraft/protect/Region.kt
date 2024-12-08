@@ -16,7 +16,9 @@ import net.minecraft.world.World
 import org.nguh.nguhcraft.Constants
 import org.nguh.nguhcraft.MCBASIC
 import org.nguh.nguhcraft.server.BroadcastToOperators
+import java.nio.file.Path
 import java.util.*
+import kotlin.io.path.exists
 import kotlin.math.max
 import kotlin.math.min
 
@@ -29,13 +31,14 @@ import kotlin.math.min
 * The order in which region triggers are fired if a player enters
 * or leaves multiple regions in a single tick is unspecified.
 */
-data class RegionTrigger(
-    /** The name of the trigger. */
-    val Name: String,
-
-    /** The command to run. */
-    val Commands: MCBASIC.Program = MCBASIC.Program()
+class RegionTrigger(
+    TriggerName: String
 ) {
+    /** The trigger’s procedure. */
+    val Proc = MCBASIC.Procedure(TriggerName)
+    val Name get() = Proc.Name
+    val Commands get() = Proc.Code
+
     /** Append a region name to a text element. */
     fun AppendName(MT: MutableText): MutableText
         = MT.append(Text.literal("$Name${Commands.DisplayIndicator()}").withColor(Constants.Orange))
@@ -47,20 +50,7 @@ data class RegionTrigger(
         }
     }
 
-    /** Read a trigger from NBT. */
-    fun Read(Tag: NbtCompound) {
-        Commands.DeserialiseFrom(Tag.getCompound(Name).getString(TAG_COMMANDS))
-    }
-
-    /** Write this trigger to NBT. */
-    fun Write(Parent: NbtCompound) {
-        val Tag = NbtCompound()
-        Tag.putString(TAG_COMMANDS, Commands.Save())
-        Parent.put(Name, Tag)
-    }
-
     companion object {
-        const val TAG_COMMANDS = "Commands"
         const val PERMISSION_LEVEL = 2
     }
 }
@@ -237,11 +227,6 @@ class Region(
         RegionFlags = Flags.entries.fold(0L) { Acc, Flag ->
             if (FlagsTag.getBoolean(Flag.name.lowercase())) Acc or Flag.Bit() else Acc
         }
-
-        // Read triggers.
-        val Triggers = Tag.getCompound(TAG_TRIGGERS)
-        PlayerEntryTrigger.Read(Triggers)
-        PlayerLeaveTrigger.Read(Triggers)
     }
 
     /** Deserialise a region from a packet. */
@@ -358,6 +343,14 @@ class Region(
         }
     }
 
+    /** Load triggers from disk. */
+    fun LoadTriggers(RegionsDir: Path) {
+        val Dir = RegionsDir.resolve(Name)
+        if (!Dir.exists()) return
+        PlayerEntryTrigger.Proc.LoadFrom(Dir)
+        PlayerLeaveTrigger.Proc.LoadFrom(Dir)
+    }
+
     /** Get the radius of the region. */
     val Radius: Vec2f get() {
         val X = (MaxX - MinX) / 2
@@ -374,18 +367,20 @@ class Region(
         Tag.putInt(TAG_MAX_X, MaxX)
         Tag.putInt(TAG_MAX_Z, MaxZ)
 
-        // Store triggers.
-        val Triggers = NbtCompound()
-        PlayerEntryTrigger.Write(Triggers)
-        PlayerLeaveTrigger.Write(Triggers)
-        Tag.put(TAG_TRIGGERS, Triggers)
-
         // Store flags as strings for robustness.
         val FlagsTag = NbtCompound()
         Flags.entries.forEach { FlagsTag.putBoolean(it.name.lowercase(), Test(it)) }
         Tag.put(TAG_FLAGS, FlagsTag)
 
         return Tag
+    }
+
+    /** Save the region’s triggers. */
+    fun SaveTriggers(RegionsDir: Path) {
+        val Dir = RegionsDir.resolve(Name)
+        Dir.toFile().mkdirs()
+        PlayerEntryTrigger.Proc.SaveTo(Dir)
+        PlayerLeaveTrigger.Proc.SaveTo(Dir)
     }
 
     /** Set a region flag. */
@@ -445,7 +440,6 @@ class Region(
         private const val TAG_MAX_X = "MaxX"
         private const val TAG_MAX_Z = "MaxZ"
         private const val TAG_FLAGS = "RegionFlags"
-        private const val TAG_TRIGGERS = "Triggers"
         private const val TAG_NAME = "Name"
         private val REGION_TRIGGER_TEXT: Text = Text.of("Region trigger")
 

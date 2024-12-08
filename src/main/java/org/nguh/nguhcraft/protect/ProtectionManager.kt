@@ -39,6 +39,7 @@ import org.nguh.nguhcraft.item.KeyItem
 import org.nguh.nguhcraft.network.ClientboundSyncProtectionMgrPacket
 import org.nguh.nguhcraft.server.Broadcast
 import org.nguh.nguhcraft.server.ServerUtils
+import java.nio.file.Path
 
 /** Exception thrown from ProtectionManager.AddRegion(). */
 data class MalformedRegionException(val Msg: Text) : Exception()
@@ -216,6 +217,7 @@ class RegionList(
  */
 object ProtectionManager {
     private const val TAG_REGIONS = "Regions"
+    private const val DIR_REGIONS = "regions"
 
     /** Current manager state. */
     @Volatile private var S = State()
@@ -520,11 +522,16 @@ object ProtectionManager {
     *
     * The existing list of regions is cleared.
     */
-    fun LoadRegions(W: World, Tag: NbtCompound) {
+    fun LoadRegions(W: World, NguhWorldSaveDir: Path, Tag: NbtCompound) {
         val RegionsTag = Tag.getList(TAG_REGIONS, NbtElement.COMPOUND_TYPE.toInt())
         val Regions = RegionListFor(W)
+        val RegionsDir = NguhWorldSaveDir.resolve(DIR_REGIONS)
         Regions.ClearForInitialisation()
-        RegionsTag.forEach { Regions.Add(Region(it as NbtCompound, W.registryKey)) }
+        RegionsTag.forEach {
+            val R = Region(it as NbtCompound, W.registryKey)
+            Regions.Add(R)
+            R.LoadTriggers(RegionsDir)
+        }
     }
 
     /**
@@ -540,9 +547,13 @@ object ProtectionManager {
         ?: throw IllegalArgumentException("No such world: ${Key.value}")
 
     /** Save regions to a tag. */
-    fun SaveRegions(W: World, Tag: NbtCompound) {
+    fun SaveRegions(W: World, NguhWorldSaveDir: Path, Tag: NbtCompound) {
         val RegionsTag = Tag.getList(TAG_REGIONS, NbtElement.COMPOUND_TYPE.toInt())
-        RegionListFor(W).forEach { RegionsTag.add(it.Save()) }
+        val RegionsDir = NguhWorldSaveDir.resolve(DIR_REGIONS)
+        RegionListFor(W).forEach {
+            RegionsTag.add(it.Save())
+            it.SaveTriggers(RegionsDir)
+        }
         Tag.put(TAG_REGIONS, RegionsTag)
     }
 

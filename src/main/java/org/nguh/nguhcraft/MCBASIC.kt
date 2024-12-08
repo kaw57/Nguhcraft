@@ -10,6 +10,9 @@ import net.minecraft.text.ClickEvent
 import net.minecraft.text.MutableText
 import net.minecraft.text.Text
 import net.minecraft.util.Formatting
+import java.nio.file.Path
+import kotlin.io.path.exists
+import kotlin.io.path.readText
 
 /**
  * BASIC (sort of) implementation in which minecraft commands are
@@ -24,7 +27,6 @@ import net.minecraft.util.Formatting
  * is dead or alive.
  */
 object MCBASIC {
-    private const val SERIALISED_STMT_SEPARATOR = "\u0001"
     private val WHITESPACE_REGEX = "\\s+".toRegex()
 
     /** The AST of the program. */
@@ -37,6 +39,22 @@ object MCBASIC {
 
         /** The program contains a syntax error. */
         class Error(val Err: SyntaxException) : CachedAST()
+    }
+
+    /** A procedure that has a name and can be stored on disk. */
+    class Procedure(val Name: String, val Code: Program = Program()) {
+        private val File get() = "$Name.mcbas"
+
+        fun LoadFrom(Dir: Path) {
+            val F = Dir.resolve(File)
+            if (!F.exists()) return
+            Code.DeserialiseFrom(F.readText())
+        }
+
+        fun SaveTo(Dir: Path) {
+            Dir.toFile().mkdirs()
+            Dir.resolve(File).toFile().writeText(Code.Serialise())
+        }
     }
 
     /**
@@ -73,7 +91,7 @@ object MCBASIC {
         /** Load a program from a serialised representation. */
         fun DeserialiseFrom(S: String) = ClearCache().also {
             SourceLines.clear()
-            if (!S.isEmpty()) SourceLines.addAll(S.split(SERIALISED_STMT_SEPARATOR))
+            if (!S.isEmpty()) SourceLines.addAll(S.split("\n"))
         }
 
         /** Delete a line from the program. */
@@ -147,7 +165,7 @@ object MCBASIC {
         }
 
         /** Save the program as a string. */
-        fun Save(): String = SourceLines.joinToString(SERIALISED_STMT_SEPARATOR)
+        fun Serialise(): String = SourceLines.joinToString("\n")
 
         /** Set a line. */
         operator fun set(Line: Int, Text: String) = ClearCache().also { SourceLines[Line] = Text.trim() }
