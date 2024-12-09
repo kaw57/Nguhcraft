@@ -1,6 +1,7 @@
 package org.nguh.nguhcraft
 
 import net.fabricmc.api.ModInitializer
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry
 import net.minecraft.util.Identifier
 import org.nguh.nguhcraft.block.NguhBlocks
@@ -155,6 +156,8 @@ class Nguhcraft : ModInitializer {
         NguhBlocks.Init()
         NguhSounds.Init()
         ServerNetworkHandler.Init()
+
+        // TODO: Use fabric lifecycle events for startup and shutdown.
     }
 
     companion object {

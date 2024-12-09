@@ -7,6 +7,7 @@ import net.minecraft.nbt.NbtSizeTracker
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.world.ServerWorld
 import net.minecraft.util.WorldSavePath
+import org.nguh.nguhcraft.MCBASIC
 import org.nguh.nguhcraft.SyncedGameRule
 import org.nguh.nguhcraft.protect.ProtectionManager
 import java.nio.file.Path
@@ -14,6 +15,7 @@ import kotlin.io.path.inputStream
 
 /** Handle server setup and shutdown. */
 object SessionSetup {
+    const val DIR_PROCEDURES = "procedures"
     private val LOGGER = LogUtils.getLogger()
 
     @JvmStatic
@@ -21,21 +23,21 @@ object SessionSetup {
         LoadServerState(S)
     }
 
-     @JvmStatic
-     fun ActOnShutdown(S: MinecraftServer) {
-         SaveServerState(S)
-     }
+    @JvmStatic
+    fun ActOnShutdown(S: MinecraftServer) {
+        SaveServerState(S)
+    }
 
     @JvmStatic
     fun LoadExtraWorldData(SW: ServerWorld) {
         LOGGER.info("Loading nguhcraft world data for {}", SW.registryKey.value)
         try {
             val Path = NguhWorldSaveFile(SW)
-            val Nguhcraft = NguhWorldSaveDir(SW)
+            val Dir = NguhWorldSaveDir(SW)
             val Tag = NbtIo.readCompressed(Path, NbtSizeTracker.ofUnlimitedBytes())
 
             // Load.
-            ProtectionManager.LoadRegions(SW, Nguhcraft, Tag)
+            ProtectionManager.LoadRegions(SW, Dir, Tag)
         } catch (E: Exception) {
             LOGGER.error("Nguhcraft: Failed to load extra world data: ${E.message}")
         }
@@ -43,10 +45,12 @@ object SessionSetup {
 
     private fun LoadServerState(S: MinecraftServer) {
         LOGGER.info("Setting up server state")
+        val Dir = NguhSaveDir(S)
 
         // Reset defaults.
         SyncedGameRule.Reset()
         WarpManager.Reset()
+        MCBASIC.GlobalProcs.clear()
 
         // Load saved state.
         try {
@@ -59,6 +63,12 @@ object SessionSetup {
             // Load data.
             SyncedGameRule.Load(Tag)
             WarpManager.Load(Tag)
+
+            // Load procedures.
+            val ProcsDir = Dir.resolve(DIR_PROCEDURES)
+            for (F in ProcsDir.toFile().listFiles())
+                if (F.isFile)
+                    MCBASIC.Procedure.LoadGlobalProc(F)
         } catch (E: Exception) {
             LOGGER.warn("Nguhcraft: Failed to load persistent state; using defaults: ${E.message}")
         }
@@ -68,19 +78,18 @@ object SessionSetup {
         "nguhcraft.extraworlddata.${SW.registryKey.value.path}.dat"
     )
 
-    private fun NguhWorldSaveDir(SW: ServerWorld) = SW.server.getSavePath(WorldSavePath.ROOT)
-        .resolve("nguhcraft")
-        .resolve(SW.registryKey.value.path)
+    private fun NguhSaveDir(S: MinecraftServer) = S.getSavePath(WorldSavePath.ROOT).resolve("nguhcraft")
+    private fun NguhWorldSaveDir(SW: ServerWorld) = NguhSaveDir(SW.server).resolve(SW.registryKey.value.path)
 
     @JvmStatic
     fun SaveExtraWorldData(SW: ServerWorld) {
         try {
             val Tag = NbtCompound()
             val Path = NguhWorldSaveFile(SW)
-            val Nguhcraft = NguhWorldSaveDir(SW)
+            val Dir = NguhWorldSaveDir(SW)
 
             // Save.
-            ProtectionManager.SaveRegions(SW, Nguhcraft, Tag)
+            ProtectionManager.SaveRegions(SW, Dir, Tag)
 
             // Write to disk.
             NbtIo.writeCompressed(Tag, Path)
@@ -96,10 +105,21 @@ object SessionSetup {
     private fun SaveServerState(S: MinecraftServer) {
         LOGGER.info("Shutting down server")
         val Tag = NbtCompound()
+        val Dir = NguhSaveDir(S)
 
         // Save data.
         SyncedGameRule.Save(Tag)
         WarpManager.Save(Tag)
+
+        // Save procedures.
+        val ProcsDir = Dir.resolve(DIR_PROCEDURES)
+        ProcsDir.toFile().mkdirs()
+        for (F in MCBASIC.GlobalProcs.values) try {
+            F.SaveTo(ProcsDir)
+        } catch (E: Exception) {
+            LOGGER.error("Nguhcraft: Failed to save procedure ${F.Name}")
+            E.printStackTrace()
+        }
 
         // And write to disk.
         try {

@@ -82,6 +82,7 @@ object Commands {
             D.register(KeyCommand())                  // /key
             val Msg = D.register(MessageCommand())    // /msg
             D.register(ObliterateCommand())           // /obliterate
+            D.register(ProcedureCommand())            // /procedure
             D.register(RegionCommand())               // /region
             D.register(RuleCommand())                 // /rule
             D.register(SayCommand())                  // /say
@@ -295,6 +296,82 @@ object Commands {
                 Text.literal("Generated key ").formatted(Formatting.YELLOW)
                 .append(Text.literal(Key).formatted(Formatting.LIGHT_PURPLE))
             )
+            return 1
+        }
+    }
+
+    object ProcedureCommand {
+        fun Call(S: ServerCommandSource, Name: String): Int {
+            val Proc = MCBASIC.GlobalProcs[Name]
+            if (Proc == null) {
+                S.sendError(Text.literal("No such procedure: ").append(Text.literal(Name).formatted(Formatting.GOLD)))
+                return 0
+            }
+
+            try {
+                Proc.Code.ExecuteAndThrow(S)
+            } catch (E: Exception) {
+                S.sendError(Text.literal("Failed to execute procedure ").append(Text.literal(Name).formatted(Formatting.GOLD)))
+                S.sendError(Text.literal(E.message))
+                E.printStackTrace()
+                return 0
+            }
+
+            return 1
+        }
+
+        fun Create(S: ServerCommandSource, Name: String): Int {
+            if (MCBASIC.GlobalProcs.containsKey(Name)) {
+                S.sendError(Text.literal("Procedure ")
+                    .append(Text.literal(Name).formatted(Formatting.GOLD))
+                    .append(" already exists!")
+                )
+                return 0
+            }
+
+            val Proc = MCBASIC.Procedure(Name)
+            MCBASIC.GlobalProcs[Name] = Proc
+            S.sendMessage(Text.literal("Created procedure ")
+                .append(Text.literal(Name).formatted(Formatting.GOLD)
+            ).formatted(Formatting.GREEN))
+            return 1
+        }
+
+        fun Delete(S: ServerCommandSource, Name: String): Int {
+            if (!MCBASIC.GlobalProcs.containsKey(Name)) {
+                S.sendError(Text.literal("No such procedure: ").append(Text.literal(Name).formatted(Formatting.GOLD)))
+                return 0
+            }
+
+            MCBASIC.GlobalProcs.remove(Name)
+            S.sendMessage(Text.literal("Deleted procedure ")
+                .append(Text.literal(Name).formatted(Formatting.GOLD)
+            ).formatted(Formatting.YELLOW))
+            return 1
+        }
+
+        fun List(S: ServerCommandSource): Int {
+            if (MCBASIC.GlobalProcs.isEmpty()) {
+                S.sendMessage(Text.literal("No procedures defined").formatted(Formatting.YELLOW))
+                return 0
+            }
+
+            val List = Text.literal("Procedures:")
+            for (P in MCBASIC.GlobalProcs.keys) List.append(Text.literal("\n  - ").append(Text.literal(P).formatted(Formatting.GOLD)))
+            S.sendMessage(List.formatted(Formatting.YELLOW))
+            return MCBASIC.GlobalProcs.size
+        }
+
+        fun List(S: ServerCommandSource, Name: String): Int {
+            val Proc = MCBASIC.GlobalProcs[Name]
+            if (Proc == null) {
+                S.sendError(Text.literal("No such procedure: ").append(Text.literal(Name).formatted(Formatting.GOLD)))
+                return 0
+            }
+
+            val Msg = Text.literal("Procedure ").append(Text.literal(Name).formatted(Formatting.GOLD)).append(":\n")
+            Proc.Code.DisplaySource(Msg, 0)
+            S.sendMessage(Msg.formatted(Formatting.YELLOW))
             return 1
         }
     }
@@ -880,6 +957,30 @@ object Commands {
                 it.source.sendMessage(Text.literal("Obliterated ${Players.size} players"))
                 Players.size
             }
+        )
+
+    private fun ProcedureCommand(): LiteralArgumentBuilder<ServerCommandSource> = literal("procedure")
+        .requires { it.hasPermissionLevel(4) } // Procedures should not be able to create themselves.
+        .then(literal("call")
+            .then(argument("procedure", StringArgumentType.word())
+                .executes { ProcedureCommand.Call(it.source, StringArgumentType.getString(it, "procedure")) }
+            )
+        )
+        .then(literal("create")
+            .then(argument("procedure", StringArgumentType.word())
+                .executes { ProcedureCommand.Create(it.source, StringArgumentType.getString(it, "procedure")) }
+            )
+        )
+        .then(literal("del")
+            .then(argument("procedure", StringArgumentType.word())
+                .executes { ProcedureCommand.Delete(it.source, StringArgumentType.getString(it, "procedure")) }
+            )
+        )
+        .then(literal("list")
+            .then(argument("procedure", StringArgumentType.word())
+                .executes { ProcedureCommand.List(it.source, StringArgumentType.getString(it, "procedure")) }
+            )
+            .executes { ProcedureCommand.List(it.source) }
         )
 
     private fun RegionCommand(): LiteralArgumentBuilder<ServerCommandSource> {

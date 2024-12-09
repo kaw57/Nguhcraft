@@ -10,6 +10,7 @@ import net.minecraft.text.ClickEvent
 import net.minecraft.text.MutableText
 import net.minecraft.text.Text
 import net.minecraft.util.Formatting
+import java.io.File
 import java.nio.file.Path
 import kotlin.io.path.exists
 import kotlin.io.path.readText
@@ -28,6 +29,9 @@ import kotlin.io.path.readText
  */
 object MCBASIC {
     private val WHITESPACE_REGEX = "\\s+".toRegex()
+
+    /** Global procedures. */
+    val GlobalProcs = mutableMapOf<String, Procedure>()
 
     /** The AST of the program. */
     private sealed class CachedAST {
@@ -54,6 +58,16 @@ object MCBASIC {
         fun SaveTo(Dir: Path) {
             Dir.toFile().mkdirs()
             Dir.resolve(File).toFile().writeText(Code.Serialise())
+        }
+
+        companion object {
+            fun LoadGlobalProc(F: File) {
+                if (!F.exists()) throw IllegalArgumentException("File does not exist")
+                val Name = F.nameWithoutExtension
+                val P = Procedure(Name)
+                P.Code.DeserialiseFrom(F.readText())
+                GlobalProcs[Name] = P
+            }
         }
     }
 
@@ -105,7 +119,11 @@ object MCBASIC {
         }
 
         /** Print the program. */
-        fun DisplaySource(MT: MutableText, Indent: Int, ClickEventFactory: (Line: Int, Text: String) -> String): MutableText {
+        fun DisplaySource(
+            MT: MutableText,
+            Indent: Int,
+            ClickEventFactory: ((Line: Int, Text: String) -> String)? = null
+        ): MutableText {
             val IndentStr = " ".repeat(Indent)
             if (SourceLines.isEmpty()) {
                 MT.append(IndentStr).append(Text.literal("<empty>").formatted(Formatting.GRAY))
@@ -113,18 +131,15 @@ object MCBASIC {
             }
 
             SourceLines.forEachIndexed { I, S ->
-                MT.append("\n$IndentStr[$I] ").append(Text
-                    .literal(S)
-                    .formatted(Formatting.AQUA)
-                    .styled {
-                        it.withClickEvent(
-                            ClickEvent(
-                                ClickEvent.Action.SUGGEST_COMMAND,
-                                ClickEventFactory(I, S)
-                            )
-                        )
-                    }
-                )
+                val T = Text.literal(S).formatted(Formatting.AQUA)
+                if (ClickEventFactory != null) T.styled { it.withClickEvent(
+                    ClickEvent(
+                        ClickEvent.Action.SUGGEST_COMMAND,
+                        ClickEventFactory(I, S)
+                    )
+                )}
+
+                MT.append("\n$IndentStr[$I] ").append(T)
             }
             return MT
         }
