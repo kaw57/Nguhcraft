@@ -103,8 +103,7 @@
 		"protect.client.ClientPlayerInteractionManagerMixin",
 		"protect.client.GameRendererMixin",
 		"protect.client.LecternScreenMixin",
-		"protect.client.MinecraftClientMixin",
-		"server.integrated.IntegratedServerMixin"
+		"protect.client.MinecraftClientMixin"
 	],
 	"server": [
 		"discord.server.CommandManagerMixin",

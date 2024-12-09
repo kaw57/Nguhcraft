@@ -10,15 +10,14 @@ import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallba
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents
 import net.minecraft.client.gui.DrawContext
 import net.minecraft.client.render.RenderLayer
-import net.minecraft.client.util.math.MatrixStack
 import net.minecraft.item.ItemGroup
 import net.minecraft.item.ItemStack
 import net.minecraft.item.Items
 import net.minecraft.registry.Registries
 import net.minecraft.registry.Registry
-import net.minecraft.server.integrated.IntegratedServer
 import net.minecraft.text.Text
 import net.minecraft.util.Colors
 import net.minecraft.util.Formatting
@@ -46,6 +45,13 @@ class NguhcraftClient : ClientModInitializer {
         ClientCommandRegistrationCallback.EVENT.register { Dispatcher, _ ->
             Dispatcher.register(RenderCommand())
         }
+
+        ServerLifecycleEvents.SERVER_STARTING.register {
+            InHypershotContext = false
+            BypassesRegionProtection = false
+            Vanished = false
+            LastInteractedLecternPos = BlockPos.ORIGIN
+        }
     }
 
     companion object {
@@ -62,19 +68,6 @@ class NguhcraftClient : ClientModInitializer {
         @JvmField @Volatile var BypassesRegionProtection = false
         @JvmField @Volatile var Vanished = false
         @JvmField @Volatile var LastInteractedLecternPos: BlockPos = BlockPos.ORIGIN
-
-        @JvmStatic
-        fun ActOnSessionStart(S: IntegratedServer) {
-            InHypershotContext = false
-            BypassesRegionProtection = false
-            Vanished = false
-            LastInteractedLecternPos = BlockPos.ORIGIN
-        }
-
-        @JvmStatic
-        fun ActOnSessionShutdown(S: IntegratedServer) {
-            // Nop.
-        }
 
         @JvmStatic
         fun ProcessF3(key: Int): Boolean {
