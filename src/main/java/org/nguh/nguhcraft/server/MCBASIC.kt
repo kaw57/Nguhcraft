@@ -51,6 +51,9 @@ object MCBASIC {
     /**
      * A procedure that has a name and can be stored on disk.
      *
+     * Procedures are canonically stored as source text, which is compiled
+     * and cached the first time it is executed after being modified.
+     *
      * Use ProtectionManager#GetOrCreate(Managed) to create a procedure
      * instead of constructing one of these directly.
      */
@@ -61,11 +64,9 @@ object MCBASIC {
          */
         val Name: String,
 
-        /** The code that makes up the procedure. */
-        val Code: Program = Program(),
+        /** The source text of the procedure, which need not be syntactically valid. */
+        private val SourceLines: MutableList<String> = mutableListOf<String>()
     ) {
-        val Path get() = Path("$Name$FILE_EXTENSION")
-
         /**
          * If a procedure is 'managed', it cannot be deleted by the user.
          *
@@ -79,6 +80,109 @@ object MCBASIC {
             if (field && !M) throw IllegalArgumentException("Invalid use of system procedure '$Name'")
             field = M
         }
+
+        /** The file path of the procedure. */
+        val Path get() = Path("$Name$FILE_EXTENSION")
+
+        /** The compiled representation. */
+        private var AST: CachedAST = CachedAST.NotCached()
+
+        /** Add a line to the procedure. */
+        fun Add(Line: String) = ClearCache().also { SourceLines.add(Line.trim()) }
+
+        /** Clear the procedure. */
+        fun Clear() = ClearCache().also { SourceLines.clear() }
+
+        /** Clear the cached procedure state. */
+        fun ClearCache() { AST = CachedAST.NotCached() }
+
+        /** Compile the procedure. */
+        fun Compile() {
+            AST = Compiler(SourceLines.joinToString("\n").trim()).CompileAST()
+        }
+
+        /** Load a procedure from a serialised representation. */
+        fun DeserialiseFrom(S: String) = ClearCache().also {
+            SourceLines.clear()
+            if (!S.isEmpty()) SourceLines.addAll(S.split("\n"))
+        }
+
+        /** Delete a line from the procedure. */
+        fun Delete(R: ClosedRange<Int>) = ClearCache().also { SourceLines.subList(R.start, R.endInclusive + 1).clear() }
+
+        /** The indicator that displays the procedures state. */
+        fun DisplayIndicator() = when (AST) {
+            is CachedAST.Error -> "%"
+            is CachedAST.Cached -> ""
+            is CachedAST.NotCached -> "*"
+        }
+
+        /** Print the procedure. */
+        fun DisplaySource(
+            MT: MutableText,
+            Indent: Int,
+            ClickEventFactory: ((Line: Int, Text: String) -> String)? = null
+        ): MutableText {
+            val IndentStr = " ".repeat(Indent)
+            if (SourceLines.isEmpty()) {
+                MT.append(IndentStr).append(Text.literal("<empty>").formatted(Formatting.GRAY))
+                return MT
+            }
+
+            SourceLines.forEachIndexed { I, S ->
+                val T = Text.literal(S).formatted(Formatting.AQUA)
+                if (ClickEventFactory != null) T.styled { it.withClickEvent(
+                    ClickEvent(
+                        ClickEvent.Action.SUGGEST_COMMAND,
+                        ClickEventFactory(I, S)
+                    )
+                )}
+
+                MT.append("\n$IndentStr[$I] ").append(T)
+            }
+            return MT
+        }
+
+        /**
+         * Execute the procedure.
+         *
+         * @throws Exception If there was a syntax error or an unexpected error executing the procedure.
+         */
+        @Throws(Exception::class)
+        fun ExecuteAndThrow(S: ServerCommandSource) {
+            when (AST) {
+                is CachedAST.Cached -> Executor(S).ExecuteAST((AST as CachedAST.Cached).Root)
+                is CachedAST.Error -> throw (AST as CachedAST.Error).Err
+                is CachedAST.NotCached -> {
+                    Compile()
+                    ExecuteAndThrow(S)
+                }
+            }
+        }
+
+        /** Insert a line into the procedure. */
+        fun Insert(Line: Int, Text: String) = ClearCache().also { SourceLines.add(Line, Text.trim()) }
+
+        /** Whether the procedure is empty. */
+        fun IsEmpty(): Boolean = SourceLines.isEmpty()
+
+        /** The line count of the procedure. */
+        fun LineCount(): Int = SourceLines.size
+
+        /** Print the AST. */
+        fun Listing(MT: MutableText) {
+            when (AST) {
+                is CachedAST.Cached -> Writer(MT).also { (AST as CachedAST.Cached).Root.Display(it) }
+                is CachedAST.Error -> MT.append(Text.literal("Listing not available due to syntax error").formatted(Formatting.RED))
+                is CachedAST.NotCached -> MT.append(Text.literal("Listing not available until compiled").formatted(Formatting.GRAY))
+            }
+        }
+
+        /** Save the procedure as a string. */
+        fun Serialise(): String = SourceLines.joinToString("\n")
+
+        /** Set a line. */
+        operator fun set(Line: Int, Text: String) = ClearCache().also { SourceLines[Line] = Text.trim() }
     }
 
     /** Helper that manages procedure storage. */
@@ -149,7 +253,7 @@ object MCBASIC {
                 try {
                     val Name = F.relativeTo(Dir).path.dropLast(FILE_EXTENSION.length)
                     val P = GetOrCreateImpl(Name)
-                    P.Code.DeserialiseFrom(F.readText())
+                    P.DeserialiseFrom(F.readText())
                 } catch (E : Exception) {
                     LOGGER.error("Could not load stored procedure '{}': {}", F.path, E.message)
                 }
@@ -166,7 +270,7 @@ object MCBASIC {
             Dir.mkdirs()
             for (Proc in LoadedProcs.values) {
                 try {
-                    val S = Proc.Code.Serialise()
+                    val S = Proc.Serialise()
                     if (S.isEmpty()) continue
                     val ProcPath = ProcsDir.resolve(Proc.Path)
                     ProcPath.parent.toFile().mkdirs()
@@ -176,123 +280,6 @@ object MCBASIC {
                 }
             }
         }
-    }
-
-    /**
-     * A program that can be executed and modified.
-     *
-     * Programs are canonically stored as source text, which is compiled
-     * and cached the first time it is executed after being modified.
-     *
-     * FIXME: Merge this into 'Procedure' maybe?.
-     */
-    class Program(
-        /**
-         * The source text of the program, which may not constitute
-         * a syntactically valid program.
-         */
-        private val SourceLines: MutableList<String> = mutableListOf<String>()
-    ) {
-
-        /** The compiled representation. */
-        private var AST: CachedAST = CachedAST.NotCached()
-
-        /** Add a line to the program. */
-        fun Add(Line: String) = ClearCache().also { SourceLines.add(Line.trim()) }
-
-        /** Clear the program. */
-        fun Clear() = ClearCache().also { SourceLines.clear() }
-
-        /** Clear the cached program state. */
-        fun ClearCache() { AST = CachedAST.NotCached() }
-
-        /** Compile the program. */
-        fun Compile() {
-            AST = Compiler(SourceLines.joinToString("\n").trim()).CompileAST()
-        }
-
-        /** Load a program from a serialised representation. */
-        fun DeserialiseFrom(S: String) = ClearCache().also {
-            SourceLines.clear()
-            if (!S.isEmpty()) SourceLines.addAll(S.split("\n"))
-        }
-
-        /** Delete a line from the program. */
-        fun Delete(R: ClosedRange<Int>) = ClearCache().also { SourceLines.subList(R.start, R.endInclusive + 1).clear() }
-
-        /** The indicator that displays the programs state. */
-        fun DisplayIndicator() = when (AST) {
-            is CachedAST.Error -> "%"
-            is CachedAST.Cached -> ""
-            is CachedAST.NotCached -> "*"
-        }
-
-        /** Print the program. */
-        fun DisplaySource(
-            MT: MutableText,
-            Indent: Int,
-            ClickEventFactory: ((Line: Int, Text: String) -> String)? = null
-        ): MutableText {
-            val IndentStr = " ".repeat(Indent)
-            if (SourceLines.isEmpty()) {
-                MT.append(IndentStr).append(Text.literal("<empty>").formatted(Formatting.GRAY))
-                return MT
-            }
-
-            SourceLines.forEachIndexed { I, S ->
-                val T = Text.literal(S).formatted(Formatting.AQUA)
-                if (ClickEventFactory != null) T.styled { it.withClickEvent(
-                    ClickEvent(
-                        ClickEvent.Action.SUGGEST_COMMAND,
-                        ClickEventFactory(I, S)
-                    )
-                )}
-
-                MT.append("\n$IndentStr[$I] ").append(T)
-            }
-            return MT
-        }
-
-        /**
-         * Execute the program.
-         *
-         * @throws Exception If there was a syntax error or an unexpected error executing the program.
-         */
-        @Throws(Exception::class)
-        fun ExecuteAndThrow(S: ServerCommandSource) {
-            when (AST) {
-                is CachedAST.Cached -> Executor(S).ExecuteAST((AST as CachedAST.Cached).Root)
-                is CachedAST.Error -> throw (AST as CachedAST.Error).Err
-                is CachedAST.NotCached -> {
-                    Compile()
-                    ExecuteAndThrow(S)
-                }
-            }
-        }
-
-        /** Insert a line into the program. */
-        fun Insert(Line: Int, Text: String) = ClearCache().also { SourceLines.add(Line, Text.trim()) }
-
-        /** Whether the program is empty. */
-        fun IsEmpty(): Boolean = SourceLines.isEmpty()
-
-        /** The line count of the program. */
-        fun LineCount(): Int = SourceLines.size
-
-        /** Print the AST. */
-        fun Listing(MT: MutableText) {
-            when (AST) {
-                is CachedAST.Cached -> Writer(MT).also { (AST as CachedAST.Cached).Root.Display(it) }
-                is CachedAST.Error -> MT.append(Text.literal("Listing not available due to syntax error").formatted(Formatting.RED))
-                is CachedAST.NotCached -> MT.append(Text.literal("Listing not available until compiled").formatted(Formatting.GRAY))
-            }
-        }
-
-        /** Save the program as a string. */
-        fun Serialise(): String = SourceLines.joinToString("\n")
-
-        /** Set a line. */
-        operator fun set(Line: Int, Text: String) = ClearCache().also { SourceLines[Line] = Text.trim() }
     }
 
     private class Executor(CommandSource: ServerCommandSource) {
@@ -471,7 +458,7 @@ object MCBASIC {
         }
     }
 
-    /** A statement that returns from the current procedure or program. */
+    /** A statement that returns from the current procedure. */
     private class ReturnStmt() : Stmt() {
         override fun Display(W: Writer) { W.Write("return", Formatting.GOLD) }
         override fun Execute(E: Executor) { throw ReturnException.INSTANCE }

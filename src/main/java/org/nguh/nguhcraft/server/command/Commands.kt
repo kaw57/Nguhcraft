@@ -307,11 +307,11 @@ object Commands {
         private val INVALID_LINE_NUMBER = Exn("Line number is out of bounds!")
 
         fun Append(S: ServerCommandSource, Proc: MCBASIC.Procedure, Text: String) =
-            InsertLine(S, Proc, Proc.Code.LineCount(), Text)
+            InsertLine(S, Proc, Proc.LineCount(), Text)
 
         fun Call(S: ServerCommandSource, Proc: MCBASIC.Procedure): Int {
             try {
-                Proc.Code.ExecuteAndThrow(S)
+                Proc.ExecuteAndThrow(S)
             } catch (E: Exception) {
                 S.sendError(Text.literal("Failed to execute procedure ").append(Text.literal(Proc.Name).formatted(Formatting.GOLD)))
                 S.Error(E.message)
@@ -323,12 +323,12 @@ object Commands {
         }
 
         fun Clear(S: ServerCommandSource, Proc: MCBASIC.Procedure): Int {
-            if (Proc.Code.IsEmpty()) {
+            if (Proc.IsEmpty()) {
                 S.sendMessage(PROC_EMPTY)
                 return 0
             }
 
-            Proc.Code.Clear()
+            Proc.Clear()
             S.Reply(Text.literal("Cleared procedure ").append(Text.literal(Proc.Name).formatted(Formatting.GOLD)))
             return 1
         }
@@ -357,9 +357,9 @@ object Commands {
         }
 
         fun DeleteLine(S: ServerCommandSource, Proc: MCBASIC.Procedure, Line: Int, Until: Int? = null): Int {
-            if (Line >= Proc.Code.LineCount()) throw INVALID_LINE_NUMBER.create()
-            if (Until != null && Until >= Proc.Code.LineCount()) throw INVALID_LINE_NUMBER.create()
-            Proc.Code.Delete(Line..(Until ?: Line))
+            if (Line >= Proc.LineCount()) throw INVALID_LINE_NUMBER.create()
+            if (Until != null && Until >= Proc.LineCount()) throw INVALID_LINE_NUMBER.create()
+            Proc.Delete(Line..(Until ?: Line))
             S.Reply("Removed command at index $Line")
             return 1
         }
@@ -376,8 +376,8 @@ object Commands {
         }
 
         fun InsertLine(S: ServerCommandSource, Proc: MCBASIC.Procedure, Line: Int, Code: String): Int {
-            if (Line > Proc.Code.LineCount() || Line < 0) throw INVALID_LINE_NUMBER.create() // '>', not '>='!
-            Proc.Code.Insert(Line, Code)
+            if (Line > Proc.LineCount() || Line < 0) throw INVALID_LINE_NUMBER.create() // '>', not '>='!
+            Proc.Insert(Line, Code)
             S.Success(Text.literal("Added command at index $Line"))
             return 1
         }
@@ -397,21 +397,21 @@ object Commands {
 
         fun Listing(S: ServerCommandSource, Proc: MCBASIC.Procedure): Int {
             val Msg = Text.literal("Procedure ").append(Text.literal(Proc.Name).formatted(Formatting.GOLD)).append(":\n")
-            Proc.Code.Listing(Msg)
+            Proc.Listing(Msg)
             S.Reply(Msg)
             return 1
         }
 
         fun SetLine(S: ServerCommandSource, Proc: MCBASIC.Procedure, Line: Int, Code: String): Int {
-            if (Line >= Proc.Code.LineCount()) throw INVALID_LINE_NUMBER.create()
-            Proc.Code[Line] = Code
+            if (Line >= Proc.LineCount()) throw INVALID_LINE_NUMBER.create()
+            Proc[Line] = Code
             S.Reply("Set command at index $Line")
             return 1
         }
 
         fun Source(S: ServerCommandSource, Proc: MCBASIC.Procedure): Int {
             val Msg = Text.literal("Procedure ").append(Text.literal(Proc.Name).formatted(Formatting.GOLD)).append(":\n")
-            Proc.Code.DisplaySource(Msg, 0)
+            Proc.DisplaySource(Msg, 0)
             S.Reply(Msg)
             return 1
         }

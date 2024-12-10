@@ -100,7 +100,7 @@ class ServerRegion(
 
     /** Run a player trigger. */
     fun InvokePlayerTrigger(SP: ServerPlayerEntity, T: RegionTrigger) {
-        if (T.Commands.IsEmpty()) return
+        if (T.Proc.IsEmpty()) return
         val S = ServerCommandSource(
             SP.server,
             SP.pos,
@@ -114,7 +114,7 @@ class ServerRegion(
         )
 
         try {
-            T.Commands.ExecuteAndThrow(S)
+            T.Proc.ExecuteAndThrow(S)
         } catch (E: Exception) {
             val Path = Text.literal("Error\n    In trigger ")
             T.AppendName(AppendWorldAndName(Path).append(":"))
@@ -235,17 +235,15 @@ class RegionTrigger(
 ) {
     /** The trigger’s procedure. */
     val Proc = S.ProcedureManager.GetOrCreateManaged("regions/${Parent.World.value.path}/${Parent.Name}/$TriggerName")
-    val Name get() = Proc.Name
-    val Commands get() = Proc.Code
 
     /** Append a region name to a text element. */
     fun AppendName(MT: MutableText): MutableText
-            = MT.append(Text.literal("$Name${Commands.DisplayIndicator()}").withColor(Constants.Orange))
+            = MT.append(Text.literal("${Proc.Name}${Proc.DisplayIndicator()}").withColor(Constants.Orange))
 
     /** Print this trigger. */
     fun AppendCommands(R: Region, MT: MutableText, Indent: Int): MutableText {
-        return Commands.DisplaySource(MT, Indent) { Line, Text ->
-            "/region trigger ${R.World.value.path}:${R.Name} $Name set $Line $Text"
+        return Proc.DisplaySource(MT, Indent) { Line, Text ->
+            "/region trigger ${R.World.value.path}:${R.Name} ${Proc.Name} set $Line $Text"
         }
     }
 
