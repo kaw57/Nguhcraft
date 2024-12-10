@@ -1,6 +1,7 @@
 package org.nguh.nguhcraft
 
 import com.mojang.brigadier.StringReader
+import com.mojang.logging.LogUtils
 import net.minecraft.command.EntitySelector
 import net.minecraft.command.argument.EntityArgumentType
 import net.minecraft.entity.Entity
@@ -10,10 +11,9 @@ import net.minecraft.text.ClickEvent
 import net.minecraft.text.MutableText
 import net.minecraft.text.Text
 import net.minecraft.util.Formatting
-import java.io.File
 import java.nio.file.Path
+import kotlin.io.path.Path
 import kotlin.io.path.exists
-import kotlin.io.path.readText
 
 /**
  * BASIC (sort of) implementation in which minecraft commands are
@@ -28,10 +28,8 @@ import kotlin.io.path.readText
  * is dead or alive.
  */
 object MCBASIC {
+    private val LOGGER = LogUtils.getLogger()
     private val WHITESPACE_REGEX = "\\s+".toRegex()
-
-    /** Global procedures. */
-    val GlobalProcs = mutableMapOf<String, Procedure>()
 
     /** The AST of the program. */
     private sealed class CachedAST {
@@ -45,28 +43,139 @@ object MCBASIC {
         class Error(val Err: SyntaxException) : CachedAST()
     }
 
-    /** A procedure that has a name and can be stored on disk. */
-    class Procedure(val Name: String, val Code: Program = Program()) {
-        private val File get() = "$Name.mcbas"
+    /** Helper that manages procedure storage. */
+    object ProcedureManager {
+        private const val FILE_EXTENSION = ".mcbas"
 
-        fun LoadFrom(Dir: Path) {
-            val F = Dir.resolve(File)
-            if (!F.exists()) return
-            Code.DeserialiseFrom(F.readText())
+        /** Save directory. */
+        private var SaveDir: Path? = null
+
+        /** All loaded  procedures. */
+        private val LoadedProcs = mutableMapOf<String, Procedure>()
+
+        /** Procedures as an immutable list. */
+        val Procedures get(): Collection<Procedure> = LoadedProcs.values
+
+        /** A procedure that has a name and can be stored on disk. */
+        class Procedure private constructor(
+            /**
+             * The procedure name. This is the *path* to it relative to the
+             * 'procedures' directory, but without the file extension.
+             */
+            val Name: String,
+
+            /** The code that makes up the procedure. */
+            val Code: Program = Program(),
+        ) {
+            val Path get() = Path("$Name$FILE_EXTENSION")
+
+            /**
+             * If a procedure is 'managed', it cannot be deleted by the user.
+             *
+             * This is used for e.g. region triggers, which should only be
+             * deleted when the corresponding region is.
+             */
+            var Managed = false; private set
+
+            companion object {
+                /**
+                 * Actually create/retrieve a procedure.
+                 *
+                 * This can also be called directly if you don’t care whether
+                 * the procedure you get back is managed or not.
+                 */
+                @Throws(IllegalArgumentException::class)
+                fun GetOrCreate(Name: String, Managed: Boolean? = null): Procedure {
+                    LoadedProcs[Name]?.let {
+                        if (Managed != null && it.Managed != Managed) {
+                            // We cannot change a managed procedure to be unmanaged.
+                            if (it.Managed) throw IllegalArgumentException(
+                                "Name '$Name' is already in use by a system procedure"
+                            )
+
+                            // The opposite is fine though.
+                            it.Managed = true
+                        }
+
+                        return it
+                    }
+
+                    // Prevent attempts to escape the procedures directory.
+                    if (Name.startsWith("/") || Name.contains(".."))
+                        throw IllegalArgumentException("Invalid procedure name")
+
+                    val Proc = Procedure(Name)
+                    if (Managed != null) Proc.Managed = Managed
+                    LoadedProcs[Name] = Proc
+                    return Proc
+                }
+            }
         }
 
-        fun SaveTo(Dir: Path) {
-            Dir.toFile().mkdirs()
-            Dir.resolve(File).toFile().writeText(Code.Serialise())
+        /** Delete a managed or unmanaged procedure. */
+        fun Delete(P: Procedure) {
+            LoadedProcs.remove(P.Name)
+            val Dir = SaveDir?.resolve(P.Path)
+            if (Dir == null || !Dir.exists()) return
+            Dir.toFile().delete()
         }
 
-        companion object {
-            fun LoadGlobalProc(F: File) {
-                if (!F.exists()) throw IllegalArgumentException("File does not exist")
-                val Name = F.nameWithoutExtension
-                val P = Procedure(Name)
-                P.Code.DeserialiseFrom(F.readText())
-                GlobalProcs[Name] = P
+        /** Get or create a user-defined procedure. */
+        @Throws(IllegalArgumentException::class)
+        fun GetOrCreate(Name: String): Procedure {
+            // Prevent use of slashes in user-defined procedures.
+            if (Name.contains("/")) throw IllegalArgumentException("Invalid procedure name")
+            return Procedure.GetOrCreate(Name, false)
+        }
+
+        /** Get an existing procedure. */
+        fun GetExisting(Name: String) = LoadedProcs[Name]
+
+        /** Get or create a managed procedure. */
+        @Throws(IllegalArgumentException::class)
+        fun GetOrCreateManaged(Name: String) = Procedure.GetOrCreate(Name, true)
+
+        /** Load stored procedures. */
+        fun Load(ProcsDir: Path) {
+            SaveDir = ProcsDir
+            if (!ProcsDir.exists()) return
+            val Dir = ProcsDir.toFile()
+            for (F in Dir.walkTopDown()) {
+                if (!F.isFile || !F.name.endsWith(FILE_EXTENSION)) continue
+                try {
+                    val Name = F.relativeTo(Dir).path.dropLast(FILE_EXTENSION.length)
+                    val P = Procedure.GetOrCreate(Name)
+                    P.Code.DeserialiseFrom(F.readText())
+                } catch (E : Exception) {
+                    LOGGER.error("Could not load stored procedure '{}': {}", F.path, E.message)
+                }
+            }
+        }
+
+        /** Reset manager state. */
+        fun Reset() {
+            SaveDir = null
+            LoadedProcs.clear()
+        }
+
+        /**
+         * Save stored procedures.
+         *
+         * Empty procedures are not saved.
+         */
+        fun Save(ProcsDir: Path) {
+            val Dir = ProcsDir.toFile()
+            Dir.mkdirs()
+            for (Proc in LoadedProcs.values) {
+                try {
+                    val S = Proc.Code.Serialise()
+                    if (S.isEmpty()) continue
+                    val ProcPath = ProcsDir.resolve(Proc.Path)
+                    ProcPath.parent.toFile().mkdirs()
+                    ProcPath.toFile().writeText(S)
+                } catch (E: Exception) {
+                    LOGGER.error("Could not save stored procedure '{}': {}", Proc.Name, E.message)
+                }
             }
         }
     }
@@ -76,6 +185,8 @@ object MCBASIC {
      *
      * Programs are canonically stored as source text, which is compiled
      * and cached the first time it is executed after being modified.
+     *
+     * FIXME: Merge this into 'Procedure' maybe?.
      */
     class Program(
         /**

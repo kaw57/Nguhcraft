@@ -1,6 +1,8 @@
 package org.nguh.nguhcraft.protect
 
 import com.mojang.logging.LogUtils
+import net.fabricmc.api.EnvType
+import net.fabricmc.api.Environment
 import net.minecraft.nbt.NbtCompound
 import net.minecraft.network.RegistryByteBuf
 import net.minecraft.registry.RegistryKey
@@ -16,11 +18,12 @@ import net.minecraft.world.World
 import org.nguh.nguhcraft.Constants
 import org.nguh.nguhcraft.MCBASIC
 import org.nguh.nguhcraft.server.BroadcastToOperators
-import java.nio.file.Path
 import java.util.*
-import kotlin.io.path.exists
 import kotlin.math.max
 import kotlin.math.min
+
+/** Used to signal that a region’s properties are invalid. */
+data class MalformedRegionException(val Msg: Text) : Exception()
 
 /**
 * Trigger that runs when an event happens in a region.
@@ -32,10 +35,11 @@ import kotlin.math.min
 * or leaves multiple regions in a single tick is unspecified.
 */
 class RegionTrigger(
-    TriggerName: String
+    Parent: Region,
+    TriggerName: String,
 ) {
     /** The trigger’s procedure. */
-    val Proc = MCBASIC.Procedure(TriggerName)
+    val Proc = MCBASIC.ProcedureManager.GetOrCreateManaged("regions/${Parent.World.value.path}/${Parent.Name}/$TriggerName")
     val Name get() = Proc.Name
     val Commands get() = Proc.Code
 
@@ -55,7 +59,13 @@ class RegionTrigger(
     }
 }
 
-/** A protected region. */
+/**
+ * A protected region.
+ *
+ * @throws MalformedRegionException If the region name is invalid.
+ *
+ * FIXME: Split into 'Region' and 'ServerRegion'.
+ */
 class Region(
     /** Region name. */
     val Name: String,
@@ -170,11 +180,17 @@ class Region(
     val MaxX: Int = max(FromX, ToX)
     val MaxZ: Int = max(FromZ, ToZ)
 
+    /** Make sure that the name is valid . */
+    init {
+        if (Name.trim().isEmpty() || Name.contains("/") || Name.contains(".."))
+            throw MalformedRegionException(Text.of("Invalid region name '$Name'"))
+    }
+
     /** Command that is run when a player enters the region. */
-    val PlayerEntryTrigger = RegionTrigger("player_entry")
+    val PlayerEntryTrigger = RegionTrigger(this, "player_entry")
 
     /** Command that is run when a player leaves the region. */
-    val PlayerLeaveTrigger = RegionTrigger("player_leave")
+    val PlayerLeaveTrigger = RegionTrigger(this, "player_leave")
 
     /**
     * Players that are in this region.
@@ -343,14 +359,6 @@ class Region(
         }
     }
 
-    /** Load triggers from disk. */
-    fun LoadTriggers(RegionsDir: Path) {
-        val Dir = RegionsDir.resolve(Name)
-        if (!Dir.exists()) return
-        PlayerEntryTrigger.Proc.LoadFrom(Dir)
-        PlayerLeaveTrigger.Proc.LoadFrom(Dir)
-    }
-
     /** Get the radius of the region. */
     val Radius: Vec2f get() {
         val X = (MaxX - MinX) / 2
@@ -373,14 +381,6 @@ class Region(
         Tag.put(TAG_FLAGS, FlagsTag)
 
         return Tag
-    }
-
-    /** Save the region’s triggers. */
-    fun SaveTriggers(RegionsDir: Path) {
-        val Dir = RegionsDir.resolve(Name)
-        Dir.toFile().mkdirs()
-        PlayerEntryTrigger.Proc.SaveTo(Dir)
-        PlayerLeaveTrigger.Proc.SaveTo(Dir)
     }
 
     /** Set a region flag. */

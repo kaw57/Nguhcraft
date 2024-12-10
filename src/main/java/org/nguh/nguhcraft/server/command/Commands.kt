@@ -302,7 +302,7 @@ object Commands {
 
     object ProcedureCommand {
         fun Call(S: ServerCommandSource, Name: String): Int {
-            val Proc = MCBASIC.GlobalProcs[Name]
+            val Proc = MCBASIC.ProcedureManager.GetExisting(Name)
             if (Proc == null) {
                 S.sendError(Text.literal("No such procedure: ").append(Text.literal(Name).formatted(Formatting.GOLD)))
                 return 0
@@ -321,7 +321,7 @@ object Commands {
         }
 
         fun Create(S: ServerCommandSource, Name: String): Int {
-            if (MCBASIC.GlobalProcs.containsKey(Name)) {
+            if (MCBASIC.ProcedureManager.GetExisting(Name) != null) {
                 S.sendError(Text.literal("Procedure ")
                     .append(Text.literal(Name).formatted(Formatting.GOLD))
                     .append(" already exists!")
@@ -329,21 +329,35 @@ object Commands {
                 return 0
             }
 
-            val Proc = MCBASIC.Procedure(Name)
-            MCBASIC.GlobalProcs[Name] = Proc
-            S.sendMessage(Text.literal("Created procedure ")
-                .append(Text.literal(Name).formatted(Formatting.GOLD)
-            ).formatted(Formatting.GREEN))
-            return 1
+            try {
+                MCBASIC.ProcedureManager.GetOrCreate(Name)
+                S.sendMessage(Text.literal("Created procedure ")
+                    .append(Text.literal(Name).formatted(Formatting.GOLD)
+                ).formatted(Formatting.GREEN))
+                return 1
+            } catch (E: IllegalArgumentException) {
+                S.sendError(
+                    Text.literal("Failed to create procedure ")
+                    .append(Text.literal(Name).formatted(Formatting.GOLD))
+                    .append(": ${E.message}")
+                )
+                return 0
+            }
         }
 
         fun Delete(S: ServerCommandSource, Name: String): Int {
-            if (!MCBASIC.GlobalProcs.containsKey(Name)) {
+            val P = MCBASIC.ProcedureManager.GetExisting(Name)
+            if (P == null) {
                 S.sendError(Text.literal("No such procedure: ").append(Text.literal(Name).formatted(Formatting.GOLD)))
                 return 0
             }
 
-            MCBASIC.GlobalProcs.remove(Name)
+            if (P.Managed) {
+                S.sendError(Text.literal("Cannot delete managed procedure ").append(Text.literal(Name).formatted(Formatting.GOLD)))
+                return 0
+            }
+
+            MCBASIC.ProcedureManager.Delete(P)
             S.sendMessage(Text.literal("Deleted procedure ")
                 .append(Text.literal(Name).formatted(Formatting.GOLD)
             ).formatted(Formatting.YELLOW))
@@ -351,19 +365,20 @@ object Commands {
         }
 
         fun List(S: ServerCommandSource): Int {
-            if (MCBASIC.GlobalProcs.isEmpty()) {
+            val Procs = MCBASIC.ProcedureManager.Procedures
+            if (Procs.isEmpty()) {
                 S.sendMessage(Text.literal("No procedures defined").formatted(Formatting.YELLOW))
                 return 0
             }
 
             val List = Text.literal("Procedures:")
-            for (P in MCBASIC.GlobalProcs.keys) List.append(Text.literal("\n  - ").append(Text.literal(P).formatted(Formatting.GOLD)))
+            for (P in Procs) List.append(Text.literal("\n  - ").append(Text.literal(P.Name).formatted(Formatting.GOLD)))
             S.sendMessage(List.formatted(Formatting.YELLOW))
-            return MCBASIC.GlobalProcs.size
+            return Procs.size
         }
 
         fun List(S: ServerCommandSource, Name: String): Int {
-            val Proc = MCBASIC.GlobalProcs[Name]
+            val Proc = MCBASIC.ProcedureManager.GetExisting(Name)
             if (Proc == null) {
                 S.sendError(Text.literal("No such procedure: ").append(Text.literal(Name).formatted(Formatting.GOLD)))
                 return 0
@@ -390,38 +405,37 @@ object Commands {
                 return 0
             }
 
-            val R = Region(
-                Name,
-                W.registryKey,
-                FromX = From.x,
-                FromZ = From.z,
-                ToX = To.x,
-                ToZ = To.z
-            )
-
             try {
+                val R = Region(
+                    Name,
+                    W.registryKey,
+                    FromX = From.x,
+                    FromZ = From.z,
+                    ToX = To.x,
+                    ToZ = To.z
+                )
+
                 ProtectionManager.AddRegion(S.server, R)
+                S.sendMessage(Text.literal("Created region ")
+                    .append(Text.literal(Name).formatted(Formatting.AQUA))
+                    .append(" in world ")
+                    .append(Text.literal(W.registryKey.value.path.toString()).withColor(Constants.Lavender))
+                    .append(" with bounds [")
+                    .append(Text.literal("${R.MinX}").formatted(Formatting.GRAY))
+                    .append(", ")
+                    .append(Text.literal("${R.MinZ}").formatted(Formatting.GRAY))
+                    .append("] → [")
+                    .append(Text.literal("${R.MaxX}").formatted(Formatting.GRAY))
+                    .append(", ")
+                    .append(Text.literal("${R.MaxZ}").formatted(Formatting.GRAY))
+                    .append("]")
+                    .formatted(Formatting.GREEN)
+                )
+                return 1
             } catch (E: MalformedRegionException) {
                 S.sendError(E.Msg)
                 return 0
             }
-
-            S.sendMessage(Text.literal("Created region ")
-                .append(Text.literal(Name).formatted(Formatting.AQUA))
-                .append(" in world ")
-                .append(Text.literal(W.registryKey.value.path.toString()).withColor(Constants.Lavender))
-                .append(" with bounds [")
-                .append(Text.literal("${R.MinX}").formatted(Formatting.GRAY))
-                .append(", ")
-                .append(Text.literal("${R.MinZ}").formatted(Formatting.GRAY))
-                .append("] → [")
-                .append(Text.literal("${R.MaxX}").formatted(Formatting.GRAY))
-                .append(", ")
-                .append(Text.literal("${R.MaxZ}").formatted(Formatting.GRAY))
-                .append("]")
-                .formatted(Formatting.GREEN)
-            )
-            return 1
         }
 
         fun AddTriggerLine(C: CommandContext<ServerCommandSource>, Trigger: RegionTriggerProperty): Int {
@@ -962,22 +976,22 @@ object Commands {
     private fun ProcedureCommand(): LiteralArgumentBuilder<ServerCommandSource> = literal("procedure")
         .requires { it.hasPermissionLevel(4) } // Procedures should not be able to create themselves.
         .then(literal("call")
-            .then(argument("procedure", StringArgumentType.word())
+            .then(argument("procedure", StringArgumentType.greedyString())
                 .executes { ProcedureCommand.Call(it.source, StringArgumentType.getString(it, "procedure")) }
             )
         )
         .then(literal("create")
-            .then(argument("procedure", StringArgumentType.word())
+            .then(argument("procedure", StringArgumentType.greedyString())
                 .executes { ProcedureCommand.Create(it.source, StringArgumentType.getString(it, "procedure")) }
             )
         )
         .then(literal("del")
-            .then(argument("procedure", StringArgumentType.word())
+            .then(argument("procedure", StringArgumentType.greedyString())
                 .executes { ProcedureCommand.Delete(it.source, StringArgumentType.getString(it, "procedure")) }
             )
         )
         .then(literal("list")
-            .then(argument("procedure", StringArgumentType.word())
+            .then(argument("procedure", StringArgumentType.greedyString())
                 .executes { ProcedureCommand.List(it.source, StringArgumentType.getString(it, "procedure")) }
             )
             .executes { ProcedureCommand.List(it.source) }

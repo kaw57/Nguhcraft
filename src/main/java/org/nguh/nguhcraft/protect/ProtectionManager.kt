@@ -37,12 +37,18 @@ import org.nguh.nguhcraft.client.accessors.AbstractClientPlayerEntityAccessor
 import org.nguh.nguhcraft.isa
 import org.nguh.nguhcraft.item.KeyItem
 import org.nguh.nguhcraft.network.ClientboundSyncProtectionMgrPacket
+import org.nguh.nguhcraft.protect.ProtectionManager.AllowBlockModify
+import org.nguh.nguhcraft.protect.ProtectionManager.AllowEntityAttack
+import org.nguh.nguhcraft.protect.ProtectionManager.AllowEntityInteract
+import org.nguh.nguhcraft.protect.ProtectionManager.AllowItemUse
+import org.nguh.nguhcraft.protect.ProtectionManager.GetRegion
+import org.nguh.nguhcraft.protect.ProtectionManager.GetRegions
+import org.nguh.nguhcraft.protect.ProtectionManager.HandleBlockInteract
+import org.nguh.nguhcraft.protect.ProtectionManager.IsProtectedBlock
+import org.nguh.nguhcraft.protect.ProtectionManager.IsProtectedEntity
 import org.nguh.nguhcraft.server.Broadcast
 import org.nguh.nguhcraft.server.ServerUtils
-import java.nio.file.Path
-
-/** Exception thrown from ProtectionManager.AddRegion(). */
-data class MalformedRegionException(val Msg: Text) : Exception()
+import kotlin.Throws
 
 /**
  * List of protected regions.
@@ -522,15 +528,13 @@ object ProtectionManager {
     *
     * The existing list of regions is cleared.
     */
-    fun LoadRegions(W: World, NguhWorldSaveDir: Path, Tag: NbtCompound) {
+    fun LoadRegions(W: World, Tag: NbtCompound) {
         val RegionsTag = Tag.getList(TAG_REGIONS, NbtElement.COMPOUND_TYPE.toInt())
         val Regions = RegionListFor(W)
-        val RegionsDir = NguhWorldSaveDir.resolve(DIR_REGIONS)
         Regions.ClearForInitialisation()
         RegionsTag.forEach {
             val R = Region(it as NbtCompound, W.registryKey)
             Regions.Add(R)
-            R.LoadTriggers(RegionsDir)
         }
     }
 
@@ -547,13 +551,9 @@ object ProtectionManager {
         ?: throw IllegalArgumentException("No such world: ${Key.value}")
 
     /** Save regions to a tag. */
-    fun SaveRegions(W: World, NguhWorldSaveDir: Path, Tag: NbtCompound) {
+    fun SaveRegions(W: World, Tag: NbtCompound) {
         val RegionsTag = Tag.getList(TAG_REGIONS, NbtElement.COMPOUND_TYPE.toInt())
-        val RegionsDir = NguhWorldSaveDir.resolve(DIR_REGIONS)
-        RegionListFor(W).forEach {
-            RegionsTag.add(it.Save())
-            it.SaveTriggers(RegionsDir)
-        }
+        RegionListFor(W).forEach { RegionsTag.add(it.Save()) }
         Tag.put(TAG_REGIONS, RegionsTag)
     }
 

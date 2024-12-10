@@ -22,6 +22,7 @@ import net.minecraft.text.Text
 import net.minecraft.util.Colors
 import net.minecraft.util.Formatting
 import net.minecraft.util.math.BlockPos
+import org.nguh.nguhcraft.MCBASIC
 import org.nguh.nguhcraft.Nguhcraft.Companion.Id
 import org.nguh.nguhcraft.block.NguhBlocks
 import org.nguh.nguhcraft.client.ClientUtils.Client
@@ -52,6 +53,10 @@ class NguhcraftClient : ClientModInitializer {
             Vanished = false
             LastInteractedLecternPos = BlockPos.ORIGIN
         }
+
+        ServerLifecycleEvents.SERVER_STOPPED.register {
+            MCBASIC.ProcedureManager.Reset()
+        }
     }
 
     companion object {
@@ -63,7 +68,8 @@ class NguhcraftClient : ClientModInitializer {
 
         const val VANISH_MSG = "You are currently vanished"
 
-        // FIXME: These should probably not be here.
+        // FIXME: All of these should be attached to some singleton 'Session' object so
+        //        they don’t accidentally persist across saves.
         @JvmField @Volatile var InHypershotContext = false
         @JvmField @Volatile var BypassesRegionProtection = false
         @JvmField @Volatile var Vanished = false

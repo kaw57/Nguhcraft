@@ -183,17 +183,15 @@ class Nguhcraft : ModInitializer {
         )
 
         private fun NguhSaveDir(S: MinecraftServer) = S.getSavePath(WorldSavePath.ROOT).resolve("nguhcraft")
-        private fun NguhWorldSaveDir(SW: ServerWorld) = NguhSaveDir(SW.server).resolve(SW.registryKey.value.path)
 
         fun LoadExtraWorldData(SW: ServerWorld) {
             LOGGER.info("Loading nguhcraft world data for {}", SW.registryKey.value)
             try {
                 val Path = NguhWorldSaveFile(SW)
-                val Dir = NguhWorldSaveDir(SW)
                 val Tag = NbtIo.readCompressed(Path, NbtSizeTracker.ofUnlimitedBytes())
 
                 // Load.
-                ProtectionManager.LoadRegions(SW, Dir, Tag)
+                ProtectionManager.LoadRegions(SW, Tag)
             } catch (E: Exception) {
                 LOGGER.error("Nguhcraft: Failed to load extra world data: ${E.message}")
             }
@@ -206,7 +204,6 @@ class Nguhcraft : ModInitializer {
             // Reset defaults.
             SyncedGameRule.Reset()
             WarpManager.Reset()
-            MCBASIC.GlobalProcs.clear()
 
             // Load saved state.
             try {
@@ -224,10 +221,7 @@ class Nguhcraft : ModInitializer {
                 for (SW in S.worlds) LoadExtraWorldData(SW)
 
                 // Load procedures.
-                val ProcsDir = Dir.resolve(DIR_PROCEDURES)
-                for (F in ProcsDir.toFile().listFiles())
-                    if (F.isFile)
-                        MCBASIC.Procedure.LoadGlobalProc(F)
+                MCBASIC.ProcedureManager.Load(Dir.resolve(DIR_PROCEDURES))
             } catch (E: Exception) {
                 LOGGER.warn("Nguhcraft: Failed to load persistent state; using defaults: ${E.message}")
             }
@@ -237,10 +231,9 @@ class Nguhcraft : ModInitializer {
             try {
                 val Tag = NbtCompound()
                 val Path = NguhWorldSaveFile(SW)
-                val Dir = NguhWorldSaveDir(SW)
 
                 // Save.
-                ProtectionManager.SaveRegions(SW, Dir, Tag)
+                ProtectionManager.SaveRegions(SW, Tag)
 
                 // Write to disk.
                 NbtIo.writeCompressed(Tag, Path)
@@ -266,14 +259,7 @@ class Nguhcraft : ModInitializer {
             for (SW in S.worlds) SaveExtraWorldData(SW)
 
             // Save procedures.
-            val ProcsDir = Dir.resolve(DIR_PROCEDURES)
-            ProcsDir.toFile().mkdirs()
-            for (F in MCBASIC.GlobalProcs.values) try {
-                F.SaveTo(ProcsDir)
-            } catch (E: Exception) {
-                LOGGER.error("Nguhcraft: Failed to save procedure ${F.Name}")
-                E.printStackTrace()
-            }
+            MCBASIC.ProcedureManager.Save(Dir.resolve(DIR_PROCEDURES))
 
             // And write to disk.
             try {
