@@ -1,19 +1,23 @@
-package org.nguh.nguhcraft
+package org.nguh.nguhcraft.server
 
 import com.mojang.brigadier.StringReader
 import com.mojang.logging.LogUtils
 import net.minecraft.command.EntitySelector
 import net.minecraft.command.argument.EntityArgumentType
 import net.minecraft.entity.Entity
+import net.minecraft.server.MinecraftServer
 import net.minecraft.server.command.ServerCommandSource
 import net.minecraft.server.network.ServerPlayerEntity
 import net.minecraft.text.ClickEvent
 import net.minecraft.text.MutableText
 import net.minecraft.text.Text
 import net.minecraft.util.Formatting
+import org.nguh.nguhcraft.server.accessors.ProcedureManagerAccessor
 import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.exists
+
+val MinecraftServer.ProcedureManager get() = (this as ProcedureManagerAccessor).`Nguhcraft$GetProcedureManager`()
 
 /**
  * BASIC (sort of) implementation in which minecraft commands are
@@ -30,6 +34,7 @@ import kotlin.io.path.exists
 object MCBASIC {
     private val LOGGER = LogUtils.getLogger()
     private val WHITESPACE_REGEX = "\\s+".toRegex()
+    private const val FILE_EXTENSION = ".mcbas"
 
     /** The AST of the program. */
     private sealed class CachedAST {
@@ -43,10 +48,41 @@ object MCBASIC {
         class Error(val Err: SyntaxException) : CachedAST()
     }
 
-    /** Helper that manages procedure storage. */
-    object ProcedureManager {
-        private const val FILE_EXTENSION = ".mcbas"
+    /**
+     * A procedure that has a name and can be stored on disk.
+     *
+     * Use ProtectionManager#GetOrCreate(Managed) to create a procedure
+     * instead of constructing one of these directly.
+     */
+    class Procedure internal constructor(
+        /**
+         * The procedure name. This is the *path* to it relative to the
+         * 'procedures' directory, but without the file extension.
+         */
+        val Name: String,
 
+        /** The code that makes up the procedure. */
+        val Code: Program = Program(),
+    ) {
+        val Path get() = Path("$Name$FILE_EXTENSION")
+
+        /**
+         * If a procedure is 'managed', it cannot be deleted by the user.
+         *
+         * This is used for e.g. region triggers, which should only be
+         * deleted when the corresponding region is.
+         */
+        var Managed = false; set(M) {
+            // Disallow changing a managed procedure to unmanaged so as
+            // to prevent e.g. region triggers from being deleted by the
+            // user.
+            if (field && !M) throw IllegalArgumentException("Invalid use of system procedure '$Name'")
+            field = M
+        }
+    }
+
+    /** Helper that manages procedure storage. */
+    class ProcedureManager {
         /** Save directory. */
         private var SaveDir: Path? = null
 
@@ -56,61 +92,6 @@ object MCBASIC {
         /** Procedures as an immutable list. */
         val Procedures get(): Collection<Procedure> = LoadedProcs.values
 
-        /** A procedure that has a name and can be stored on disk. */
-        class Procedure private constructor(
-            /**
-             * The procedure name. This is the *path* to it relative to the
-             * 'procedures' directory, but without the file extension.
-             */
-            val Name: String,
-
-            /** The code that makes up the procedure. */
-            val Code: Program = Program(),
-        ) {
-            val Path get() = Path("$Name$FILE_EXTENSION")
-
-            /**
-             * If a procedure is 'managed', it cannot be deleted by the user.
-             *
-             * This is used for e.g. region triggers, which should only be
-             * deleted when the corresponding region is.
-             */
-            var Managed = false; private set
-
-            companion object {
-                /**
-                 * Actually create/retrieve a procedure.
-                 *
-                 * This can also be called directly if you don’t care whether
-                 * the procedure you get back is managed or not.
-                 */
-                @Throws(IllegalArgumentException::class)
-                fun GetOrCreate(Name: String, Managed: Boolean? = null): Procedure {
-                    LoadedProcs[Name]?.let {
-                        if (Managed != null && it.Managed != Managed) {
-                            // We cannot change a managed procedure to be unmanaged.
-                            if (it.Managed) throw IllegalArgumentException(
-                                "Name '$Name' is already in use by a system procedure"
-                            )
-
-                            // The opposite is fine though.
-                            it.Managed = true
-                        }
-
-                        return it
-                    }
-
-                    // Prevent attempts to escape the procedures directory.
-                    if (Name.startsWith("/") || Name.contains(".."))
-                        throw IllegalArgumentException("Invalid procedure name")
-
-                    val Proc = Procedure(Name)
-                    if (Managed != null) Proc.Managed = Managed
-                    LoadedProcs[Name] = Proc
-                    return Proc
-                }
-            }
-        }
 
         /** Delete a managed or unmanaged procedure. */
         fun Delete(P: Procedure) {
@@ -120,20 +101,43 @@ object MCBASIC {
             Dir.toFile().delete()
         }
 
+        /** Get an existing procedure. */
+        fun GetExisting(Name: String) = LoadedProcs[Name]
+
         /** Get or create a user-defined procedure. */
         @Throws(IllegalArgumentException::class)
         fun GetOrCreate(Name: String): Procedure {
             // Prevent use of slashes in user-defined procedures.
             if (Name.contains("/")) throw IllegalArgumentException("Invalid procedure name")
-            return Procedure.GetOrCreate(Name, false)
+            return GetOrCreateImpl(Name, false)
         }
 
-        /** Get an existing procedure. */
-        fun GetExisting(Name: String) = LoadedProcs[Name]
+        /**
+         * Actually create/retrieve a procedure.
+         *
+         * This can also be called directly if you don’t care whether
+         * the procedure you get back is managed or not.
+         */
+        @Throws(IllegalArgumentException::class)
+        private fun GetOrCreateImpl(Name: String, Managed: Boolean? = null): Procedure {
+            LoadedProcs[Name]?.let {
+                if (Managed != null) it.Managed = Managed
+                return it
+            }
+
+            // Prevent attempts to escape the procedures directory.
+            if (Name.startsWith("/") || Name.contains(".."))
+                throw IllegalArgumentException("Invalid procedure name")
+
+            val Proc = Procedure(Name)
+            if (Managed != null) Proc.Managed = Managed
+            LoadedProcs[Name] = Proc
+            return Proc
+        }
 
         /** Get or create a managed procedure. */
         @Throws(IllegalArgumentException::class)
-        fun GetOrCreateManaged(Name: String) = Procedure.GetOrCreate(Name, true)
+        fun GetOrCreateManaged(Name: String) = GetOrCreateImpl(Name, true)
 
         /** Load stored procedures. */
         fun Load(ProcsDir: Path) {
@@ -144,18 +148,12 @@ object MCBASIC {
                 if (!F.isFile || !F.name.endsWith(FILE_EXTENSION)) continue
                 try {
                     val Name = F.relativeTo(Dir).path.dropLast(FILE_EXTENSION.length)
-                    val P = Procedure.GetOrCreate(Name)
+                    val P = GetOrCreateImpl(Name)
                     P.Code.DeserialiseFrom(F.readText())
                 } catch (E : Exception) {
                     LOGGER.error("Could not load stored procedure '{}': {}", F.path, E.message)
                 }
             }
-        }
-
-        /** Reset manager state. */
-        fun Reset() {
-            SaveDir = null
-            LoadedProcs.clear()
         }
 
         /**

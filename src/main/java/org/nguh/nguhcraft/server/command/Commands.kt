@@ -33,7 +33,7 @@ import net.minecraft.world.Heightmap
 import net.minecraft.world.World
 import net.minecraft.world.chunk.ChunkStatus
 import org.nguh.nguhcraft.Constants
-import org.nguh.nguhcraft.MCBASIC
+import org.nguh.nguhcraft.server.MCBASIC
 import org.nguh.nguhcraft.Nguhcraft.Companion.Id
 import org.nguh.nguhcraft.SyncedGameRule
 import org.nguh.nguhcraft.item.KeyItem
@@ -46,9 +46,6 @@ import org.nguh.nguhcraft.server.ServerUtils.StrikeLighting
 import org.nguh.nguhcraft.server.accessors.ServerPlayerAccessor
 import org.nguh.nguhcraft.server.accessors.ServerPlayerDiscordAccessor
 import org.nguh.nguhcraft.server.dedicated.Vanish
-import kotlin.reflect.KProperty1
-
-typealias RegionTriggerProperty = KProperty1<ServerRegion, RegionTrigger>
 
 object Commands {
     private inline fun <reified T : ArgumentType<*>> ArgType(Key: String, noinline Func: () -> T) {
@@ -98,6 +95,7 @@ object Commands {
         }
 
         ArgType("home", HomeArgumentType::Home)
+        ArgType("procedure", ProcedureArgumentType::Procedure)
         ArgType("region", RegionArgumentType::Region)
         ArgType("warp", WarpArgumentType::Warp)
     }
@@ -299,17 +297,17 @@ object Commands {
     }
 
     object ProcedureCommand {
-        fun Call(S: ServerCommandSource, Name: String): Int {
-            val Proc = MCBASIC.ProcedureManager.GetExisting(Name)
-            if (Proc == null) {
-                S.sendError(Text.literal("No such procedure: ").append(Text.literal(Name).formatted(Formatting.GOLD)))
-                return 0
-            }
+        private val PROC_EMPTY: Text = Text.literal("Procedure is already empty").formatted(Formatting.YELLOW)
+        private val INVALID_LINE_NUMBER = Exn("Line number is out of bounds!")
 
+        fun Append(S: ServerCommandSource, Proc: MCBASIC.Procedure, Text: String) =
+            InsertLine(S, Proc, Proc.Code.LineCount(), Text)
+
+        fun Call(S: ServerCommandSource, Proc: MCBASIC.Procedure): Int {
             try {
                 Proc.Code.ExecuteAndThrow(S)
             } catch (E: Exception) {
-                S.sendError(Text.literal("Failed to execute procedure ").append(Text.literal(Name).formatted(Formatting.GOLD)))
+                S.sendError(Text.literal("Failed to execute procedure ").append(Text.literal(Proc.Name).formatted(Formatting.GOLD)))
                 S.sendError(Text.literal(E.message))
                 E.printStackTrace()
                 return 0
@@ -318,9 +316,24 @@ object Commands {
             return 1
         }
 
+        fun Clear(S: ServerCommandSource, Proc: MCBASIC.Procedure): Int {
+            if (Proc.Code.IsEmpty()) {
+                S.sendMessage(PROC_EMPTY)
+                return 0
+            }
+
+            Proc.Code.Clear()
+            val Msg = Text.literal("Cleared procedure ").append(Text.literal(Proc.Name).formatted(Formatting.GOLD))
+            S.sendMessage(Msg.formatted(Formatting.YELLOW))
+            // TODO: Introduce
+            //     - S.reply(msg) -> S.sendMessage(msg.formatted(Formatting.YELLOW))
+            //     - S.success(msg) -> S.sendMessage(msg.formatted(Formatting.GREEN))
+            return 1
+        }
+
         fun Create(S: ServerCommandSource, Name: String): Int {
-            if (MCBASIC.ProcedureManager.GetExisting(Name) != null) {
-                S.sendError(Text.literal("Procedure ")
+            if (S.server.ProcedureManager.GetExisting(Name) != null) {
+                S.sendError(Text.literal("Procedure ") // FIXME: This isn’t really an error.
                     .append(Text.literal(Name).formatted(Formatting.GOLD))
                     .append(" already exists!")
                 )
@@ -328,7 +341,7 @@ object Commands {
             }
 
             try {
-                MCBASIC.ProcedureManager.GetOrCreate(Name)
+                S.server.ProcedureManager.GetOrCreate(Name)
                 S.sendMessage(Text.literal("Created procedure ")
                     .append(Text.literal(Name).formatted(Formatting.GOLD)
                 ).formatted(Formatting.GREEN))
@@ -343,27 +356,36 @@ object Commands {
             }
         }
 
-        fun Delete(S: ServerCommandSource, Name: String): Int {
-            val P = MCBASIC.ProcedureManager.GetExisting(Name)
-            if (P == null) {
-                S.sendError(Text.literal("No such procedure: ").append(Text.literal(Name).formatted(Formatting.GOLD)))
+        fun DeleteLine(S: ServerCommandSource, Proc: MCBASIC.Procedure, Line: Int, Until: Int? = null): Int {
+            if (Line >= Proc.Code.LineCount()) throw INVALID_LINE_NUMBER.create()
+            if (Until != null && Until >= Proc.Code.LineCount()) throw INVALID_LINE_NUMBER.create()
+            Proc.Code.Delete(Line..(Until ?: Line))
+            S.sendMessage(Text.literal("Removed command at index $Line"))
+            return 1
+        }
+
+        fun DeleteProcedure(S: ServerCommandSource, Proc: MCBASIC.Procedure): Int {
+            if (Proc.Managed) {
+                S.sendError(Text.literal("Cannot delete managed procedure ").append(Text.literal(Proc.Name).formatted(Formatting.GOLD)))
                 return 0
             }
 
-            if (P.Managed) {
-                S.sendError(Text.literal("Cannot delete managed procedure ").append(Text.literal(Name).formatted(Formatting.GOLD)))
-                return 0
-            }
-
-            MCBASIC.ProcedureManager.Delete(P)
+            S.server.ProcedureManager.Delete(Proc)
             S.sendMessage(Text.literal("Deleted procedure ")
-                .append(Text.literal(Name).formatted(Formatting.GOLD)
+                .append(Text.literal(Proc.Name).formatted(Formatting.GOLD)
             ).formatted(Formatting.YELLOW))
             return 1
         }
 
+        fun InsertLine(S: ServerCommandSource, Proc: MCBASIC.Procedure, Line: Int, Code: String): Int {
+            if (Line > Proc.Code.LineCount() || Line < 0) throw INVALID_LINE_NUMBER.create() // '>', not '>='!
+            Proc.Code.Insert(Line, Code)
+            S.sendMessage(Text.literal("Added command at index $Line"))
+            return 1
+        }
+
         fun List(S: ServerCommandSource): Int {
-            val Procs = MCBASIC.ProcedureManager.Procedures
+            val Procs = S.server.ProcedureManager.Procedures
             if (Procs.isEmpty()) {
                 S.sendMessage(Text.literal("No procedures defined").formatted(Formatting.YELLOW))
                 return 0
@@ -375,14 +397,22 @@ object Commands {
             return Procs.size
         }
 
-        fun List(S: ServerCommandSource, Name: String): Int {
-            val Proc = MCBASIC.ProcedureManager.GetExisting(Name)
-            if (Proc == null) {
-                S.sendError(Text.literal("No such procedure: ").append(Text.literal(Name).formatted(Formatting.GOLD)))
-                return 0
-            }
+        fun Listing(S: ServerCommandSource, Proc: MCBASIC.Procedure): Int {
+            val Msg = Text.literal("Procedure ").append(Text.literal(Proc.Name).formatted(Formatting.GOLD)).append(":\n")
+            Proc.Code.Listing(Msg)
+            S.sendMessage(Msg.formatted(Formatting.YELLOW))
+            return 1
+        }
 
-            val Msg = Text.literal("Procedure ").append(Text.literal(Name).formatted(Formatting.GOLD)).append(":\n")
+        fun SetLine(S: ServerCommandSource, Proc: MCBASIC.Procedure, Line: Int, Code: String): Int {
+            if (Line >= Proc.Code.LineCount()) throw INVALID_LINE_NUMBER.create()
+            Proc.Code[Line] = Code
+            S.sendMessage(Text.literal("Set command at index $Line"))
+            return 1
+        }
+
+        fun Source(S: ServerCommandSource, Proc: MCBASIC.Procedure): Int {
+            val Msg = Text.literal("Procedure ").append(Text.literal(Proc.Name).formatted(Formatting.GOLD)).append(":\n")
             Proc.Code.DisplaySource(Msg, 0)
             S.sendMessage(Msg.formatted(Formatting.YELLOW))
             return 1
@@ -391,11 +421,6 @@ object Commands {
 
     object RegionCommand {
         private val NOT_IN_ANY_REGION: Text = Text.literal("You are not in any region!")
-        private val INVALID_LINE_NUMBER = Exn("Line number is out of bounds!")
-        private val TRIGGER_EMPTY: Text = Text.literal("Trigger is already empty").formatted(Formatting.YELLOW)
-        const val REGION_ARG_NAME = "region"
-        const val COMMAND_ARG_NAME = "command"
-        const val LINE_ARG_NAME = "line"
 
         fun AddRegion(S: ServerCommandSource, W: World, Name: String, From: ColumnPos, To: ColumnPos): Int {
             if (From == To) {
@@ -405,6 +430,7 @@ object Commands {
 
             try {
                 val R = ServerRegion(
+                    S.server,
                     Name,
                     W.registryKey,
                     FromX = From.x,
@@ -436,38 +462,6 @@ object Commands {
             }
         }
 
-        fun AddTriggerLine(C: CommandContext<ServerCommandSource>, Trigger: RegionTriggerProperty): Int {
-            val R = RegionArgumentType.Resolve(C, REGION_ARG_NAME)
-            val Program = Trigger.get(R).Commands
-            val Line = IntegerArgumentType.getInteger(C, LINE_ARG_NAME)
-            InsertTriggerCommand(C, Program, Line)
-            return 1
-        }
-
-        fun AppendTriggerLine(C: CommandContext<ServerCommandSource>, Trigger: RegionTriggerProperty): Int {
-            val R = RegionArgumentType.Resolve(C, REGION_ARG_NAME)
-            val Program = Trigger.get(R).Commands
-            InsertTriggerCommand(C, Program, Program.LineCount())
-            return 1
-        }
-
-        fun ClearTrigger(C: CommandContext<ServerCommandSource>, Trigger: RegionTriggerProperty): Int {
-            val R = RegionArgumentType.Resolve(C, REGION_ARG_NAME)
-            val T = Trigger.get(R)
-            if (T.Commands.IsEmpty()) {
-                C.source.sendMessage(TRIGGER_EMPTY)
-                return 0
-            }
-
-            T.Commands.Clear()
-            val Msg = Text.literal("Cleared ")
-            T.AppendName(Msg)
-            Msg.append(" for region ")
-            R.AppendWorldAndName(Msg)
-            C.source.sendMessage(Msg.formatted(Formatting.GREEN))
-            return 1
-        }
-
         fun DeleteRegion(S: ServerCommandSource, R: ServerRegion): Int {
             if (!S.server.ProtectionManager.DeleteRegion(S.server, R)) {
                 S.sendError(R.AppendWorldAndName(Text.literal("No such region: ")))
@@ -479,23 +473,6 @@ object Commands {
                 .formatted(Formatting.GREEN)
             )
             return 1
-        }
-
-        fun DeleteTriggerLine(C: CommandContext<ServerCommandSource>, Trigger: RegionTriggerProperty, Until: Int? = null): Int {
-            val R = RegionArgumentType.Resolve(C, REGION_ARG_NAME)
-            val Program = Trigger.get(R).Commands
-            val Line = IntegerArgumentType.getInteger(C, LINE_ARG_NAME)
-            if (Line >= Program.LineCount()) throw INVALID_LINE_NUMBER.create()
-            if (Until != null && Until >= Program.LineCount()) throw INVALID_LINE_NUMBER.create()
-            Program.Delete(Line..(Until ?: Line))
-            C.source.sendMessage(Text.literal("Removed command at index $Line"))
-            return 1
-        }
-
-        private fun InsertTriggerCommand(C: CommandContext<ServerCommandSource>, Program: MCBASIC.Program, Index: Int) {
-            if (Index > Program.LineCount() || Index < 0) throw INVALID_LINE_NUMBER.create() // '>', not '>='!
-            Program.Insert(Index, StringArgumentType.getString(C, COMMAND_ARG_NAME))
-            C.source.sendMessage(Text.literal("Added command at index $Index"))
         }
 
         fun ListAllRegions(S: ServerCommandSource): Int {
@@ -567,42 +544,6 @@ object Commands {
 
             R.AppendWorldAndName(Mess)
             S.sendMessage(Mess.formatted(Formatting.YELLOW))
-            return 1
-        }
-
-        fun SetTrigger(C: CommandContext<ServerCommandSource>, Trigger: RegionTriggerProperty): Int {
-            val R = RegionArgumentType.Resolve(C, REGION_ARG_NAME)
-            val Program = Trigger.get(R).Commands
-            Program.Clear()
-            InsertTriggerCommand(C, Program, 0)
-            return 1
-        }
-
-        fun SetTriggerLine(C: CommandContext<ServerCommandSource>, Trigger: RegionTriggerProperty): Int {
-            val R = RegionArgumentType.Resolve(C, REGION_ARG_NAME)
-            val List = Trigger.get(R).Commands
-            val Line = IntegerArgumentType.getInteger(C, LINE_ARG_NAME)
-            if (Line >= List.LineCount()) throw INVALID_LINE_NUMBER.create()
-            List[Line] = StringArgumentType.getString(C, COMMAND_ARG_NAME)
-            C.source.sendMessage(Text.literal("Set command at index $Line"))
-            return 1
-        }
-
-        fun ShowTrigger(C: CommandContext<ServerCommandSource>, Trigger: RegionTriggerProperty): Int {
-            val R = RegionArgumentType.Resolve(C, REGION_ARG_NAME)
-            val T = Trigger.get(R)
-            val Msg = T.AppendName(Text.literal("== Trigger ")).append(" ==\n")
-            T.AppendCommands(R, Msg, 2)
-            C.source.sendMessage(Msg.formatted(Formatting.YELLOW))
-            return 1
-        }
-
-        fun ShowTriggerListing(C: CommandContext<ServerCommandSource>, Trigger: RegionTriggerProperty): Int {
-            val R = RegionArgumentType.Resolve(C, REGION_ARG_NAME)
-            val T = Trigger.get(R)
-            val Msg = T.AppendName(Text.literal("== Trigger ")).append(" ==") // No newline here!
-            T.Commands.Listing(Msg)
-            C.source.sendMessage(Msg.formatted(Formatting.YELLOW))
             return 1
         }
     }
@@ -973,26 +914,105 @@ object Commands {
 
     private fun ProcedureCommand(): LiteralArgumentBuilder<ServerCommandSource> = literal("procedure")
         .requires { it.hasPermissionLevel(4) } // Procedures should not be able to create themselves.
+        .then(literal("append")
+            .then(argument("procedure", ProcedureArgumentType.Procedure())
+                .suggests(ProcedureArgumentType::Suggest)
+                .then(argument("text", StringArgumentType.greedyString())
+                    .executes { ProcedureCommand.Append(
+                        it.source,
+                        ProcedureArgumentType.Resolve(it, "procedure"),
+                        StringArgumentType.getString(it, "text")
+                    ) }
+                )
+            )
+        )
         .then(literal("call")
-            .then(argument("procedure", StringArgumentType.greedyString())
-                .executes { ProcedureCommand.Call(it.source, StringArgumentType.getString(it, "procedure")) }
+            .then(argument("procedure", ProcedureArgumentType.Procedure())
+                .suggests(ProcedureArgumentType::Suggest)
+                .executes { ProcedureCommand.Call(it.source, ProcedureArgumentType.Resolve(it, "procedure")) }
+            )
+        )
+        .then(literal("clear")
+            .then(argument("procedure", ProcedureArgumentType.Procedure())
+                .suggests(ProcedureArgumentType::Suggest)
+                .executes { ProcedureCommand.Clear(it.source, ProcedureArgumentType.Resolve(it, "procedure")) }
             )
         )
         .then(literal("create")
-            .then(argument("procedure", StringArgumentType.greedyString())
+            .then(argument("procedure", StringArgumentType.greedyString()) // Not a procedure arg because it doesn’t exist yet.
                 .executes { ProcedureCommand.Create(it.source, StringArgumentType.getString(it, "procedure")) }
             )
         )
         .then(literal("del")
-            .then(argument("procedure", StringArgumentType.greedyString())
-                .executes { ProcedureCommand.Delete(it.source, StringArgumentType.getString(it, "procedure")) }
+            .then(argument("procedure", ProcedureArgumentType.Procedure())
+                .suggests(ProcedureArgumentType::Suggest)
+                .then(argument("line", IntegerArgumentType.integer())
+                    .then(literal("to")
+                        .then(argument("until", IntegerArgumentType.integer())
+                            .executes { ProcedureCommand.DeleteLine(
+                                it.source,
+                                ProcedureArgumentType.Resolve(it, "procedure"),
+                                IntegerArgumentType.getInteger(it, "line"),
+                                IntegerArgumentType.getInteger(it, "until")
+                            ) }
+                        )
+                    )
+                    .executes { ProcedureCommand.DeleteLine(
+                        it.source,
+                        ProcedureArgumentType.Resolve(it, "procedure"),
+                        IntegerArgumentType.getInteger(it, "line")
+                    ) }
+                )
             )
         )
-        .then(literal("list")
-            .then(argument("procedure", StringArgumentType.greedyString())
-                .executes { ProcedureCommand.List(it.source, StringArgumentType.getString(it, "procedure")) }
+        .then(literal("delete-procedure")
+            .then(argument("procedure", ProcedureArgumentType.Procedure())
+                .suggests(ProcedureArgumentType::Suggest)
+                .executes { ProcedureCommand.DeleteProcedure(it.source, ProcedureArgumentType.Resolve(it, "procedure")) }
             )
-            .executes { ProcedureCommand.List(it.source) }
+        )
+        .then(literal("insert")
+            .then(argument("procedure", ProcedureArgumentType.Procedure())
+                .suggests(ProcedureArgumentType::Suggest)
+                .then(argument("line", IntegerArgumentType.integer())
+                    .then(argument("text", StringArgumentType.greedyString())
+                        .executes { ProcedureCommand.InsertLine(
+                            it.source,
+                            ProcedureArgumentType.Resolve(it, "procedure"),
+                            IntegerArgumentType.getInteger(it, "line"),
+                            StringArgumentType.getString(it, "text")
+                        ) }
+                    )
+                )
+            )
+        )
+        .then(literal("list").executes { ProcedureCommand.List(it.source) })
+        .then(literal("listing")
+            .then(argument("procedure", ProcedureArgumentType.Procedure())
+                .suggests(ProcedureArgumentType::Suggest)
+                .executes { ProcedureCommand.Listing(it.source, ProcedureArgumentType.Resolve(it, "procedure")) }
+            )
+        )
+        .then(literal("set")
+            .then(argument("procedure", ProcedureArgumentType.Procedure())
+                .suggests(ProcedureArgumentType::Suggest)
+                .then(argument("line", IntegerArgumentType.integer())
+                    .then(argument("text", StringArgumentType.greedyString())
+                        .executes { ProcedureCommand.SetLine(
+                            it.source,
+                            ProcedureArgumentType.Resolve(it, "procedure"),
+                            IntegerArgumentType.getInteger(it, "line"),
+                            StringArgumentType.getString(it, "text")
+                        ) }
+                    )
+                )
+            )
+        )
+        .then(literal("source")
+            .then(argument("procedure", ProcedureArgumentType.Procedure())
+                .suggests(ProcedureArgumentType::Suggest)
+                .executes { ProcedureCommand.Source(it.source, ProcedureArgumentType.Resolve(it, "procedure")) }
+            )
         )
 
     private fun RegionCommand(): LiteralArgumentBuilder<ServerCommandSource> {
@@ -1010,56 +1030,6 @@ object Commands {
                 .then(literal("deny").executes { Set(it, false) })
                 .then(literal("disable").executes { Set(it, false) })
                 .then(literal("enable").executes { Set(it, true) })
-            )
-        }
-
-        val TriggerNode = argument(RegionCommand.REGION_ARG_NAME, RegionArgumentType.Region())
-        listOf(
-            ServerRegion::PlayerEntryTrigger,
-            ServerRegion::PlayerLeaveTrigger,
-        ).forEach { Trigger ->
-            // TODO: These should probably be moved to a generic 'procedure' command,
-            TriggerNode.then(literal(Trigger.get(ServerRegion.DUMMY).Name)
-                .then(literal("append")
-                    .then(argument(RegionCommand.COMMAND_ARG_NAME, StringArgumentType.greedyString())
-                        .executes { RegionCommand.AppendTriggerLine(it, Trigger) }
-                    )
-                )
-                .then(literal("clear").executes { RegionCommand.ClearTrigger(it, Trigger) })
-                .then(literal("del")
-                    .then(argument(RegionCommand.LINE_ARG_NAME, IntegerArgumentType.integer())
-                        .then(literal("to")
-                            .then(argument("until", IntegerArgumentType.integer())
-                                .executes { RegionCommand.DeleteTriggerLine(
-                                    it,
-                                    Trigger,
-                                    IntegerArgumentType.getInteger(it, "until")
-                                ) }
-                            )
-                        )
-                        .executes { RegionCommand.DeleteTriggerLine(it, Trigger) }
-                    )
-                )
-                .then(literal("insert")
-                    .then(argument(RegionCommand.LINE_ARG_NAME, IntegerArgumentType.integer())
-                        .then(argument(RegionCommand.COMMAND_ARG_NAME, StringArgumentType.greedyString())
-                            .executes { RegionCommand.AddTriggerLine(it, Trigger) }
-                        )
-                    )
-                )
-                .then(literal("listing").executes { RegionCommand.ShowTriggerListing(it, Trigger) })
-                .then(literal("set")
-                    .then(argument(RegionCommand.LINE_ARG_NAME, IntegerArgumentType.integer())
-                        .then(argument(RegionCommand.COMMAND_ARG_NAME, StringArgumentType.greedyString())
-                            .executes { RegionCommand.SetTriggerLine(it, Trigger) }
-                        )
-                    )
-                )
-                .then(literal("set_entire_trigger") // Verbose so we don’t confuse it w/ 'set'.
-                    .then(argument(RegionCommand.COMMAND_ARG_NAME, StringArgumentType.greedyString())
-                        .executes { RegionCommand.SetTrigger(it, Trigger) }
-                ))
-                .executes { RegionCommand.ShowTrigger(it, Trigger) }
             )
         }
 
@@ -1116,7 +1086,6 @@ object Commands {
                 .executes { RegionCommand.PrintRegionInfo(it.source, it.source.playerOrThrow) }
             )
             .then(literal("flags").then(RegionFlagsNameNode))
-            .then(literal("trigger").then(TriggerNode))
     }
 
     private fun RuleCommand(): LiteralArgumentBuilder<ServerCommandSource> {

@@ -16,7 +16,7 @@ import net.minecraft.util.Formatting
 import net.minecraft.util.profiler.Profilers
 import net.minecraft.world.World
 import org.nguh.nguhcraft.Constants
-import org.nguh.nguhcraft.MCBASIC
+import org.nguh.nguhcraft.server.MCBASIC
 import org.nguh.nguhcraft.network.ClientboundSyncProtectionMgrPacket
 import org.nguh.nguhcraft.protect.ProtectionManager
 import org.nguh.nguhcraft.protect.Region
@@ -28,6 +28,7 @@ data class MalformedRegionException(val Msg: Text) : Exception()
 
 /** Server-side region. */
 class ServerRegion(
+    S: MinecraftServer,
     Name: String,
     World: RegistryKey<World>,
     FromX: Int,
@@ -42,10 +43,10 @@ class ServerRegion(
     }
 
     /** Command that is run when a player enters the region. */
-    val PlayerEntryTrigger = RegionTrigger(this, "player_entry")
+    val PlayerEntryTrigger = RegionTrigger(S, this, "player_entry")
 
     /** Command that is run when a player leaves the region. */
-    val PlayerLeaveTrigger = RegionTrigger(this, "player_leave")
+    val PlayerLeaveTrigger = RegionTrigger(S, this, "player_leave")
 
     /**
      * Players that are in this region.
@@ -59,7 +60,8 @@ class ServerRegion(
     private var PlayersInRegion = mutableSetOf<UUID>()
 
     /** Deserialise a region. */
-    constructor(Tag: NbtCompound, W: RegistryKey<World>) : this(
+    constructor(S: MinecraftServer, Tag: NbtCompound, W: RegistryKey<World>) : this(
+        S,
         Tag.getString(TAG_NAME),
         W,
         FromX = Tag.getInt(TAG_MIN_X),
@@ -214,9 +216,6 @@ class ServerRegion(
         private const val TAG_MAX_Z = "MaxZ"
         private const val TAG_FLAGS = "RegionFlags"
         private const val TAG_NAME = "Name"
-
-        /** Dummy region used as part of a hack to access trigger names. */
-        val DUMMY = ServerRegion("__dummy__", World.END, 0, 0, 0, 0)
     }
 }
 
@@ -230,11 +229,12 @@ class ServerRegion(
  * or leaves multiple regions in a single tick is unspecified.
  */
 class RegionTrigger(
+    S: MinecraftServer,
     Parent: Region,
     TriggerName: String,
 ) {
     /** The trigger’s procedure. */
-    val Proc = MCBASIC.ProcedureManager.GetOrCreateManaged("regions/${Parent.World.value.path}/${Parent.Name}/$TriggerName")
+    val Proc = S.ProcedureManager.GetOrCreateManaged("regions/${Parent.World.value.path}/${Parent.Name}/$TriggerName")
     val Name get() = Proc.Name
     val Commands get() = Proc.Code
 
@@ -444,7 +444,7 @@ class ServerProtectionManager : ProtectionManager(
         val RegionsTag = Tag.getList(TAG_REGIONS, NbtElement.COMPOUND_TYPE.toInt())
         val Regions = RegionListFor(SW)
         RegionsTag.forEach {
-            val R = ServerRegion(it as NbtCompound, SW.registryKey)
+            val R = ServerRegion(SW.server, it as NbtCompound, SW.registryKey)
             Regions.Add(R)
         }
     }

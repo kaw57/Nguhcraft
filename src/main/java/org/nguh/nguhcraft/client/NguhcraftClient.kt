@@ -22,7 +22,7 @@ import net.minecraft.text.Text
 import net.minecraft.util.Colors
 import net.minecraft.util.Formatting
 import net.minecraft.util.math.BlockPos
-import org.nguh.nguhcraft.MCBASIC
+import org.nguh.nguhcraft.server.MCBASIC
 import org.nguh.nguhcraft.Nguhcraft.Companion.Id
 import org.nguh.nguhcraft.block.NguhBlocks
 import org.nguh.nguhcraft.client.ClientUtils.Client
@@ -52,10 +52,6 @@ class NguhcraftClient : ClientModInitializer {
             BypassesRegionProtection = false
             Vanished = false
             LastInteractedLecternPos = BlockPos.ORIGIN
-        }
-
-        ServerLifecycleEvents.SERVER_STOPPED.register {
-            MCBASIC.ProcedureManager.Reset()
         }
     }
 

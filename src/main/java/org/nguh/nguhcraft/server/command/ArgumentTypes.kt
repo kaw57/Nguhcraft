@@ -19,7 +19,9 @@ import net.minecraft.world.World
 import org.nguh.nguhcraft.client.ClientUtils.Client
 import org.nguh.nguhcraft.protect.ProtectionManager
 import org.nguh.nguhcraft.server.Home
+import org.nguh.nguhcraft.server.MCBASIC
 import org.nguh.nguhcraft.server.PlayerByName
+import org.nguh.nguhcraft.server.ProcedureManager
 import org.nguh.nguhcraft.server.ServerRegion
 import org.nguh.nguhcraft.server.WarpManager
 import org.nguh.nguhcraft.server.accessors.ServerPlayerAccessor
@@ -94,6 +96,28 @@ class HomeArgumentType : ArgumentType<String> {
         }
 
         fun Home() = HomeArgumentType()
+    }
+}
+
+class ProcedureArgumentType : ArgumentType<String> {
+    override fun parse(R: StringReader) =  R.ReadUntilWhitespace()
+    companion object {
+        private val NO_SUCH_PROCEDURE = DynamicCommandExceptionType { Text.literal("No such procedure: '$it'") }
+
+        fun Procedure() = ProcedureArgumentType()
+
+        fun Resolve(Ctx: CommandContext<ServerCommandSource>, ArgName: String): MCBASIC.Procedure {
+            val Name = Ctx.getArgument(ArgName, String::class.java)
+            return Ctx.source.server.ProcedureManager.GetExisting(Name) ?: throw NO_SUCH_PROCEDURE.create(Name)
+        }
+
+        fun Suggest(
+            Ctx: CommandContext<ServerCommandSource>,
+            SB: SuggestionsBuilder
+        ): CompletableFuture<Suggestions> {
+            val Procedures = Ctx.source.server.ProcedureManager.Procedures.map { it.Name }
+            return CommandSource.suggestMatching(Procedures, SB)
+        }
     }
 }
 

@@ -15,6 +15,8 @@ import org.nguh.nguhcraft.block.NguhBlocks
 import org.nguh.nguhcraft.item.NguhItems
 import org.nguh.nguhcraft.network.*
 import org.nguh.nguhcraft.protect.ProtectionManager
+import org.nguh.nguhcraft.server.MCBASIC
+import org.nguh.nguhcraft.server.ProcedureManager
 import org.nguh.nguhcraft.server.command.Commands
 import org.nguh.nguhcraft.server.ServerNetworkHandler
 import org.nguh.nguhcraft.server.ServerProtectionManager
@@ -222,7 +224,7 @@ class Nguhcraft : ModInitializer {
                 for (SW in S.worlds) LoadExtraWorldData(SW)
 
                 // Load procedures.
-                MCBASIC.ProcedureManager.Load(Dir.resolve(DIR_PROCEDURES))
+                S.ProcedureManager.Load(Dir.resolve(DIR_PROCEDURES))
             } catch (E: Exception) {
                 LOGGER.warn("Nguhcraft: Failed to load persistent state; using defaults: ${E.message}")
             }
@@ -262,7 +264,7 @@ class Nguhcraft : ModInitializer {
             for (SW in S.worlds) SaveExtraWorldData(SW)
 
             // Save procedures.
-            MCBASIC.ProcedureManager.Save(Dir.resolve(DIR_PROCEDURES))
+            S.ProcedureManager.Save(Dir.resolve(DIR_PROCEDURES))
 
             // And write to disk.
             try {
