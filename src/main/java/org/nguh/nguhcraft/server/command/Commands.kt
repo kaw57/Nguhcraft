@@ -23,6 +23,7 @@ import net.minecraft.server.command.CommandManager.literal
 import net.minecraft.server.command.ServerCommandSource
 import net.minecraft.server.network.ServerPlayerEntity
 import net.minecraft.server.world.ServerWorld
+import net.minecraft.text.MutableText
 import net.minecraft.text.Text
 import net.minecraft.util.Formatting
 import net.minecraft.util.math.BlockPos
@@ -46,6 +47,20 @@ import org.nguh.nguhcraft.server.ServerUtils.StrikeLighting
 import org.nguh.nguhcraft.server.accessors.ServerPlayerAccessor
 import org.nguh.nguhcraft.server.accessors.ServerPlayerDiscordAccessor
 import org.nguh.nguhcraft.server.dedicated.Vanish
+
+fun ServerCommandSource.Error(Msg: String?) = sendError(Text.of(Msg))
+
+// Used when a command causes a general change, or for status updates.
+fun ServerCommandSource.Reply(Msg: String) = Reply(Text.literal(Msg))
+fun ServerCommandSource.Reply(Msg: Text) = Reply(Text.empty().append(Msg))
+fun ServerCommandSource.Reply(Msg: MutableText) = sendMessage(Msg.formatted(Formatting.YELLOW))
+
+// Used when a command results in the addition or creation of something.
+fun ServerCommandSource.Success(Msg: String) = Success(Text.literal(Msg))
+fun ServerCommandSource.Success(Msg: Text) = Success(Text.empty().append(Msg))
+fun ServerCommandSource.Success(Msg: MutableText) = sendMessage(Msg.formatted(Formatting.GREEN))
+
+fun ReplyMsg(Msg: String): Text = Text.literal(Msg).formatted(Formatting.YELLOW)
 
 object Commands {
     private inline fun <reified T : ArgumentType<*>> ArgType(Key: String, noinline Func: () -> T) {
@@ -119,8 +134,8 @@ object Commands {
     }
 
     object BypassCommand {
-        private val BYPASSING = Text.literal("Now bypassing region protection.").formatted(Formatting.YELLOW)
-        private val NOT_BYPASSING = Text.literal("No longer bypassing region protection.").formatted(Formatting.YELLOW)
+        private val BYPASSING = ReplyMsg("Now bypassing region protection.")
+        private val NOT_BYPASSING = ReplyMsg("No longer bypassing region protection.")
 
         fun Toggle(S: ServerCommandSource, SP: ServerPlayerEntity): Int {
             val A = SP as ServerPlayerAccessor
@@ -133,7 +148,7 @@ object Commands {
     }
 
     object DiscardCommand {
-        private val REASON = Text.literal("Player entity was discarded")
+        private val REASON = ReplyMsg("Player entity was discarded")
 
         fun Execute(S: ServerCommandSource, Entities: Collection<Entity>): Int {
             for (E in Entities) {
@@ -145,7 +160,7 @@ object Commands {
                 else if (!IsIntegratedServer()) E.networkHandler.disconnect(REASON)
             }
 
-            S.sendMessage(Text.literal("Discarded ${Entities.size} entities"))
+            S.Reply("Discarded ${Entities.size} entities")
             return Entities.size
         }
     }
@@ -164,7 +179,7 @@ object Commands {
             val ItemStack = SP.mainHandStack
             if (ItemStack.isEmpty) throw ERR_NO_ITEM.create()
             ItemStack.addEnchantment(E, Lvl)
-            S.sendMessage(
+            S.Success(
                 Text.translatable(
                     "commands.enchant.success.single", *arrayOf<Any>(
                         Enchantment.getName(E, Lvl),
@@ -177,8 +192,8 @@ object Commands {
     }
 
     object FixCommand {
-        private val FIXED_ONE = Text.literal("Fixed item in hand").formatted(Formatting.YELLOW)
-        private val FIXED_ALL = Text.literal("Fixed all items in inventory").formatted(Formatting.YELLOW)
+        private val FIXED_ONE = ReplyMsg("Fixed item in hand")
+        private val FIXED_ALL = ReplyMsg("Fixed all items in inventory")
 
         fun Fix(S: ServerCommandSource, SP: ServerPlayerEntity): Int {
             FixStack(SP.mainHandStack)
@@ -204,15 +219,12 @@ object Commands {
     object HomeCommand {
         private val CANT_TOUCH_THIS = Exn("The \"bed\" home is special and cannot be deleted or set!")
         private val CONNOR_MACLEOD = Exn("You may only have one home!")
+        private val NO_HOMES = ReplyMsg("No homes defined!")
 
         fun Delete(S: ServerCommandSource, SP: ServerPlayerEntity, H: Home): Int {
             if (H.Name == Home.BED_HOME) throw CANT_TOUCH_THIS.create()
             (SP as ServerPlayerAccessor).Homes().remove(H)
-            S.sendMessage(
-                Text.literal("Deleted home ")
-                    .append(Text.literal(H.Name).formatted(Formatting.AQUA))
-                    .formatted(Formatting.YELLOW)
-            )
+            S.Reply(Text.literal("Deleted home ").append(Text.literal(H.Name).formatted(Formatting.AQUA)))
             return 1
         }
 
@@ -237,14 +249,14 @@ object Commands {
         fun List(S: ServerCommandSource, SP: ServerPlayerEntity): Int {
             val Homes = (SP as ServerPlayerAccessor).Homes()
             if (Homes.isEmpty()) {
-                S.sendMessage(Text.literal("No homes defined").formatted(Formatting.YELLOW))
+                S.sendMessage(NO_HOMES)
                 return 0
             }
 
             val List = Text.literal("Homes:")
             List.append(FormatHome(Home.Bed(SP)))
             for (H in Homes) List.append(FormatHome(H))
-            S.sendMessage(List.formatted(Formatting.YELLOW))
+            S.Reply(List)
             return 1
         }
 
@@ -258,11 +270,7 @@ object Commands {
             if (!TargetPlayer.hasPermissionLevel(4) && Homes.isNotEmpty()) throw CONNOR_MACLEOD.create()
             Homes.add(Home(Name, SP.world.registryKey, SP.blockPos))
 
-            S.sendMessage(
-                Text.literal("Set home ")
-                    .append(Text.literal(Name).formatted(Formatting.AQUA))
-                    .formatted(Formatting.GREEN)
-            )
+            S.Success(Text.literal("Set home ").append(Text.literal(Name).formatted(Formatting.AQUA)))
             return 1
         }
 
@@ -278,7 +286,7 @@ object Commands {
     }
 
     object KeyCommand {
-        private val ERR_EMPTY: Text = Text.literal("Key may not be empty!")
+        private val ERR_EMPTY = Text.of("Key may not be empty!")
 
         fun Generate(S: ServerCommandSource, SP: ServerPlayerEntity, Key: String): Int {
             if (Key.isEmpty()) {
@@ -288,16 +296,14 @@ object Commands {
 
             SP.inventory.insertStack(KeyItem.Create(Key))
             SP.currentScreenHandler.sendContentUpdates()
-            S.sendMessage(
-                Text.literal("Generated key ").formatted(Formatting.YELLOW)
-                .append(Text.literal(Key).formatted(Formatting.LIGHT_PURPLE))
-            )
+            S.Success(Text.literal("Generated key ").append(Text.literal(Key).formatted(Formatting.LIGHT_PURPLE)))
             return 1
         }
     }
 
     object ProcedureCommand {
-        private val PROC_EMPTY: Text = Text.literal("Procedure is already empty").formatted(Formatting.YELLOW)
+        private val PROC_EMPTY = ReplyMsg("Procedure is already empty")
+        private val NO_PROCEDURES = ReplyMsg("No procedures defined")
         private val INVALID_LINE_NUMBER = Exn("Line number is out of bounds!")
 
         fun Append(S: ServerCommandSource, Proc: MCBASIC.Procedure, Text: String) =
@@ -308,7 +314,7 @@ object Commands {
                 Proc.Code.ExecuteAndThrow(S)
             } catch (E: Exception) {
                 S.sendError(Text.literal("Failed to execute procedure ").append(Text.literal(Proc.Name).formatted(Formatting.GOLD)))
-                S.sendError(Text.literal(E.message))
+                S.Error(E.message)
                 E.printStackTrace()
                 return 0
             }
@@ -323,17 +329,13 @@ object Commands {
             }
 
             Proc.Code.Clear()
-            val Msg = Text.literal("Cleared procedure ").append(Text.literal(Proc.Name).formatted(Formatting.GOLD))
-            S.sendMessage(Msg.formatted(Formatting.YELLOW))
-            // TODO: Introduce
-            //     - S.reply(msg) -> S.sendMessage(msg.formatted(Formatting.YELLOW))
-            //     - S.success(msg) -> S.sendMessage(msg.formatted(Formatting.GREEN))
+            S.Reply(Text.literal("Cleared procedure ").append(Text.literal(Proc.Name).formatted(Formatting.GOLD)))
             return 1
         }
 
         fun Create(S: ServerCommandSource, Name: String): Int {
             if (S.server.ProcedureManager.GetExisting(Name) != null) {
-                S.sendError(Text.literal("Procedure ") // FIXME: This isn’t really an error.
+                S.Reply(Text.literal("Procedure ")
                     .append(Text.literal(Name).formatted(Formatting.GOLD))
                     .append(" already exists!")
                 )
@@ -342,9 +344,7 @@ object Commands {
 
             try {
                 S.server.ProcedureManager.GetOrCreate(Name)
-                S.sendMessage(Text.literal("Created procedure ")
-                    .append(Text.literal(Name).formatted(Formatting.GOLD)
-                ).formatted(Formatting.GREEN))
+                S.Success(Text.literal("Created procedure ").append(Text.literal(Name).formatted(Formatting.GOLD)))
                 return 1
             } catch (E: IllegalArgumentException) {
                 S.sendError(
@@ -360,7 +360,7 @@ object Commands {
             if (Line >= Proc.Code.LineCount()) throw INVALID_LINE_NUMBER.create()
             if (Until != null && Until >= Proc.Code.LineCount()) throw INVALID_LINE_NUMBER.create()
             Proc.Code.Delete(Line..(Until ?: Line))
-            S.sendMessage(Text.literal("Removed command at index $Line"))
+            S.Reply("Removed command at index $Line")
             return 1
         }
 
@@ -371,60 +371,59 @@ object Commands {
             }
 
             S.server.ProcedureManager.Delete(Proc)
-            S.sendMessage(Text.literal("Deleted procedure ")
-                .append(Text.literal(Proc.Name).formatted(Formatting.GOLD)
-            ).formatted(Formatting.YELLOW))
+            S.Reply(Text.literal("Deleted procedure ").append(Text.literal(Proc.Name).formatted(Formatting.GOLD)))
             return 1
         }
 
         fun InsertLine(S: ServerCommandSource, Proc: MCBASIC.Procedure, Line: Int, Code: String): Int {
             if (Line > Proc.Code.LineCount() || Line < 0) throw INVALID_LINE_NUMBER.create() // '>', not '>='!
             Proc.Code.Insert(Line, Code)
-            S.sendMessage(Text.literal("Added command at index $Line"))
+            S.Success(Text.literal("Added command at index $Line"))
             return 1
         }
 
         fun List(S: ServerCommandSource): Int {
             val Procs = S.server.ProcedureManager.Procedures
             if (Procs.isEmpty()) {
-                S.sendMessage(Text.literal("No procedures defined").formatted(Formatting.YELLOW))
+                S.sendMessage(NO_PROCEDURES)
                 return 0
             }
 
             val List = Text.literal("Procedures:")
             for (P in Procs) List.append(Text.literal("\n  - ").append(Text.literal(P.Name).formatted(Formatting.GOLD)))
-            S.sendMessage(List.formatted(Formatting.YELLOW))
+            S.Reply(List)
             return Procs.size
         }
 
         fun Listing(S: ServerCommandSource, Proc: MCBASIC.Procedure): Int {
             val Msg = Text.literal("Procedure ").append(Text.literal(Proc.Name).formatted(Formatting.GOLD)).append(":\n")
             Proc.Code.Listing(Msg)
-            S.sendMessage(Msg.formatted(Formatting.YELLOW))
+            S.Reply(Msg)
             return 1
         }
 
         fun SetLine(S: ServerCommandSource, Proc: MCBASIC.Procedure, Line: Int, Code: String): Int {
             if (Line >= Proc.Code.LineCount()) throw INVALID_LINE_NUMBER.create()
             Proc.Code[Line] = Code
-            S.sendMessage(Text.literal("Set command at index $Line"))
+            S.Reply("Set command at index $Line")
             return 1
         }
 
         fun Source(S: ServerCommandSource, Proc: MCBASIC.Procedure): Int {
             val Msg = Text.literal("Procedure ").append(Text.literal(Proc.Name).formatted(Formatting.GOLD)).append(":\n")
             Proc.Code.DisplaySource(Msg, 0)
-            S.sendMessage(Msg.formatted(Formatting.YELLOW))
+            S.Reply(Msg)
             return 1
         }
     }
 
     object RegionCommand {
-        private val NOT_IN_ANY_REGION: Text = Text.literal("You are not in any region!")
+        private val NOT_IN_ANY_REGION = Text.of("You are not in any region!")
+        private val CANNOT_CREATE_EMPTY = Text.of("Refusing to create empty region!")
 
         fun AddRegion(S: ServerCommandSource, W: World, Name: String, From: ColumnPos, To: ColumnPos): Int {
             if (From == To) {
-                S.sendError(Text.literal("Refusing to create empty region!"))
+                S.sendError(CANNOT_CREATE_EMPTY)
                 return 0
             }
 
@@ -440,7 +439,7 @@ object Commands {
                 )
 
                 S.server.ProtectionManager.AddRegion(S.server, R)
-                S.sendMessage(Text.literal("Created region ")
+                S.Success(Text.literal("Created region ")
                     .append(Text.literal(Name).formatted(Formatting.AQUA))
                     .append(" in world ")
                     .append(Text.literal(W.registryKey.value.path.toString()).withColor(Constants.Lavender))
@@ -453,7 +452,6 @@ object Commands {
                     .append(", ")
                     .append(Text.literal("${R.MaxZ}").formatted(Formatting.GRAY))
                     .append("]")
-                    .formatted(Formatting.GREEN)
                 )
                 return 1
             } catch (E: MalformedRegionException) {
@@ -485,9 +483,8 @@ object Commands {
         fun ListRegions(S: ServerCommandSource, W: World): Int {
             val Regions = ProtectionManager.GetRegions(W)
             if (Regions.isEmpty()) {
-                S.sendMessage(Text.literal("No regions defined in world ")
+                S.Reply(Text.literal("No regions defined in world ")
                     .append(Text.literal(W.registryKey.value.path.toString()).withColor(Constants.Lavender))
-                    .formatted(Formatting.YELLOW)
                 )
                 return 0
             }
@@ -502,7 +499,7 @@ object Commands {
                 (R as ServerRegion).AppendBounds(List)
             }
 
-            S.sendMessage(List.formatted(Formatting.YELLOW))
+            S.Reply(List)
             return 1
         }
 
@@ -510,7 +507,7 @@ object Commands {
             val Stats = R.AppendWorldAndName(Text.literal("Region "))
             R.AppendBounds(Stats)
             Stats.append(R.Stats)
-            S.sendMessage(Stats.formatted(Formatting.YELLOW))
+            S.Reply(Stats)
             return 1
         }
 
@@ -543,16 +540,18 @@ object Commands {
                 .append(" for region ")
 
             R.AppendWorldAndName(Mess)
-            S.sendMessage(Mess.formatted(Formatting.YELLOW))
+            S.Reply(Mess)
             return 1
         }
     }
 
     object SpeedCommand {
+        private val SPEED_LIMIT = Text.of("Speed must be between 1 and 10")
+
         fun Execute(S: ServerCommandSource, Value: Int): Int {
             // Sanity check so the server doesn’t explode when we move.
             if (Value < 1 || Value > 10) {
-                S.sendError(Text.literal("Speed must be between 1 and 10"))
+                S.sendError(SPEED_LIMIT)
                 return 0
             }
 
@@ -560,15 +559,17 @@ object Commands {
             val SP = S.playerOrThrow
             SP.abilities.flySpeed = Value / 20f
             SP.sendAbilitiesUpdate()
-            S.sendMessage(Text.literal("Set flying speed to $Value").formatted(Formatting.YELLOW))
+            S.Reply("Set flying speed to $Value")
             return 1
         }
     }
 
     object WarpsCommand {
+        private val NO_WARPS = ReplyMsg("No warps defined")
+
         fun Delete(S: ServerCommandSource, W: WarpManager.Warp): Int {
             WarpManager.Warps.remove(W.Name)
-            S.sendMessage(Text.literal("Deleted warp ").append(Text.literal(W.Name).formatted(Formatting.AQUA)))
+            S.Reply(Text.literal("Deleted warp ").append(Text.literal(W.Name).formatted(Formatting.AQUA)))
             return 1
         }
 
@@ -588,7 +589,7 @@ object Commands {
 
         fun List(S: ServerCommandSource): Int {
             if (WarpManager.Warps.isEmpty()) {
-                S.sendMessage(Text.literal("No warps defined").formatted(Formatting.YELLOW))
+                S.sendMessage(NO_WARPS)
                 return 0
             }
 
@@ -598,21 +599,21 @@ object Commands {
                     .append(FormatWarp(W))
             }
 
-            S.sendMessage(List.formatted(Formatting.YELLOW))
+            S.Reply(List)
             return 1
         }
 
         fun Set(S: ServerCommandSource, SP: ServerPlayerEntity, Name: String): Int {
             val W = WarpManager.Warp(Name, SP.serverWorld.registryKey, SP.pos, SP.yaw, SP.pitch)
             WarpManager.Warps[Name] = W
-            S.sendMessage(Text.literal("Set warp ").append(FormatWarp(W)).formatted(Formatting.YELLOW))
+            S.Reply(Text.literal("Set warp ").append(FormatWarp(W)))
             return 1
         }
     }
 
     object WildCommand {
         const val MAX_ATTEMPTS = 50
-        val TELEPORT_FAILED: Text = Text.literal("Sorry, couldn’t find a suitable teleport location. Please try again.")
+        val TELEPORT_FAILED = Text.of("Sorry, couldn’t find a suitable teleport location. Please try again.")
 
         /**
          * Teleport a player to a random position in the world
