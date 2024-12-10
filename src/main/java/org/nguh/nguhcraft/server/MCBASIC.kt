@@ -120,8 +120,7 @@ object MCBASIC {
         /** Print the procedure. */
         fun DisplaySource(
             MT: MutableText,
-            Indent: Int,
-            ClickEventFactory: ((Line: Int, Text: String) -> String)? = null
+            Indent: Int
         ): MutableText {
             val IndentStr = " ".repeat(Indent)
             if (SourceLines.isEmpty()) {
@@ -130,15 +129,16 @@ object MCBASIC {
             }
 
             SourceLines.forEachIndexed { I, S ->
-                val T = Text.literal(S).formatted(Formatting.AQUA)
-                if (ClickEventFactory != null) T.styled { it.withClickEvent(
-                    ClickEvent(
-                        ClickEvent.Action.SUGGEST_COMMAND,
-                        ClickEventFactory(I, S)
+                MT.append("\n$IndentStr[$I] ").append(
+                    Text.literal(S)
+                    .formatted(Formatting.AQUA)
+                    .styled { it.withClickEvent(
+                        ClickEvent(
+                            ClickEvent.Action.SUGGEST_COMMAND,
+                            "/procedure set $Name $I $S"
+                        )
                     )
-                )}
-
-                MT.append("\n$IndentStr[$I] ").append(T)
+                })
             }
             return MT
         }

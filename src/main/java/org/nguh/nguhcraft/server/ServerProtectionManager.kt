@@ -165,7 +165,7 @@ class ServerRegion(
             S.append("\n - ")
             T.AppendName(S)
             S.append(":")
-            T.AppendCommands(this, S, 4)
+            T.AppendCommands(S, 4)
         }
 
         Display(PlayerEntryTrigger)
@@ -241,10 +241,8 @@ class RegionTrigger(
             = MT.append(Text.literal("${Proc.Name}${Proc.DisplayIndicator()}").withColor(Constants.Orange))
 
     /** Print this trigger. */
-    fun AppendCommands(R: Region, MT: MutableText, Indent: Int): MutableText {
-        return Proc.DisplaySource(MT, Indent) { Line, Text ->
-            "/region trigger ${R.World.value.path}:${R.Name} ${Proc.Name} set $Line $Text"
-        }
+    fun AppendCommands(MT: MutableText, Indent: Int): MutableText {
+        return Proc.DisplaySource(MT, Indent)
     }
 
     companion object {
