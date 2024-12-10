@@ -1,11 +1,7 @@
 package org.nguh.nguhcraft.protect
 
-import net.fabricmc.api.EnvType
-import net.fabricmc.api.Environment
-import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
 import net.minecraft.block.Blocks
 import net.minecraft.block.LecternBlock
-import net.minecraft.client.network.ClientPlayerEntity
 import net.minecraft.entity.Entity
 import net.minecraft.entity.damage.DamageSource
 import net.minecraft.entity.mob.Monster
@@ -16,180 +12,18 @@ import net.minecraft.inventory.ContainerLock
 import net.minecraft.item.BoatItem
 import net.minecraft.item.ItemStack
 import net.minecraft.item.MinecartItem
-import net.minecraft.nbt.NbtCompound
-import net.minecraft.nbt.NbtElement
-import net.minecraft.network.RegistryByteBuf
 import net.minecraft.registry.RegistryKey
 import net.minecraft.registry.tag.BlockTags
 import net.minecraft.registry.tag.DamageTypeTags
-import net.minecraft.server.MinecraftServer
-import net.minecraft.server.network.ServerPlayerEntity
-import net.minecraft.text.Text
 import net.minecraft.util.ActionResult
-import net.minecraft.util.Formatting
 import net.minecraft.util.math.BlockPos
-import net.minecraft.util.profiler.Profilers
 import net.minecraft.world.World
-import org.nguh.nguhcraft.BypassesRegionProtection
-import org.nguh.nguhcraft.Constants
 import org.nguh.nguhcraft.block.LockableBlockEntity
-import org.nguh.nguhcraft.client.accessors.AbstractClientPlayerEntityAccessor
 import org.nguh.nguhcraft.isa
 import org.nguh.nguhcraft.item.KeyItem
-import org.nguh.nguhcraft.network.ClientboundSyncProtectionMgrPacket
-import org.nguh.nguhcraft.protect.ProtectionManager.AllowBlockModify
-import org.nguh.nguhcraft.protect.ProtectionManager.AllowEntityAttack
-import org.nguh.nguhcraft.protect.ProtectionManager.AllowEntityInteract
-import org.nguh.nguhcraft.protect.ProtectionManager.AllowItemUse
-import org.nguh.nguhcraft.protect.ProtectionManager.GetRegion
-import org.nguh.nguhcraft.protect.ProtectionManager.GetRegions
-import org.nguh.nguhcraft.protect.ProtectionManager.HandleBlockInteract
-import org.nguh.nguhcraft.protect.ProtectionManager.IsProtectedBlock
-import org.nguh.nguhcraft.protect.ProtectionManager.IsProtectedEntity
-import org.nguh.nguhcraft.server.Broadcast
-import org.nguh.nguhcraft.server.ServerUtils
-import kotlin.Throws
 
 /**
- * List of protected regions.
- *
- * This class exists solely to maintain the following invariant: For
- * any regions A, B, where A comes immediately before B in the region
- * list, either A and B do not overlap, or A is fully contained within B.
- *
- * This property is important since, if this invariant holds, then for
- * any point P, that is contained within a region, a linear search of
- * the region list will always find the innermost region that contains
- * that point, which is also the region whose permission we want to
- * apply.
- *
- * In other words, this enables us to support nested regions, without
- * having to do any special handling during permission checking, since
- * we’ll always automatically find the innermost one due to the way in
- * which the regions are ordered.
- */
-class RegionList(
-    /** The world that this region list belongs to. */
-    val World: RegistryKey<World>
-) : Collection<Region> {
-    /** The ordered list of regions. */
-    val Data = mutableListOf<Region>()
-
-    /** Get all regions in this list. */
-    val Regions get(): List<Region> = Data
-
-    /** Add a region to this list while maintaining the invariant. */
-    @Throws(MalformedRegionException::class)
-    fun Add(R: Region) {
-        assert(R.World == World) { "Region is not in this world" }
-
-        // We cannot have two regions with the same name or the exact
-        // same bounds in the same world.
-        Data.find {
-            it.Name == R.Name || (
-                it.MinX == R.MinX &&
-                it.MinZ == R.MinZ &&
-                it.MaxX == R.MaxX &&
-                it.MaxZ == R.MaxZ
-            )
-        }?.let {
-            // Display which properties are the same.
-            val Msg = if (it.Name != R.Name) R.AppendBounds(Text.literal("Region with bounds "))
-            else Text.literal("Region with name ")
-                     .append(Text.literal(R.Name).formatted(Formatting.AQUA))
-
-            // And the world it’s in.
-            Msg.append(" already exists in world ")
-               .append(Text.literal(R.World.value.path.toString())
-               .withColor(Constants.Lavender))
-            throw MalformedRegionException(Msg)
-        }
-
-        // Check if the region intersects an existing one.
-        //
-        // Let `R` be the new region, and `Intersecting` the first existing
-        // region that intersects R, if it exists. Since we’ve already checked
-        // that the bounds are not identical, this leaves us with 4 cases we
-        // need to handle here:
-        //
-        //   1. There is no intersecting region.
-        //   2. R is fully contained within Intersecting.
-        //   3. Intersecting is fully contained within R.
-        //   4. The regions intersect, but neither fully contains the other.
-        //
-        var Intersecting = Data.find { it.Intersects(R) }
-
-        // Case 3: It turns out that the easiest solution to this is to reduce this
-        // case to the other three cases first by skipping over any regions that R
-        // fully contains, since we can’t insert R before any of them anyway.
-        //
-        // After this statement is executed, either Intersecting is null (if it was
-        // already null or all remaining regions are fully contained in R), or it
-        // is set to the first region that intersects R but is not fully contained
-        // in R.
-        if (Intersecting != null && R.Contains(Intersecting)) {
-            val I = Data.indexOf(Intersecting)
-            var J = I + 1
-            while (J < Data.size && R.Contains(Data[J])) J++
-            Intersecting = if (J == Data.size) null else Data[J]
-        }
-
-        // Case 1: There is no region that intersects with R and which R does not
-        // fully contain. Simply add R to the end of the list and we’re done.
-        if (Intersecting == null) Data.add(R)
-
-        // Case 2: The Intersecting region fully contains R, and it is the first
-        // region to do so. Insert R directly before it.
-        else if (Intersecting.Contains(R)) Data.add(Data.indexOf(Intersecting), R)
-
-        // Case 4: This is always invalid, since neither region can reasonably be
-        // given priority over any blocks that are in contained by both since there
-        // is no parent-child relationship here.
-        else throw MalformedRegionException(Text.literal("Region ")
-            .append(Text.literal(R.Name).formatted(Formatting.AQUA))
-            .append(" intersects region ")
-            .append(Text.literal(Intersecting.Name).formatted(Formatting.AQUA))
-            .append(", but neither fully contains the other")
-        )
-    }
-
-    /** Clear this list. For internal use only. */
-    fun ClearForInitialisation() = Data.clear()
-
-    /** Find the innermost region that contains a block, if there is one. */
-    fun Containing(Pos: BlockPos) =
-        // Due to the invariant, the first region containing this position
-        // is also the innermost region (in fact, being able to do this is
-        // the whole point of the invariant).
-        Data.find { it.Contains(Pos) }
-
-    /**
-     * Remove a region from this list, if it exists.
-     *
-     * @return Whether the region was present in the list.
-     */
-    fun Remove(R: Region): Boolean {
-        // No special checking is required here.
-        //
-        // Removing a region does not invalidate the invariant since it
-        // the invariant is transitive: for sequential A, B, C, removing
-        // either A or C is irrelevant since A, B or B, C will still be
-        // ordered correctly, and removing B maintains the invariant since
-        // it already holds for A, C, again by transitivity. By induction,
-        // this maintains the invariant for the entire list.
-        return Data.remove(R)
-    }
-
-    /** Collection interface. */
-    override val size: Int get() = Data.size
-    override fun contains(element: Region): Boolean = Data.contains(element)
-    override fun containsAll(elements: Collection<Region>): Boolean = Data.containsAll(elements)
-    override fun isEmpty(): Boolean = Data.isEmpty()
-    override operator fun iterator(): Iterator<Region> = Data.iterator()
-}
-
-/**
- * Namespace that handles world protection.
+ * Handler that contains common code paths related to world protection.
  *
  * This API generally provides three families of functions:
  *
@@ -221,53 +55,34 @@ class RegionList(
  * - [IsProtectedEntity] checks whether an entity is protected from world effects;
  *   this does *not* handle block entities. Use [IsProtectedBlock] for that.
  */
-object ProtectionManager {
-    private const val TAG_REGIONS = "Regions"
-    private const val DIR_REGIONS = "regions"
-
-    /** Current manager state. */
-    @Volatile private var S = State()
-
-    /**
-     * This function is the intended way to add a region to a world.
-     *
-     * This can throw just to ensure we never end up in a situation where we cannot
-     * reasonably determine which region a block should belong to.
-     *
-     * @throws MalformedRegionException If the region name is already taken, or the
-     * region bounds are identical to that of another region, or intersect another
-     * region without either fully containing the other.
-     */
-    @Throws(MalformedRegionException::class)
-    fun AddRegion(S: MinecraftServer, R: Region) {
-        RegionListFor(R.World).Add(R)
-        Sync(S)
-    }
-
+abstract class ProtectionManager(
+    /** Regions that are currently in each dimension. */
+    val OverworldRegions: Collection<Region>,
+    val NetherRegions: Collection<Region>,
+    val EndRegions: Collection<Region>
+) {
     /**
      * Check if a player is allowed to break, start breaking, or place a
      * block at this block position.
      */
-    @JvmStatic
-    fun AllowBlockModify(PE: PlayerEntity, W: World, Pos: BlockPos) : Boolean {
+    private fun _AllowBlockModify(PE: PlayerEntity, W: World, Pos: BlockPos): Boolean {
         // Player has bypass. Always allow.
-        if (PE.BypassesRegionProtection()) return true
+        if (_BypassesRegionProtection(PE)) return true
 
         // Player is not linked. Always deny.
         if (!IsLinked(PE)) return false
 
         // Block is within the bounds of a protected region. Deny.
-        if (IsProtectedBlock(W, Pos)) return false
+        if (_IsProtectedBlock(W, Pos)) return false
 
         // Otherwise, allow.
         return true
     }
 
     /** Check if this entity is protected from attacks by a player. */
-    @JvmStatic
-    fun AllowEntityAttack(AttackingPlayer: PlayerEntity, AttackedEntity: Entity): Boolean {
+    private fun _AllowEntityAttack(AttackingPlayer: PlayerEntity, AttackedEntity: Entity): Boolean {
         fun Allow(Predicate: (R: Region) -> Boolean): Boolean {
-            val R = FindRegionContainingBlock(
+            val R = _FindRegionContainingBlock(
                 AttackedEntity.world,
                 AttackedEntity.blockPos
             ) ?: return true
@@ -275,7 +90,7 @@ object ProtectionManager {
         }
 
         // Player has bypass. Always allow.
-        if (AttackingPlayer.BypassesRegionProtection()) return true
+        if (_BypassesRegionProtection(AttackingPlayer)) return true
 
         // Player is not linked. Always deny.
         if (!IsLinked(AttackingPlayer)) return false
@@ -290,16 +105,15 @@ object ProtectionManager {
     }
 
     /** Check if a player is allowed to interact (= right-click) with an entity. */
-    @JvmStatic
-    fun AllowEntityInteract(PE: PlayerEntity, E: Entity) : Boolean {
+    private fun _AllowEntityInteract(PE: PlayerEntity, E: Entity): Boolean {
         // Player has bypass. Always allow.
-        if (PE.BypassesRegionProtection()) return true
+        if (_BypassesRegionProtection(PE)) return true
 
         // Player is not linked. Always deny.
         if (!IsLinked(PE)) return false
 
         // Check region flags.
-        val R = FindRegionContainingBlock(E.world, E.blockPos) ?: return true
+        val R = _FindRegionContainingBlock(E.world, E.blockPos) ?: return true
         return when (E) {
             is VehicleEntity -> R.AllowsVehicleUse()
             is VillagerEntity -> R.AllowsVillagerTrading()
@@ -308,24 +122,22 @@ object ProtectionManager {
     }
 
     /** Check if a player should suffer fall damage when landing on a block. */
-    @JvmStatic
-    fun AllowFallDamage(PE: PlayerEntity): Boolean {
-        val R = FindRegionContainingBlock(PE.world, PE.blockPos) ?: return true
+    private fun _AllowFallDamage(PE: PlayerEntity): Boolean {
+        val R = _FindRegionContainingBlock(PE.world, PE.blockPos) ?: return true
         return R.AllowsPlayerFallDamage()
     }
 
     /** Check if a player is allowed to use an item (not on a block). */
-    @JvmStatic
-    fun AllowItemUse(PE: PlayerEntity, W: World, St: ItemStack): Boolean {
+    private fun _AllowItemUse(PE: PlayerEntity, W: World, St: ItemStack): Boolean {
         // Player has bypass. Always allow.
-        if (PE.BypassesRegionProtection()) return true
+        if (_BypassesRegionProtection(PE)) return true
 
         // Player is not linked. Always deny.
         if (!IsLinked(PE)) return false
 
         // Disallow placing boats in protected regions.
         if (St.item is BoatItem) {
-            val R = FindRegionContainingBlock(W, PE.blockPos) ?: return true
+            val R = _FindRegionContainingBlock(W, PE.blockPos) ?: return true
             return R.AllowsVehicleUse()
         }
 
@@ -333,30 +145,12 @@ object ProtectionManager {
         return true
     }
 
-    /** Delegates to PlayerEntity.BypassesRegionProtection(). Callable from Java. */
-    @JvmStatic
-    fun BypassesRegionProtection(PE: PlayerEntity) = PE.BypassesRegionProtection()
-
-    /**
-     * This function is the intended way to delete a region from a world.
-     *
-     * @returns Whether a region was successfully deleted. This can fail
-     * if the region does not exist or is not in this world, somehow.
-     */
-    fun DeleteRegion(S: MinecraftServer, R: Region) : Boolean {
-        if (!RegionListFor(R.World).Remove(R)) return false
-        Sync(S)
-        return true
-    }
+    /** Check if a player bypasses region protection. */
+    abstract fun _BypassesRegionProtection(PE: PlayerEntity): Boolean
 
     /** Find the region that contains a block. */
-    fun FindRegionContainingBlock(W: World, Pos: BlockPos) = RegionListFor(W).Containing(Pos)
-
-    /** Get the regions for a world. */
-    fun GetRegions(W: World): RegionList = RegionListFor(W)
-
-    /** Get a region by name. */
-    fun GetRegion(W: World, Name: String) = RegionListFor(W).find { it.Name == Name }
+    private fun _FindRegionContainingBlock(W: World, Pos: BlockPos) =
+        RegionListFor(W).find { it.Contains(Pos) }
 
     /**
      * Handle interaction (= right-click), optionally with a block.
@@ -374,10 +168,9 @@ object ProtectionManager {
      * @return ActionResult.PASS if the interaction should be rewritten to an item use.
      * @return ActionResult.SUCCESS if the interaction should be allowed.
      */
-    @JvmStatic
-    fun HandleBlockInteract(PE: PlayerEntity, W: World, Pos: BlockPos, Stack: ItemStack?): ActionResult {
+    private fun _HandleBlockInteract(PE: PlayerEntity, W: World, Pos: BlockPos, Stack: ItemStack?): ActionResult {
         // Player has bypass. Always allow.
-        if (PE.BypassesRegionProtection()) return ActionResult.SUCCESS
+        if (_BypassesRegionProtection(PE)) return ActionResult.SUCCESS
 
         // Player is not linked. Always deny.
         if (!IsLinked(PE)) return ActionResult.FAIL
@@ -401,19 +194,19 @@ object ProtectionManager {
 
         // Doors are a separate flag.
         if (St isa BlockTags.DOORS) {
-            val R = FindRegionContainingBlock(W, Pos) ?: return ActionResult.SUCCESS
+            val R = _FindRegionContainingBlock(W, Pos) ?: return ActionResult.SUCCESS
             return if (R.AllowsDoors()) ActionResult.SUCCESS else ActionResult.FAIL
         }
 
         // As are buttons.
         if (St isa BlockTags.BUTTONS) {
-            val R = FindRegionContainingBlock(W, Pos) ?: return ActionResult.SUCCESS
+            val R = _FindRegionContainingBlock(W, Pos) ?: return ActionResult.SUCCESS
             return if (R.AllowsButtons()) ActionResult.SUCCESS else ActionResult.FAIL
         }
 
         // Allow placing minecarts.
         if (Stack != null && Stack.item is MinecartItem && St isa BlockTags.RAILS) {
-            val R = FindRegionContainingBlock(W, Pos) ?: return ActionResult.SUCCESS
+            val R = _FindRegionContainingBlock(W, Pos) ?: return ActionResult.SUCCESS
             return if (R.AllowsVehicleUse()) ActionResult.SUCCESS else ActionResult.FAIL
         }
 
@@ -435,37 +228,30 @@ object ProtectionManager {
      * not commands. If you don’t want people to use commands to teleport
      * somewhere they shouldn’t be, don’t give them access to those commands.
      */
-    @JvmStatic
-    fun IsLegalTeleportTarget(W: World, Pos: BlockPos): Boolean {
-        val R = FindRegionContainingBlock(W, Pos) ?: return true
+    private fun _IsLegalTeleportTarget(W: World, Pos: BlockPos): Boolean {
+        val R = _FindRegionContainingBlock(W, Pos) ?: return true
         return R.AllowsTeleportation()
     }
 
     /** Check if a player is linked. */
-    fun IsLinked(PE: PlayerEntity) = when (PE) {
-        is ServerPlayerEntity -> ServerUtils.IsLinkedOrOperator(PE)
-        is ClientPlayerEntity -> (PE as AbstractClientPlayerEntityAccessor).isLinked
-        else -> false
-    }
+    abstract fun IsLinked(PE: PlayerEntity): Boolean
 
     /** Check if a block is a locked chest. */
-    private fun IsLockedBlock(W: World, Pos: BlockPos): Boolean {
+    private fun _IsLockedBlock(W: World, Pos: BlockPos): Boolean {
         val BE = KeyItem.GetLockableEntity(W, Pos)
         return BE is LockableBlockEntity && BE.lock != ContainerLock.EMPTY
     }
 
     /** Check if a pressure plate is enabled. */
-    @JvmStatic
-    fun IsPressurePlateEnabled(W: World, Pos: BlockPos): Boolean {
-        val R = FindRegionContainingBlock(W, Pos) ?: return true
+    private fun _IsPressurePlateEnabled(W: World, Pos: BlockPos): Boolean {
+        val R = _FindRegionContainingBlock(W, Pos) ?: return true
         return R.AllowsPressurePlates()
     }
 
     /** Check if a block is within a protected region. */
-    @JvmStatic
-    fun IsProtectedBlock(W: World, Pos: BlockPos): Boolean {
+    private fun _IsProtectedBlock(W: World, Pos: BlockPos): Boolean {
         // If this is a locked block (container or door), treat it as protected.
-        if (IsLockedBlock(W, Pos)) return true
+        if (_IsLockedBlock(W, Pos)) return true
 
         // Otherwise, delegate to the region check.
         return IsProtectedBlockInternal(W, Pos)
@@ -473,24 +259,22 @@ object ProtectionManager {
 
     /** Like IsProtectedBlock(), but does not check for locked chests. */
     private fun IsProtectedBlockInternal(W: World, Pos: BlockPos): Boolean {
-        val R = FindRegionContainingBlock(W, Pos) ?: return false
+        val R = _FindRegionContainingBlock(W, Pos) ?: return false
         return !R.AllowsBlockModification()
     }
 
     /**
-    * Check if this entity is protected from world effects.
-    *
-    * This is used for explosions, lightning, potion effects, etc.
-    */
-    @JvmStatic
-    fun IsProtectedEntity(E: Entity): Boolean {
-        val R = FindRegionContainingBlock(E.world, E.blockPos) ?: return false
+     * Check if this entity is protected from world effects.
+     *
+     * This is used for explosions, lightning, potion effects, etc.
+     */
+    private fun _IsProtectedEntity(E: Entity): Boolean {
+        val R = _FindRegionContainingBlock(E.world, E.blockPos) ?: return false
         return !R.AllowsEnvironmentalHazards()
     }
 
     /** Check if this entity cannot be damaged by a damage source. */
-    @JvmStatic
-    fun IsProtectedEntity(E: Entity, DS: DamageSource): Boolean {
+    private fun _IsProtectedEntity(E: Entity, DS: DamageSource): Boolean {
         // First, damage that cannot be guarded against (e.g. out
         // of world) is always allowed; this is so entities don’t
         // end up 10000 blocks beneath protected areas...
@@ -502,21 +286,19 @@ object ProtectionManager {
         // Otherwise, use established protection rules, making sure
         // that we forward the attacker if there is one.
         val A = DS.attacker
-        return if (A is PlayerEntity) !AllowEntityAttack(A, E) else IsProtectedEntity(E)
+        return if (A is PlayerEntity) !_AllowEntityAttack(A, E) else _IsProtectedEntity(E)
     }
 
     /** Check if the passed bounding box intersects a protected region. */
-    @JvmStatic
-    fun IsProtectedRegion(W: World, MinX: Int, MinZ: Int, MaxX: Int, MaxZ: Int): Boolean {
+    private fun _IsProtectedRegion(W: World, MinX: Int, MinZ: Int, MaxX: Int, MaxZ: Int): Boolean {
         val Regions = RegionListFor(W)
         return Regions.any { it.Intersects(MinX, MinZ, MaxX, MaxZ) }
     }
 
     /** Check whether an entity is allowed to spawn here. */
-    @JvmStatic
-    fun IsSpawningAllowed(E: Entity): Boolean {
+    fun _IsSpawningAllowed(E: Entity): Boolean {
         if (E !is Monster) return true
-        val R = FindRegionContainingBlock(E.world, E.blockPos) ?: return true
+        val R = _FindRegionContainingBlock(E.world, E.blockPos) ?: return true
         return R.AllowsHostileMobSpawning()
     }
 
@@ -524,85 +306,26 @@ object ProtectionManager {
     private fun IsVehicle(St: ItemStack?) = St != null && (St.item is MinecartItem || St.item is BoatItem)
 
     /**
-    * Load regions from a tag.
-    *
-    * The existing list of regions is cleared.
-    */
-    fun LoadRegions(W: World, Tag: NbtCompound) {
-        val RegionsTag = Tag.getList(TAG_REGIONS, NbtElement.COMPOUND_TYPE.toInt())
-        val Regions = RegionListFor(W)
-        Regions.ClearForInitialisation()
-        RegionsTag.forEach {
-            val R = Region(it as NbtCompound, W.registryKey)
-            Regions.Add(R)
-        }
-    }
-
-    /**
-    * Get the regions for a world.
-    *
-    * For internal use only as it returns a mutable list
-    * instead of an immutable one.
-    */
-    private fun RegionListFor(W: World) = RegionListFor(W.registryKey)
+     * Get the regions for a world.
+     *
+     * For internal use only as it returns a mutable list
+     * instead of an immutable one.
+     */
+    protected fun RegionListFor(W: World) = RegionListFor(W.registryKey)
 
     /** Get the regions for a world by key. */
-    private fun RegionListFor(Key: RegistryKey<World>) = TryGetRegionList(Key)
+    protected fun RegionListFor(Key: RegistryKey<World>) = TryGetRegionList(Key)
         ?: throw IllegalArgumentException("No such world: ${Key.value}")
 
-    /** Save regions to a tag. */
-    fun SaveRegions(W: World, Tag: NbtCompound) {
-        val RegionsTag = Tag.getList(TAG_REGIONS, NbtElement.COMPOUND_TYPE.toInt())
-        RegionListFor(W).forEach { RegionsTag.add(it.Save()) }
-        Tag.put(TAG_REGIONS, RegionsTag)
-    }
-
-    /** Send data to the client. */
-    @JvmStatic
-    fun Send(SP: ServerPlayerEntity) {
-        // Don’t sync in single player since we already have the state.
-        if (ServerUtils.IsDedicatedServer())
-            ServerPlayNetworking.send(SP, ClientboundSyncProtectionMgrPacket(S))
-    }
-
-    /** Sync regions to the clients. */
-    fun Sync(Server: MinecraftServer) {
-        // Don’t sync in single player since we already have the state.
-        if (ServerUtils.IsDedicatedServer())
-            Server.Broadcast(ClientboundSyncProtectionMgrPacket(S))
-    }
-
-    /** Fire events that need to happen when a player leaves the server. */
-    fun TickPlayerQuit(SP: ServerPlayerEntity) {
-        Profilers.get().push("Nguhcraft: Region tick")
-        for (R in RegionListFor(SP.serverWorld)) R.TickPlayer(SP, InRegion = false)
-    }
-
     /**
-    * Fire region-based triggers for this player.
-    *
-    * We walk the region list for each player because we will never have
-    * so many regions that doing that would end up being slower than doing
-    * entity lookups for each region.
-    */
-    fun TickRegionsForPlayer(SP: ServerPlayerEntity) {
-        Profilers.get().push("Nguhcraft: Region tick")
-
-        // Tick all regions.
-        for (R in RegionListFor(SP.serverWorld)) R.TickPlayer(SP)
-
-        Profilers.get().pop()
-    }
-
-    /**
-    * Attempt to get a region in a world.
-    *
-    * Prefer [GetRegion] over this if you already have a reference to the
-    * world; this is meant to be used for cases where you parsed a world
-    * registry key from somewhere w/o knowing whether it’s valid or not.
-    *
-    * @return null if the world or region does not exist.
-    */
+     * Attempt to get a region in a world.
+     *
+     * Prefer [GetRegion] over this if you already have a reference to the
+     * world; this is meant to be used for cases where you parsed a world
+     * registry key from somewhere w/o knowing whether it’s valid or not.
+     *
+     * @return null if the world or region does not exist.
+     */
     fun TryGetRegion(W: RegistryKey<World>, Name: String): Region? = TryGetRegionList(W)?.find { it.Name == Name }
 
     /**
@@ -614,68 +337,116 @@ object ProtectionManager {
      *
      * @return null if the world does not exist.
      */
-    fun TryGetRegions(W: RegistryKey<World>): RegionList? = TryGetRegionList(W)
+    fun TryGetRegions(W: RegistryKey<World>): Collection<Region>? = TryGetRegionList(W)
 
     /**
-    * Get the region list for a world by key.
-    *
-    * For internal use; returns a mutable list instead of an
-    * immutable one.
-    */
+     * Get the region list for a world by key.
+     *
+     * For internal use; returns a mutable list instead of an
+     * immutable one.
+     */
     private fun TryGetRegionList(Key: RegistryKey<World>) = when (Key) {
-        World.OVERWORLD -> S.OverworldRegions
-        World.NETHER -> S.NetherRegions
-        World.END -> S.EndRegions
+        World.OVERWORLD -> OverworldRegions
+        World.NETHER -> NetherRegions
+        World.END -> EndRegions
         else -> null
     }
 
-    /** Overwrite the region list of a world. */
-    @Environment(EnvType.CLIENT)
-    fun UpdateState(Packet: ClientboundSyncProtectionMgrPacket) {
-        S = Packet.Data
+    /** Dump a string representation of the manager state. */
+    override fun toString(): String {
+        var S = "ProtectionManager {\n"
+        for (R in OverworldRegions) S += "  Overworld: $R\n"
+        for (R in NetherRegions) S += "  Nether: $R\n"
+        for (R in EndRegions) S += "  End: $R\n"
+        S += "}"
+        return S
     }
 
-    /** Internal manager state. */
-    class State() {
-        /** Regions that are currently in each dimension. */
-        val OverworldRegions = RegionList(World.OVERWORLD)
-        val NetherRegions = RegionList(World.NETHER)
-        val EndRegions = RegionList(World.END)
+    companion object {
+        /**
+         * Get the manager instance.
+         *
+         * The manager is a singleton instead of a namespace to prevent
+         * protection state from leaking between sessions on the client.
+         *
+         * Note: The manager is *not* world-specific. Rather, the world
+         * is simply a convenient place to put the accessor for it since
+         * it is both present on the client and server and also passed in
+         * one way or another to every single API call of the manager.
+         *
+         * The server-side manager is stored in the server instance, and
+         * the client-side manger in the client network handler.
+         */
+        fun Get(W: World): ProtectionManager = (W as ProtectionManagerAccessor).`Nguhcraft$GetProtectionManager`()
 
-        /** Deserialise the state from a packet. */
-        constructor(B: RegistryByteBuf): this() {
-            ReadRegionList(OverworldRegions, B)
-            ReadRegionList(NetherRegions, B)
-            ReadRegionList(EndRegions, B)
-        }
+        // Static convenience wrappers for the functions above.
+        @JvmStatic
+        fun AllowBlockModify(PE: PlayerEntity, W: World, Pos: BlockPos) =
+            Get(W)._AllowBlockModify(PE, W, Pos)
 
-        /** Dump a string representation of the state. */
-        override fun toString(): String {
-            var S = "ProtectionManager.State {\n"
-            for (R in OverworldRegions.Regions) S += "  Overworld: $R\n"
-            for (R in NetherRegions.Regions) S += "  Nether: $R\n"
-            for (R in EndRegions.Regions) S += "  End: $R\n"
-            S += "}"
-            return S
-        }
+        @JvmStatic
+        fun AllowEntityAttack(AttackingPlayer: PlayerEntity, AttackedEntity: Entity) =
+            Get(AttackedEntity.world)._AllowEntityAttack(AttackingPlayer, AttackedEntity)
 
-        /** Read a list of regions from a packet. */
-        private fun ReadRegionList(L: RegionList, B: RegistryByteBuf) {
-            val Count = B.readInt()
-            for (I in 0 until Count) L.Add(Region(B, L.World))
-        }
+        @JvmStatic
+        fun AllowEntityInteract(PE: PlayerEntity, E: Entity) =
+            Get(E.world)._AllowEntityInteract(PE, E)
 
-        /** Serialise the state to a packet. */
-        fun Write(B: RegistryByteBuf) {
-            WriteRegionList(B, OverworldRegions)
-            WriteRegionList(B, NetherRegions)
-            WriteRegionList(B, EndRegions)
-        }
+        @JvmStatic
+        fun AllowFallDamage(PE: PlayerEntity) =
+            Get(PE.world)._AllowFallDamage(PE)
 
-        /** Write a list of regions to a packet. */
-        private fun WriteRegionList(B: RegistryByteBuf, List: RegionList) {
-            B.writeInt(List.size)
-            List.forEach { it.Write(B) }
-        }
+        @JvmStatic
+        fun AllowItemUse(PE: PlayerEntity, W: World, St: ItemStack) =
+            Get(W)._AllowItemUse(PE, W, St)
+
+        @JvmStatic
+        fun BypassesRegionProtection(PE: PlayerEntity) =
+            Get(PE.world)._BypassesRegionProtection(PE)
+
+        /** Find the region that contains a block. */
+        @JvmStatic
+        fun FindRegionContainingBlock(W: World, Pos: BlockPos) =
+            Get(W)._FindRegionContainingBlock(W, Pos)
+
+        @JvmStatic
+        fun GetRegions(W: World) =
+            Get(W).RegionListFor(W)
+
+        @JvmStatic
+        fun GetRegion(W: World, Name: String) =
+            Get(W).RegionListFor(W).find { it.Name == Name }
+
+        @JvmStatic
+        fun HandleBlockInteract(PE: PlayerEntity, W: World, Pos: BlockPos, Stack: ItemStack?) =
+            Get(W)._HandleBlockInteract(PE, W, Pos, Stack)
+
+        @JvmStatic
+        fun IsLegalTeleportTarget(W: World, Pos: BlockPos) =
+            Get(W)._IsLegalTeleportTarget(W, Pos)
+
+        @JvmStatic
+        fun IsPressurePlateEnabled(W: World, Pos: BlockPos) =
+            Get(W)._IsPressurePlateEnabled(W, Pos)
+
+        @JvmStatic
+        fun IsProtectedBlock(W: World, Pos: BlockPos) =
+            Get(W)._IsProtectedBlock(W, Pos)
+
+        @JvmStatic
+        fun IsProtectedEntity(E: Entity) =
+            Get(E.world)._IsProtectedEntity(E)
+
+        @JvmStatic
+        fun IsProtectedEntity(E: Entity, DS: DamageSource) =
+            Get(E.world)._IsProtectedEntity(E, DS)
+
+        @JvmStatic
+        fun IsProtectedRegion(W: World, MinX: Int, MinZ: Int, MaxX: Int, MaxZ: Int) =
+            Get(W)._IsProtectedRegion(W, MinX, MinZ, MaxX, MaxZ)
+
+        @JvmStatic
+        fun IsSpawningAllowed(E: Entity) =
+            Get(E.world)._IsSpawningAllowed(E)
     }
 }

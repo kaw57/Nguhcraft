@@ -38,10 +38,8 @@ import org.nguh.nguhcraft.Nguhcraft.Companion.Id
 import org.nguh.nguhcraft.SyncedGameRule
 import org.nguh.nguhcraft.item.KeyItem
 import org.nguh.nguhcraft.network.ClientFlags
-import org.nguh.nguhcraft.protect.MalformedRegionException
 import org.nguh.nguhcraft.protect.ProtectionManager
 import org.nguh.nguhcraft.protect.Region
-import org.nguh.nguhcraft.protect.RegionTrigger
 import org.nguh.nguhcraft.server.*
 import org.nguh.nguhcraft.server.ServerUtils.IsIntegratedServer
 import org.nguh.nguhcraft.server.ServerUtils.StrikeLighting
@@ -50,7 +48,7 @@ import org.nguh.nguhcraft.server.accessors.ServerPlayerDiscordAccessor
 import org.nguh.nguhcraft.server.dedicated.Vanish
 import kotlin.reflect.KProperty1
 
-typealias RegionTriggerProperty = KProperty1<Region, RegionTrigger>
+typealias RegionTriggerProperty = KProperty1<ServerRegion, RegionTrigger>
 
 object Commands {
     private inline fun <reified T : ArgumentType<*>> ArgType(Key: String, noinline Func: () -> T) {
@@ -406,7 +404,7 @@ object Commands {
             }
 
             try {
-                val R = Region(
+                val R = ServerRegion(
                     Name,
                     W.registryKey,
                     FromX = From.x,
@@ -415,7 +413,7 @@ object Commands {
                     ToZ = To.z
                 )
 
-                ProtectionManager.AddRegion(S.server, R)
+                S.server.ProtectionManager.AddRegion(S.server, R)
                 S.sendMessage(Text.literal("Created region ")
                     .append(Text.literal(Name).formatted(Formatting.AQUA))
                     .append(" in world ")
@@ -470,8 +468,8 @@ object Commands {
             return 1
         }
 
-        fun DeleteRegion(S: ServerCommandSource, R: Region): Int {
-            if (!ProtectionManager.DeleteRegion(S.server, R)) {
+        fun DeleteRegion(S: ServerCommandSource, R: ServerRegion): Int {
+            if (!S.server.ProtectionManager.DeleteRegion(S.server, R)) {
                 S.sendError(R.AppendWorldAndName(Text.literal("No such region: ")))
                 return 0
             }
@@ -524,14 +522,14 @@ object Commands {
             for (R in Regions) {
                 List.append(Text.literal("\n  - "))
                     .append(Text.literal(R.Name).formatted(Formatting.AQUA))
-                R.AppendBounds(List)
+                (R as ServerRegion).AppendBounds(List)
             }
 
             S.sendMessage(List.formatted(Formatting.YELLOW))
             return 1
         }
 
-        fun PrintRegionInfo(S: ServerCommandSource, R: Region): Int {
+        fun PrintRegionInfo(S: ServerCommandSource, R: ServerRegion): Int {
             val Stats = R.AppendWorldAndName(Text.literal("Region "))
             R.AppendBounds(Stats)
             Stats.append(R.Stats)
@@ -548,12 +546,12 @@ object Commands {
                 return 0
             }
 
-            return PrintRegionInfo(S, R)
+            return PrintRegionInfo(S, R as ServerRegion)
         }
 
         fun SetFlag(
             S: ServerCommandSource,
-            R: Region,
+            R: ServerRegion,
             Flag: Region.Flags,
             Allow: Boolean
         ): Int {
@@ -1017,11 +1015,11 @@ object Commands {
 
         val TriggerNode = argument(RegionCommand.REGION_ARG_NAME, RegionArgumentType.Region())
         listOf(
-            Region::PlayerEntryTrigger,
-            Region::PlayerLeaveTrigger,
+            ServerRegion::PlayerEntryTrigger,
+            ServerRegion::PlayerLeaveTrigger,
         ).forEach { Trigger ->
             // TODO: These should probably be moved to a generic 'procedure' command,
-            TriggerNode.then(literal(Trigger.get(Region.DUMMY).Name)
+            TriggerNode.then(literal(Trigger.get(ServerRegion.DUMMY).Name)
                 .then(literal("append")
                     .then(argument(RegionCommand.COMMAND_ARG_NAME, StringArgumentType.greedyString())
                         .executes { RegionCommand.AppendTriggerLine(it, Trigger) }

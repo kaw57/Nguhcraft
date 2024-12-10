@@ -18,9 +18,9 @@ import net.minecraft.util.Identifier
 import net.minecraft.world.World
 import org.nguh.nguhcraft.client.ClientUtils.Client
 import org.nguh.nguhcraft.protect.ProtectionManager
-import org.nguh.nguhcraft.protect.Region
 import org.nguh.nguhcraft.server.Home
 import org.nguh.nguhcraft.server.PlayerByName
+import org.nguh.nguhcraft.server.ServerRegion
 import org.nguh.nguhcraft.server.WarpManager
 import org.nguh.nguhcraft.server.accessors.ServerPlayerAccessor
 import org.nguh.nguhcraft.server.command.Commands.Exn
@@ -105,26 +105,27 @@ class RegionArgumentType : ArgumentType<String> {
         Ctx: CommandContext<S>,
         SB: SuggestionsBuilder
     ): CompletableFuture<Suggestions> {
+        val S = Ctx.source
+        if (S !is ClientCommandSource) return Suggestions.empty()
+        val P = ProtectionManager.Get(Client().world!!)
+
         // If the input contains a ':', filter by the world
         // to the left of it.
         if (":" in SB.remaining) {
             val (W, _) = SB.remaining.split(":", limit = 2)
             val Key = RegistryKey.of(RegistryKeys.WORLD, Identifier.ofVanilla(W))
-            val Regions = ProtectionManager.TryGetRegions(Key) ?: return Suggestions.empty()
+            val Regions = P.TryGetRegions(Key) ?: return Suggestions.empty()
             return CommandSource.suggestMatching(Regions.map { "${Key.value.path}:${it.Name}" }, SB)
         }
 
         // Otherwise, suggest all regions in the current world if there is one.
         val Regions = mutableListOf<String>()
-        val S = Ctx.source
-        if (S is ClientCommandSource) {
-            val W = Client().world
-            if (W != null) Regions.addAll(ProtectionManager.GetRegions(W).map { it.Name })
-        }
+        val W = Client().world
+        if (W != null) Regions.addAll(ProtectionManager.GetRegions(W).map { it.Name })
 
         // And add the registry keys for any worlds that contain regions.
         fun AddWorldKey(W: RegistryKey<World>) {
-            if (ProtectionManager.TryGetRegions(W)!!.isNotEmpty())
+            if (P.TryGetRegions(W)!!.isNotEmpty())
                 Regions.add("${W.value.path}:")
         }
 
@@ -142,7 +143,7 @@ class RegionArgumentType : ArgumentType<String> {
 
         fun Region() = RegionArgumentType()
 
-        fun Resolve(Ctx: CommandContext<ServerCommandSource>, ArgName: String): Region {
+        fun Resolve(Ctx: CommandContext<ServerCommandSource>, ArgName: String): ServerRegion {
             var Name = Ctx.getArgument(ArgName, String::class.java)
             val S = Ctx.source
             var W = S.world
@@ -153,7 +154,7 @@ class RegionArgumentType : ArgumentType<String> {
                 Name = RegionName
             }
 
-            return ProtectionManager.GetRegion(W, Name) ?: throw NO_SUCH_REGION.create(Name, W)
+            return ProtectionManager.GetRegion(W, Name) as? ServerRegion ?: throw NO_SUCH_REGION.create(Name, W)
         }
     }
 }

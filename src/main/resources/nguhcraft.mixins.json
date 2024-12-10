@@ -43,6 +43,7 @@
 		"protect.server.LecternBlockEntityMixin",
 		"protect.server.LecternScreenHandlerMixin",
 		"protect.server.LightningEntityMixin",
+		"protect.server.MinecraftServerMixin",
 		"protect.server.PlayerInteractEntityC2SPacketMixin",
 		"protect.server.PotionEntityMixin",
 		"protect.server.ReplaceDiskEnchantmentEffectMixin",
@@ -101,6 +102,8 @@
 		"discord.client.AbstractClientPlayerMixin",
 		"discord.client.PlayerListEntryMixin",
 		"protect.client.ClientPlayerInteractionManagerMixin",
+		"protect.client.ClientPlayNetworkHandlerMixin",
+		"protect.client.ClientWorldMixin",
 		"protect.client.GameRendererMixin",
 		"protect.client.LecternScreenMixin",
 		"protect.client.MinecraftClientMixin"

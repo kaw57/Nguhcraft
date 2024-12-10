@@ -14,8 +14,8 @@ import org.nguh.nguhcraft.Utils.LBRACK_COMPONENT
 import org.nguh.nguhcraft.Utils.RBRACK_COMPONENT
 import org.nguh.nguhcraft.client.ClientUtils.Client
 import org.nguh.nguhcraft.client.accessors.ClientPlayerListEntryAccessor
+import org.nguh.nguhcraft.protect.ProtectionManagerAccessor
 import org.nguh.nguhcraft.network.*
-import org.nguh.nguhcraft.protect.ProtectionManager
 import java.util.concurrent.CompletableFuture
 
 /** This runs on the network thread. */
@@ -111,7 +111,10 @@ object ClientNetworkHandler {
 
     /** Sync protection manager state. */
     private fun HandleSyncProtectionMgrPacket(Packet: ClientboundSyncProtectionMgrPacket) {
-        ProtectionManager.UpdateState(Packet)
+        Execute {
+            val A = (Client().networkHandler as? ProtectionManagerAccessor)
+            A?.`Nguhcraft$SetProtectionManager`(ClientProtectionManager(Packet))
+        }
     }
 
     /** Initialise packet handlers. */

@@ -42,7 +42,6 @@ import net.minecraft.util.math.Vec3d
 import net.minecraft.world.RaycastContext
 import net.minecraft.world.TeleportTarget
 import net.minecraft.world.World
-import org.nguh.nguhcraft.BypassesRegionProtection
 import org.nguh.nguhcraft.Constants.MAX_HOMING_DISTANCE
 import org.nguh.nguhcraft.NguhDamageTypes
 import org.nguh.nguhcraft.SyncedGameRule
@@ -88,7 +87,7 @@ object ServerUtils {
         val LEA = SP as LivingEntityAccessor
         val SPA = SP as ServerPlayerAccessor
         SyncedGameRule.Send(SP)
-        ProtectionManager.Send(SP)
+        SP.server.ProtectionManager.Send(SP)
         SP.SetClientFlag(ClientFlags.BYPASSES_REGION_PROTECTION, SPA.bypassesRegionProtection)
         SP.SetClientFlag(ClientFlags.IN_HYPERSHOT_CONTEXT, LEA.hypershotContext != null)
         SP.SetClientFlag(ClientFlags.VANISHED, SP.IsVanished)
@@ -115,13 +114,13 @@ object ServerUtils {
             LOGGER.warn("Player {} tried to leave the border.", SP.displayName!!.string)
         }
 
-        ProtectionManager.TickRegionsForPlayer(SP)
+        SP.server.ProtectionManager.TickRegionsForPlayer(SP)
     }
 
     /** Broadcast a join message for a player. */
     @JvmStatic
     fun ActOnPlayerQuit(SP: ServerPlayerEntity, Msg: Text) {
-        ProtectionManager.TickPlayerQuit(SP)
+        SP.server.ProtectionManager.TickPlayerQuit(SP)
         SendPlayerJoinQuitMessage(SP, Msg)
     }
 
