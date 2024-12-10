@@ -1,6 +1,7 @@
 package org.nguh.nguhcraft.network
 
 import io.netty.buffer.ByteBuf
+import net.minecraft.network.RegistryByteBuf
 import net.minecraft.network.codec.PacketCodec
 import net.minecraft.network.packet.CustomPayload
 import org.nguh.nguhcraft.Utils
@@ -21,7 +22,12 @@ data class ClientboundSyncFlagPacket(
     /** The value of the flag. */
     val Value: Boolean
 ) : CustomPayload {
-    fun write(buf: ByteBuf) {
+    private constructor(B: RegistryByteBuf): this(
+        ClientFlags.entries[B.readByte().toInt()],
+        B.readBoolean()
+    )
+
+    private fun Write(buf: ByteBuf) {
         buf.writeByte(Flag.ordinal)
         buf.writeBoolean(Value)
     }
@@ -29,10 +35,7 @@ data class ClientboundSyncFlagPacket(
     override fun getId() = ID
     companion object {
         val ID = Utils.PacketId<ClientboundSyncFlagPacket>("clientbound/sync_protection_bypass")
-        val CODEC: PacketCodec<ByteBuf, ClientboundSyncFlagPacket> = PacketCodec.of(
-            { obj: ClientboundSyncFlagPacket, buf: ByteBuf -> obj.write(buf) },
-            { buf: ByteBuf -> ClientboundSyncFlagPacket(ClientFlags.entries[buf.readByte().toInt()], buf.readBoolean()) }
-        )
+        val CODEC = MakeCodec(ClientboundSyncFlagPacket::Write, ::ClientboundSyncFlagPacket)
     }
 }
 

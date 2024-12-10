@@ -42,10 +42,7 @@ class ClientboundSyncProtectionMgrPacket(
 
     companion object {
         val ID = Utils.PacketId<ClientboundSyncProtectionMgrPacket>("clientbound/sync_protection_mgr")
-        val CODEC: PacketCodec<RegistryByteBuf, ClientboundSyncProtectionMgrPacket> = PacketCodec.of(
-            { Packet: ClientboundSyncProtectionMgrPacket, B: RegistryByteBuf -> Packet.Write(B) },
-            { B: RegistryByteBuf -> ClientboundSyncProtectionMgrPacket(B) })
-
+        val CODEC = MakeCodec(ClientboundSyncProtectionMgrPacket::Write, ::ClientboundSyncProtectionMgrPacket)
 
         /** Read a list of regions from a packet. */
         @Environment(EnvType.CLIENT)
