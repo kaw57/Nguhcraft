@@ -164,7 +164,7 @@ class ServerRegion(
         fun Display(T: RegionTrigger) {
             S.append("\n - ")
             T.AppendName(S)
-            S.append(":")
+            S.append(":\n")
             T.AppendCommands(S, 4)
         }
 

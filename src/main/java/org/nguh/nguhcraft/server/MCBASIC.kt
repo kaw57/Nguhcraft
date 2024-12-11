@@ -129,7 +129,7 @@ object MCBASIC {
             }
 
             SourceLines.forEachIndexed { I, S ->
-                MT.append("\n$IndentStr[$I] ").append(
+                MT.append("${if (I == 0) "" else "\n"}$IndentStr[$I] ").append(
                     Text.literal(S)
                     .formatted(Formatting.AQUA)
                     .styled { it.withClickEvent(
@@ -303,9 +303,14 @@ object MCBASIC {
         val MT: MutableText,
         var IndentWidth: Int = 0
     ) {
+        var FirstLine = true
         fun Indent() { IndentWidth += 4 }
         fun Outdent() { IndentWidth -= 4 }
-        fun StartLine() { MT.append("\n" + " ".repeat(IndentWidth)) }
+        fun StartLine() {
+            if (FirstLine) FirstLine = false
+            else MT.append("\n")
+            MT.append(" ".repeat(IndentWidth))
+        }
         fun Write(S: String, F: Formatting? = null) {
             val T = Text.literal(S)
             if (F != null) T.formatted(F)
