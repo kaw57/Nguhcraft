@@ -35,9 +35,14 @@ object Chat {
     private val COMMA_COMPONENT = Text.literal(", ").withColor(Constants.DeepKoamaru)
 
     /** Broadcast a command to subscribed operators. */
-    private fun BroadcastCommand(S: MinecraftServer, Source: MutableText, Command: String) {
+    private fun BroadcastCommand(
+        S: MinecraftServer,
+        Source: MutableText,
+        Command: String,
+        SP: ServerPlayerEntity? = null
+    ) {
         Source.append(" issued command\n    /$Command")
-        S.BroadcastToOperators(Source.formatted(Formatting.YELLOW))
+        S.BroadcastToOperators(Source.formatted(Formatting.YELLOW), SP)
     }
 
     /** Actually send a message. */
@@ -81,7 +86,8 @@ object Chat {
         if (IsCommand) BroadcastCommand(
             SP.server,
             SP.displayName?.copy() ?: Text.literal(SP.nameForScoreboard),
-            Message
+            Message,
+            SP
         )
 
         LOGGER.info(

@@ -105,7 +105,7 @@ fun MinecraftServer.BroadcastToOperators(Msg: Text, Except: ServerPlayerEntity? 
         .append(Msg)
 
     for (P in playerManager.playerList)
-        if (/*P != Except && */P.IsSubscribedToConsole && P.hasPermissionLevel(4))
+        if (P != Except && P.IsSubscribedToConsole && P.hasPermissionLevel(4))
             P.sendMessage(Decorated, false)
 }
 
