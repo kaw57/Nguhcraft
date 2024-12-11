@@ -63,7 +63,7 @@ fun ServerCommandSource.Success(Msg: MutableText) = sendMessage(Msg.formatted(Fo
 fun ReplyMsg(Msg: String): Text = Text.literal(Msg).formatted(Formatting.YELLOW)
 
 object Commands {
-    private inline fun <reified T : ArgumentType<*>> ArgType(Key: String, noinline Func: () -> T) {
+    inline fun <reified T : ArgumentType<*>> ArgType(Key: String, noinline Func: () -> T) {
         ArgumentTypeRegistry.registerArgumentType(
             Id(Key),
             T::class.java,

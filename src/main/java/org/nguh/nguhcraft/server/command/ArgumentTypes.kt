@@ -28,7 +28,7 @@ import org.nguh.nguhcraft.server.accessors.ServerPlayerAccessor
 import org.nguh.nguhcraft.server.command.Commands.Exn
 import java.util.concurrent.CompletableFuture
 
-private fun StringReader.ReadUntilWhitespace(): String {
+fun StringReader.ReadUntilWhitespace(): String {
     val Start = cursor
     while (canRead() && !Character.isWhitespace(peek())) skip()
     return string.substring(Start, cursor)
