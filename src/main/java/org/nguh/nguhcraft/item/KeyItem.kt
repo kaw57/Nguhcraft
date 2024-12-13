@@ -148,6 +148,7 @@ class KeyItem : Item(
         *
         * For lockable doors, get the lower half instead.
         */
+        @JvmStatic
         fun GetLockableEntity(W: World, Pos: BlockPos): LockableBlockEntity? {
             val BE = W.getBlockEntity(Pos)
 
