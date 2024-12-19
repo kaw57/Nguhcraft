@@ -25,6 +25,8 @@ class NguhcraftAppender(Rewriter: RewriteAppender? = null) : AbstractAppender(
     false,
     arrayOf()
 ) {
+    // The rewrite policy and rewriter function are from the stack deobfuscation mod;
+    // this way, we can use it without having to depend on it during the build process.
     val Policy = run {
         if (Rewriter == null) return@run null
         val Field = Rewriter.javaClass.getDeclaredField("rewritePolicy")

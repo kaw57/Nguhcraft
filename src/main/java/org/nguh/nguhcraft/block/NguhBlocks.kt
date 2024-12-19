@@ -5,6 +5,8 @@ import net.fabricmc.fabric.api.`object`.builder.v1.block.entity.FabricBlockEntit
 import net.minecraft.block.AbstractBlock
 import net.minecraft.block.Block
 import net.minecraft.block.Blocks
+import net.minecraft.block.ChainBlock
+import net.minecraft.block.LanternBlock
 import net.minecraft.block.MapColor
 import net.minecraft.block.entity.BlockEntity
 import net.minecraft.block.entity.BlockEntityType
@@ -36,6 +38,20 @@ object NguhBlocks {
             .pistonBehavior(PistonBehavior.IGNORE)
     )
 
+    val PEARLESCENT_LANTERN = Register(
+        "pearlescent_lantern",
+        ::LanternBlock,
+        AbstractBlock.Settings.copy(Blocks.LANTERN)
+            .mapColor(MapColor.DULL_PINK)
+    )
+
+    val PEARLESCENT_CHAIN = Register(
+        "pearlescent_chain",
+        ::ChainBlock,
+        AbstractBlock.Settings.copy(Blocks.CHAIN)
+            .mapColor(MapColor.GRAY)
+    )
+
     // Block entities.
     val LOCKED_DOOR_BLOCK_ENTITY = RegisterEntity(
         "lockable_door",
@@ -51,6 +67,11 @@ object NguhBlocks {
 
         ItemGroupEvents.modifyEntriesEvent(ItemGroups.BUILDING_BLOCKS).register {
             it.add(LOCKED_DOOR)
+        }
+
+        ItemGroupEvents.modifyEntriesEvent(ItemGroups.FUNCTIONAL).register {
+            it.add(PEARLESCENT_LANTERN)
+            it.add(PEARLESCENT_CHAIN)
         }
     }
 

@@ -195,6 +195,11 @@ object Chat {
         ))
     }
 
+    // TODO: Use colours when serialising components for the console.
+
     /** Send a message from the console. */
-    fun SendServerMessage(S: MinecraftServer, Message: String) = DispatchMessage(S, null, Message)
+    fun SendServerMessage(S: MinecraftServer, Message: String) {
+        LOGGER.info("{} {}", SERVER_COMPONENT, Message)
+        DispatchMessage(S, null, Message)
+    }
 }
