@@ -15,6 +15,9 @@ import org.nguh.nguhcraft.block.ChestVariant;
 import org.nguh.nguhcraft.block.NguhBlocks;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.Locale;
 
@@ -41,9 +44,8 @@ public abstract class ChestBlockEntityMixin extends LootableContainerBlockEntity
         Variant = CA.get(NguhBlocks.CHEST_VARIANT_COMPONENT);
     }
 
-    @Override
-    public void readNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registries) {
-        super.readNbt(nbt, registries);
+    @Inject(method = "readNbt", at = @At("TAIL"))
+    public void inject$readNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registries, CallbackInfo ci) {
         if (nbt.contains(TAG_CHEST_VARIANT, NbtElement.STRING_TYPE))
             Variant = ChestVariant.valueOf(nbt.getString(TAG_CHEST_VARIANT).toUpperCase(Locale.ROOT));
     }
@@ -55,9 +57,8 @@ public abstract class ChestBlockEntityMixin extends LootableContainerBlockEntity
         return Tag;
     }
 
-    @Override
-    public void writeNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registries) {
-        super.writeNbt(nbt, registries);
+    @Inject(method = "writeNbt", at = @At("TAIL"))
+    public void inject$writeNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registries, CallbackInfo ci) {
         if (Variant != null) nbt.putString(TAG_CHEST_VARIANT, Variant.asString());
     }
 }
