@@ -7,6 +7,7 @@ import net.minecraft.registry.RegistryKeys
 import net.minecraft.text.Text
 import net.minecraft.util.Formatting
 import org.nguh.nguhcraft.Nguhcraft.Companion.Id
+import org.nguh.nguhcraft.Nguhcraft.Companion.RKey
 import java.util.Optional
 
 object NguhPaintings {
@@ -39,6 +40,5 @@ object NguhPaintings {
         Register(RAIL_DIAGRAM, 3, 3)
     }
 
-    fun of(Key: String): RegistryKey<PaintingVariant> =
-        RegistryKey.of(RegistryKeys.PAINTING_VARIANT, Id(Key))
+    fun of(Key: String) = RKey(RegistryKeys.PAINTING_VARIANT, Key)
 }

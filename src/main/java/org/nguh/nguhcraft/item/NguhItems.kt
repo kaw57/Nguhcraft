@@ -5,15 +5,20 @@ import net.minecraft.item.Item
 import net.minecraft.item.ItemGroups
 import net.minecraft.item.Items
 import net.minecraft.item.SmithingTemplateItem
+import net.minecraft.item.equipment.trim.ArmorTrimPattern
 import net.minecraft.recipe.SpecialCraftingRecipe.SpecialRecipeSerializer
+import net.minecraft.registry.Registerable
 import net.minecraft.registry.Registries
 import net.minecraft.registry.Registry
 import net.minecraft.registry.RegistryKey
 import net.minecraft.registry.RegistryKeys
 import net.minecraft.registry.tag.ItemTags
+import net.minecraft.text.Text
 import net.minecraft.util.Identifier
 import net.minecraft.util.Rarity
+import net.minecraft.util.Util
 import org.nguh.nguhcraft.Nguhcraft.Companion.Id
+import org.nguh.nguhcraft.Nguhcraft.Companion.RKey
 
 object NguhItems {
     // =========================================================================
@@ -31,7 +36,7 @@ object NguhItems {
         Item.Settings()
             .maxCount(1)
             .rarity(Rarity.EPIC)
-            .jukeboxPlayable(RegistryKey.of(RegistryKeys.JUKEBOX_SONG, Id("nguhrovision_2024")))
+            .jukeboxPlayable(RKey(RegistryKeys.JUKEBOX_SONG, "nguhrovision_2024"))
     )
 
     val ATLANTIC_ARMOUR_TRIM: Item = CreateSmithingTemplate("atlantic_armour_trim_smithing_template", Item.Settings().rarity(Rarity.RARE))
@@ -52,6 +57,23 @@ object NguhItems {
     // =========================================================================
     //  Initialisation
     // =========================================================================
+    fun BootstrapArmourTrims(R: Registerable<ArmorTrimPattern>) {
+        fun Register(Key: String, I: Item) {
+            val K = RKey(RegistryKeys.TRIM_PATTERN, Key)
+            R.register(K, ArmorTrimPattern(
+                K.value,
+                Registries.ITEM.getEntry(I),
+                Text.translatable(Util.createTranslationKey("trim_pattern", K.value)),
+                false
+            ))
+        }
+
+        Register("atlantic", ATLANTIC_ARMOUR_TRIM)
+        Register("cenrail", CENRAIL_ARMOUR_TRIM)
+        Register("ice_cold", ICE_COLD_ARMOUR_TRIM)
+        Register("veneficium", VENEFICIUM_ARMOUR_TRIM)
+    }
+
     fun Init() {
         ItemGroupEvents.modifyEntriesEvent(ItemGroups.FUNCTIONAL).register {
             it.add(LOCK)

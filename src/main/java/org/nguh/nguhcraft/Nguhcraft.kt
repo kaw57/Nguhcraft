@@ -7,6 +7,8 @@ import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry
 import net.minecraft.nbt.NbtCompound
 import net.minecraft.nbt.NbtIo
 import net.minecraft.nbt.NbtSizeTracker
+import net.minecraft.registry.Registry
+import net.minecraft.registry.RegistryKey
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.world.ServerWorld
 import net.minecraft.util.Identifier
@@ -15,12 +17,11 @@ import org.nguh.nguhcraft.block.NguhBlocks
 import org.nguh.nguhcraft.item.NguhItems
 import org.nguh.nguhcraft.network.*
 import org.nguh.nguhcraft.protect.ProtectionManager
-import org.nguh.nguhcraft.server.MCBASIC
 import org.nguh.nguhcraft.server.ProcedureManager
-import org.nguh.nguhcraft.server.command.Commands
 import org.nguh.nguhcraft.server.ServerNetworkHandler
 import org.nguh.nguhcraft.server.ServerProtectionManager
 import org.nguh.nguhcraft.server.WarpManager
+import org.nguh.nguhcraft.server.command.Commands
 import java.nio.file.Path
 import kotlin.io.path.inputStream
 
@@ -180,6 +181,7 @@ class Nguhcraft : ModInitializer {
         const val MOD_ID = "nguhcraft"
         const val DIR_PROCEDURES = "procedures"
         @JvmStatic fun Id(S: String): Identifier = Identifier.of(MOD_ID, S)
+        @JvmStatic fun<T> RKey(Registry: RegistryKey<Registry<T>>, S: String): RegistryKey<T> = RegistryKey.of(Registry, Id(S))
 
         private fun NguhWorldSaveFile(SW: ServerWorld) = SW.server.getSavePath(WorldSavePath.ROOT).resolve(
             "nguhcraft.extraworlddata.${SW.registryKey.value.path}.dat"

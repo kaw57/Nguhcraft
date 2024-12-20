@@ -245,6 +245,7 @@ class NguhcraftDynamicRegistryProvider(
     ) {
         E.addAll(WL.getOrThrow(RegistryKeys.DAMAGE_TYPE))
         E.addAll(WL.getOrThrow(RegistryKeys.PAINTING_VARIANT))
+        E.addAll(WL.getOrThrow(RegistryKeys.TRIM_PATTERN))
     }
 
     override fun getName() = "Nguhcraft Dynamic Registries"
@@ -254,6 +255,7 @@ class NguhcraftDataGenerator : DataGeneratorEntrypoint {
     override fun buildRegistry(RB: RegistryBuilder) {
         RB.addRegistry(RegistryKeys.DAMAGE_TYPE, NguhDamageTypes::Bootstrap)
         RB.addRegistry(RegistryKeys.PAINTING_VARIANT, NguhPaintings::Bootstrap)
+        RB.addRegistry(RegistryKeys.TRIM_PATTERN, NguhItems::BootstrapArmourTrims)
     }
 
     override fun onInitializeDataGenerator(FDG: FabricDataGenerator) {
