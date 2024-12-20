@@ -121,3 +121,7 @@ kotlin {
 loom {
     accessWidenerPath = file('src/main/resources/nguhcraft.accessWidener')
 }
+
+fabricApi {
+    configureDataGeneration()
+}

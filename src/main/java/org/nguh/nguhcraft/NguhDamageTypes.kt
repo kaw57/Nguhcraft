@@ -14,6 +14,7 @@ object NguhDamageTypes {
     val MINECART_RUN_OVER = register("minecart_run_over")
     val MINECART_POOR_TRACK_DESIGN = register("minecart_poor_track_design")
     val OBLITERATED = register("obliterated")
+    val ALL = arrayOf(MINECART_COLLISION, MINECART_RUN_OVER, MINECART_POOR_TRACK_DESIGN, OBLITERATED)
 
     fun MinecartRunOverBy(W: World, P: PlayerEntity? = null) = DamageSource(entry(W, MINECART_RUN_OVER), P)
     fun MinecartCollision(W: World, P: PlayerEntity? = null) = DamageSource(entry(W, MINECART_COLLISION), P)

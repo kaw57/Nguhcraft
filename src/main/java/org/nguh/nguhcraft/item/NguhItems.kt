@@ -3,17 +3,22 @@ package org.nguh.nguhcraft.item
 import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents
 import net.minecraft.item.Item
 import net.minecraft.item.ItemGroups
+import net.minecraft.item.Items
 import net.minecraft.item.SmithingTemplateItem
 import net.minecraft.recipe.SpecialCraftingRecipe.SpecialRecipeSerializer
 import net.minecraft.registry.Registries
 import net.minecraft.registry.Registry
 import net.minecraft.registry.RegistryKey
 import net.minecraft.registry.RegistryKeys
+import net.minecraft.registry.tag.ItemTags
 import net.minecraft.util.Identifier
 import net.minecraft.util.Rarity
 import org.nguh.nguhcraft.Nguhcraft.Companion.Id
 
 object NguhItems {
+    // =========================================================================
+    //  Items
+    // =========================================================================
     val LOCK: Item = CreateItem(LockItem.ID, LockItem())
     val KEY: Item = CreateItem(KeyItem.ID, KeyItem())
     val SLABLET_1: Item = CreateItem(Id("slablet_1"), Item.Settings().maxCount(64).rarity(Rarity.UNCOMMON).fireproof())
@@ -34,6 +39,19 @@ object NguhItems {
     val ICE_COLD_ARMOUR_TRIM: Item = CreateSmithingTemplate("ice_cold_armour_trim_smithing_template", Item.Settings().rarity(Rarity.RARE))
     val VENEFICIUM_ARMOUR_TRIM: Item = CreateSmithingTemplate("veneficium_armour_trim_smithing_template", Item.Settings().rarity(Rarity.RARE))
 
+    // =========================================================================
+    //  Item Data
+    // =========================================================================
+    val SMITHING_TEMPLATES = arrayOf(
+        ATLANTIC_ARMOUR_TRIM,
+        CENRAIL_ARMOUR_TRIM,
+        ICE_COLD_ARMOUR_TRIM,
+        VENEFICIUM_ARMOUR_TRIM
+    )
+
+    // =========================================================================
+    //  Initialisation
+    // =========================================================================
     fun Init() {
         ItemGroupEvents.modifyEntriesEvent(ItemGroups.FUNCTIONAL).register {
             it.add(LOCK)

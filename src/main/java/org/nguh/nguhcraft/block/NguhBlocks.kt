@@ -99,6 +99,20 @@ object NguhBlocks {
             .build()
     )
 
+    val PICKAXE_MINEABLE = arrayOf(
+        DECORATIVE_HOPPER,
+        LOCKED_DOOR,
+        PEARLESCENT_LANTERN,
+        PEARLESCENT_CHAIN
+    )
+
+    val DROPS_SELF = arrayOf(
+        DECORATIVE_HOPPER,
+        LOCKED_DOOR,
+        PEARLESCENT_LANTERN,
+        PEARLESCENT_CHAIN
+    )
+
     fun Init() {
         ItemGroupEvents.modifyEntriesEvent(ItemGroups.REDSTONE).register {
             it.add(DECORATIVE_HOPPER)
