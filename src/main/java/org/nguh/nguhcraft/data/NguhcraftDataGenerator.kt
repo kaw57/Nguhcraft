@@ -14,10 +14,12 @@ import net.minecraft.data.recipe.RecipeGenerator
 import net.minecraft.data.recipe.ShapedRecipeJsonBuilder
 import net.minecraft.entity.damage.DamageScaling
 import net.minecraft.entity.damage.DamageType
+import net.minecraft.entity.decoration.painting.PaintingVariant
 import net.minecraft.item.Item
 import net.minecraft.item.ItemConvertible
 import net.minecraft.item.Items
 import net.minecraft.recipe.book.RecipeCategory
+import net.minecraft.registry.Registerable
 import net.minecraft.registry.RegistryBuilder
 import net.minecraft.registry.RegistryKey
 import net.minecraft.registry.RegistryKeys
@@ -25,8 +27,10 @@ import net.minecraft.registry.RegistryWrapper
 import net.minecraft.registry.tag.BlockTags
 import net.minecraft.registry.tag.DamageTypeTags
 import net.minecraft.registry.tag.ItemTags
+import net.minecraft.registry.tag.PaintingVariantTags
 import net.minecraft.registry.tag.TagKey
 import org.nguh.nguhcraft.NguhDamageTypes
+import org.nguh.nguhcraft.NguhPaintings
 import org.nguh.nguhcraft.Nguhcraft.Companion.Id
 import org.nguh.nguhcraft.block.NguhBlocks
 import org.nguh.nguhcraft.item.KeyDuplicationRecipe
@@ -78,6 +82,14 @@ class NguhcraftLootTableProvider(
     }
 }
 
+class NguhcraftPaintingVariantTagProvider(
+    O: FabricDataOutput,
+    RF: CompletableFuture<RegistryWrapper.WrapperLookup>
+) : FabricTagProvider<PaintingVariant>(O, RegistryKeys.PAINTING_VARIANT, RF) {
+    override fun configure(WL: RegistryWrapper.WrapperLookup) {
+        getOrCreateTagBuilder(PaintingVariantTags.PLACEABLE).let { for (P in NguhPaintings.PLACEABLE) it.add(P) }
+    }
+}
 
 class NguhcraftRecipeGenerator(
     val WL: RegistryWrapper.WrapperLookup,
@@ -169,7 +181,6 @@ class NguhcraftRecipeGenerator(
         return this
     }
 
-
     inline fun offerShaped(
         Output: ItemConvertible,
         Count: Int = 1,
@@ -233,6 +244,7 @@ class NguhcraftDynamicRegistryProvider(
         E: Entries
     ) {
         E.addAll(WL.getOrThrow(RegistryKeys.DAMAGE_TYPE))
+        E.addAll(WL.getOrThrow(RegistryKeys.PAINTING_VARIANT))
     }
 
     override fun getName() = "Nguhcraft Dynamic Registries"
@@ -240,34 +252,8 @@ class NguhcraftDynamicRegistryProvider(
 
 class NguhcraftDataGenerator : DataGeneratorEntrypoint {
     override fun buildRegistry(RB: RegistryBuilder) {
-        // =================================================================
-        //  Damage Types
-        // =================================================================
-        RB.addRegistry(RegistryKeys.DAMAGE_TYPE) {
-            it.register(NguhDamageTypes.MINECART_COLLISION, DamageType(
-                "minecart_collision",
-                DamageScaling.WHEN_CAUSED_BY_LIVING_NON_PLAYER,
-                0.0f
-            ))
-
-            it.register(NguhDamageTypes.MINECART_POOR_TRACK_DESIGN, DamageType(
-                "minecart_poor_track_design",
-                DamageScaling.WHEN_CAUSED_BY_LIVING_NON_PLAYER,
-                0.0f
-            ))
-
-            it.register(NguhDamageTypes.MINECART_RUN_OVER, DamageType(
-                "minecart_run_over",
-                DamageScaling.WHEN_CAUSED_BY_LIVING_NON_PLAYER,
-                0.0f
-            ))
-
-            it.register(NguhDamageTypes.OBLITERATED, DamageType(
-                "obliterated",
-                DamageScaling.WHEN_CAUSED_BY_LIVING_NON_PLAYER,
-                0.0f
-            ))
-        }
+        RB.addRegistry(RegistryKeys.DAMAGE_TYPE, NguhDamageTypes::Bootstrap)
+        RB.addRegistry(RegistryKeys.PAINTING_VARIANT, NguhPaintings::Bootstrap)
     }
 
     override fun onInitializeDataGenerator(FDG: FabricDataGenerator) {
@@ -276,6 +262,7 @@ class NguhcraftDataGenerator : DataGeneratorEntrypoint {
         P.addProvider(::NguhcraftDamageTypeTagProvider)
         P.addProvider(::NguhcraftDynamicRegistryProvider)
         P.addProvider(::NguhcraftLootTableProvider)
+        P.addProvider(::NguhcraftPaintingVariantTagProvider)
         P.addProvider(::NguhcraftRecipeProvider)
     }
 }
