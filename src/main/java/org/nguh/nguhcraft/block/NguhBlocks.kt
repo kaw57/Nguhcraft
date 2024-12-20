@@ -13,6 +13,8 @@ import net.minecraft.block.MapColor
 import net.minecraft.block.entity.BlockEntity
 import net.minecraft.block.entity.BlockEntityType
 import net.minecraft.block.piston.PistonBehavior
+import net.minecraft.client.data.BlockStateModelGenerator
+import net.minecraft.client.data.ModelIds
 import net.minecraft.component.ComponentType
 import net.minecraft.item.BlockItem
 import net.minecraft.item.Item
@@ -112,6 +114,18 @@ object NguhBlocks {
         PEARLESCENT_LANTERN,
         PEARLESCENT_CHAIN
     )
+
+    fun BootstrapModels(G: BlockStateModelGenerator) {
+        // The door and hopper block state models are very complicated and not exposed
+        // as helper functions (the door is actually exposed but our door has an extra
+        // block state), so those are currently hard-coded as JSON files instead of being
+        // generated here.
+        G.registerLantern(PEARLESCENT_LANTERN)
+        G.registerItemModel(PEARLESCENT_CHAIN.asItem())
+        G.registerItemModel(DECORATIVE_HOPPER.asItem())
+        G.registerItemModel(LOCKED_DOOR.asItem())
+        G.registerAxisRotated(PEARLESCENT_CHAIN, ModelIds.getBlockModelId(PEARLESCENT_CHAIN))
+    }
 
     fun Init() {
         ItemGroupEvents.modifyEntriesEvent(ItemGroups.REDSTONE).register {

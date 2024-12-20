@@ -1,5 +1,7 @@
 package org.nguh.nguhcraft.data
 
+import net.fabricmc.api.EnvType
+import net.fabricmc.fabric.api.client.datagen.v1.provider.FabricModelProvider
 import net.fabricmc.fabric.api.datagen.v1.DataGeneratorEntrypoint
 import net.fabricmc.fabric.api.datagen.v1.FabricDataGenerator
 import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput
@@ -7,19 +9,19 @@ import net.fabricmc.fabric.api.datagen.v1.provider.FabricBlockLootTableProvider
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricDynamicRegistryProvider
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricRecipeProvider
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricTagProvider
+import net.fabricmc.loader.api.FabricLoader
+import net.minecraft.client.data.BlockStateModelGenerator
+import net.minecraft.client.data.ItemModelGenerator
 import net.minecraft.data.recipe.ComplexRecipeJsonBuilder
-import net.minecraft.data.recipe.CraftingRecipeJsonBuilder
 import net.minecraft.data.recipe.RecipeExporter
 import net.minecraft.data.recipe.RecipeGenerator
 import net.minecraft.data.recipe.ShapedRecipeJsonBuilder
-import net.minecraft.entity.damage.DamageScaling
 import net.minecraft.entity.damage.DamageType
 import net.minecraft.entity.decoration.painting.PaintingVariant
 import net.minecraft.item.Item
 import net.minecraft.item.ItemConvertible
 import net.minecraft.item.Items
 import net.minecraft.recipe.book.RecipeCategory
-import net.minecraft.registry.Registerable
 import net.minecraft.registry.RegistryBuilder
 import net.minecraft.registry.RegistryKey
 import net.minecraft.registry.RegistryKeys
@@ -79,6 +81,16 @@ class NguhcraftLootTableProvider(
 ) : FabricBlockLootTableProvider(O, RL) {
     override fun generate() {
         NguhBlocks.DROPS_SELF.forEach { addDrop(it) }
+    }
+}
+
+class NguhcraftModelGenerator(O: FabricDataOutput) : FabricModelProvider(O) {
+    override fun generateBlockStateModels(G: BlockStateModelGenerator) {
+        NguhBlocks.BootstrapModels(G)
+    }
+
+    override fun generateItemModels(G: ItemModelGenerator) {
+        //NguhItems.BootstrapModels(G)
     }
 }
 
@@ -264,6 +276,7 @@ class NguhcraftDataGenerator : DataGeneratorEntrypoint {
         P.addProvider(::NguhcraftDamageTypeTagProvider)
         P.addProvider(::NguhcraftDynamicRegistryProvider)
         P.addProvider(::NguhcraftLootTableProvider)
+        P.addProvider(::NguhcraftModelGenerator)
         P.addProvider(::NguhcraftPaintingVariantTagProvider)
         P.addProvider(::NguhcraftRecipeProvider)
     }
