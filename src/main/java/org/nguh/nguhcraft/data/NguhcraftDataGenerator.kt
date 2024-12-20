@@ -90,7 +90,7 @@ class NguhcraftModelGenerator(O: FabricDataOutput) : FabricModelProvider(O) {
     }
 
     override fun generateItemModels(G: ItemModelGenerator) {
-        //NguhItems.BootstrapModels(G)
+        NguhItems.BootstrapModels(G)
     }
 }
 

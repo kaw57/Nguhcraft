@@ -1,6 +1,9 @@
 package org.nguh.nguhcraft.item
 
 import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents
+import net.minecraft.client.data.ItemModelGenerator
+import net.minecraft.client.data.Model
+import net.minecraft.client.data.Models
 import net.minecraft.item.Item
 import net.minecraft.item.ItemGroups
 import net.minecraft.item.Items
@@ -74,6 +77,22 @@ object NguhItems {
         Register("veneficium", VENEFICIUM_ARMOUR_TRIM)
     }
 
+    fun BootstrapModels(G: ItemModelGenerator) {
+        fun Register(I: Item, M : Model = Models.GENERATED) {
+            G.register(I, M)
+        }
+
+        Register(LOCK)
+        Register(KEY)
+        Register(SLABLET_1)
+        Register(SLABLET_2)
+        Register(SLABLET_4)
+        Register(SLABLET_8)
+        Register(SLABLET_16)
+        Register(NGUHROVISION_2024_DISC, Models.TEMPLATE_MUSIC_DISC)
+        SMITHING_TEMPLATES.forEach { Register(it) }
+    }
+
     fun Init() {
         ItemGroupEvents.modifyEntriesEvent(ItemGroups.FUNCTIONAL).register {
             it.add(LOCK)
@@ -90,10 +109,7 @@ object NguhItems {
         }
 
         ItemGroupEvents.modifyEntriesEvent(ItemGroups.INGREDIENTS).register {
-            it.add(ATLANTIC_ARMOUR_TRIM)
-            it.add(CENRAIL_ARMOUR_TRIM)
-            it.add(ICE_COLD_ARMOUR_TRIM)
-            it.add(VENEFICIUM_ARMOUR_TRIM)
+            for (T in SMITHING_TEMPLATES) it.add(T)
         }
 
         KeyLockPairingRecipe.SERIALISER = Registry.register(
