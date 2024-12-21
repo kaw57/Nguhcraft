@@ -248,7 +248,7 @@ object ServerUtils {
     fun Obliterate(SP: ServerPlayerEntity) {
         if (SP.isDead || SP.isSpectator || SP.isCreative) return
         val SW = SP.serverWorld
-        StrikeLighting(SW, SP.pos, null, true)
+        StrikeLightning(SW, SP.pos, null, true)
         SP.damage(SW, NguhDamageTypes.Obliterated(SW), Float.MAX_VALUE)
     }
 
@@ -277,7 +277,9 @@ object ServerUtils {
     }
 
     /** Unconditionally strike lightning. */
-    fun StrikeLighting(W: ServerWorld, Where: Vec3d, TE: TridentEntity? = null, Cosmetic: Boolean = false) {
+    @JvmStatic
+    @JvmOverloads
+    fun StrikeLightning(W: ServerWorld, Where: Vec3d, TE: TridentEntity? = null, Cosmetic: Boolean = false) {
         val Lightning = EntityType.LIGHTNING_BOLT.spawn(
             W,
             BlockPos.ofFloored(Where),

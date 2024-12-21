@@ -43,7 +43,7 @@ import org.nguh.nguhcraft.protect.ProtectionManager
 import org.nguh.nguhcraft.protect.Region
 import org.nguh.nguhcraft.server.*
 import org.nguh.nguhcraft.server.ServerUtils.IsIntegratedServer
-import org.nguh.nguhcraft.server.ServerUtils.StrikeLighting
+import org.nguh.nguhcraft.server.ServerUtils.StrikeLightning
 import org.nguh.nguhcraft.server.accessors.ServerPlayerAccessor
 import org.nguh.nguhcraft.server.accessors.ServerPlayerDiscordAccessor
 import org.nguh.nguhcraft.server.dedicated.Vanish
@@ -1158,7 +1158,7 @@ object Commands {
                 val Entities = EntityArgumentType.getEntities(it, "targets")
                 for (E in Entities)
                     if (E !is LightningEntity)
-                        StrikeLighting(E.world as ServerWorld, E.pos)
+                        StrikeLightning(E.world as ServerWorld, E.pos)
 
                 // And tell the user how many things were smitten.
                 it.source.sendMessage(Text.literal(
@@ -1172,7 +1172,7 @@ object Commands {
             .requires { it.isExecutedByPlayer }
             .executes {
                 val Pos = BlockPosArgumentType.getBlockPos(it, "where")
-                StrikeLighting(it.source.world as ServerWorld, Vec3d.ofBottomCenter(Pos))
+                StrikeLightning(it.source.world as ServerWorld, Vec3d.ofBottomCenter(Pos))
                 it.source.sendMessage(Text.literal("[$Pos] has been smitten").formatted(Formatting.YELLOW))
                 1
             }

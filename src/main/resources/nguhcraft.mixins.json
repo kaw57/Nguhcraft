@@ -56,6 +56,7 @@
 		"server.AbstractMinecartEntityAccessor",
 		"server.BlockMixin",
 		"server.DetectorRailBlockAccessor",
+		"server.EnchantmentHelperMixin",
 		"server.EntityMixin",
 		"server.HungerManagerMixin",
 		"server.LivingEntityMixin",
