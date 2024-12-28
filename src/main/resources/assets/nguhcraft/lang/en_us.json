@@ -42,6 +42,8 @@
 	"nguhcraft.block.locked": "%1$s is locked (key: %2$s)!",
 	"nguhcraft.door": "Door",
 
+	"painting.nguhcraft.chillvana_metro.author": "sq",
+	"painting.nguhcraft.chillvana_metro.title": "Chillvana Metro Diagram",
 	"painting.nguhcraft.gambianholiday.author": "Agma Schwa",
 	"painting.nguhcraft.gambianholiday.title": "???",
 	"painting.nguhcraft.gold_nguh.author": "Ætérnal",
@@ -52,8 +54,10 @@
 	"painting.nguhcraft.map.title": "World Map",
 	"painting.nguhcraft.rabo.author": "Agma Schwa",
 	"painting.nguhcraft.rabo.title": "Rabo",
-	"painting.nguhcraft.rail_diagram.author": "CenRail®",
+	"painting.nguhcraft.rail_diagram.author": "sq",
 	"painting.nguhcraft.rail_diagram.title": "Rail Diagram",
+	"painting.nguhcraft.rails_of_eras.author": "sq",
+	"painting.nguhcraft.rails_of_eras.title": "Rails of Eras Diagram",
 
 	"subtitles.nguhcraft.nguh": "Nguh",
 
