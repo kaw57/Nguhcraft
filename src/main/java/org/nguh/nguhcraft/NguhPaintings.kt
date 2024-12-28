@@ -21,7 +21,16 @@ object NguhPaintings {
     val RAILS_OF_ERAS = of("rails_of_eras")
 
     // All paintings that can be obtained randomly by placing them.
-    val PLACEABLE = arrayOf(CHILLVANA_METRO, GAMBIANHOLIDAY, GOLD_NGUH, GOLD_NGUH_SMALL, MAP, RABO, RAIL_DIAGRAM)
+    val PLACEABLE = arrayOf(
+        CHILLVANA_METRO,
+        GAMBIANHOLIDAY,
+        GOLD_NGUH,
+        GOLD_NGUH_SMALL,
+        MAP,
+        RABO,
+        RAIL_DIAGRAM,
+        RAILS_OF_ERAS,
+    )
 
     fun Bootstrap(R: Registerable<PaintingVariant>) {
         fun Register(K: RegistryKey<PaintingVariant>, Width: Int, Height: Int) {
