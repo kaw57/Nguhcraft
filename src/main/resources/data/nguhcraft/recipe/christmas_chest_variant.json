@@ -15,7 +15,7 @@
 		"id": "minecraft:chest",
 		"components": {
 			"nguhcraft:chest_variant": "christmas",
-			"minecraft:custom_name": "{\"text\": \"Christmas Chest\", \"italic\": false }"
+			"minecraft:custom_name": "{\"translate\": \"chest_variant.nguhcraft.christmas\", \"italic\": false }"
 		}
 	}
 }

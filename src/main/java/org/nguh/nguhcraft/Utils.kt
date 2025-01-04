@@ -1,13 +1,16 @@
 package org.nguh.nguhcraft
 
 import com.mojang.logging.LogUtils
+import net.minecraft.component.ComponentChanges
 import net.minecraft.enchantment.Enchantment
 import net.minecraft.enchantment.EnchantmentHelper
 import net.minecraft.entity.player.PlayerEntity
+import net.minecraft.item.Item
 import net.minecraft.item.ItemStack
 import net.minecraft.nbt.NbtElement
 import net.minecraft.nbt.NbtOps
 import net.minecraft.network.packet.CustomPayload
+import net.minecraft.registry.Registries
 import net.minecraft.registry.RegistryKey
 import net.minecraft.registry.RegistryKeys
 import net.minecraft.text.MutableText
@@ -67,6 +70,22 @@ object Utils {
         .append(LBRACK_COMPONENT)
         .append(Text.literal(Content).withColor(Constants.Lavender))
         .append(RBRACK_COMPONENT)
+
+    /**
+     * The ItemStack constructor for this sucks so much it’s not even funny anymore.
+     *
+     * The callback has no default parameter because at that point you can literally
+     * just use the ItemStack constructor instead.
+     */
+    fun BuildItemStack(I: Item, Count: Int = 1, ComponentBuilder: ComponentChanges.Builder.() -> Unit): ItemStack {
+        val B = ComponentChanges.builder()
+        B.ComponentBuilder()
+        return ItemStack(
+            Registries.ITEM.getEntry(I),
+            Count,
+            B.build()
+        )
+    }
 
     /** Calculate a player’s total saturation enchantment value. */
     @JvmStatic

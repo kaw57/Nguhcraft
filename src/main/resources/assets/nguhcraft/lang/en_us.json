@@ -4,6 +4,9 @@
 	"block.nguhcraft.pearlescent_lantern": "Pearlescent Lantern",
 	"block.nguhcraft.pearlescent_chain": "Pearlescent Chain",
 
+	"chest_variant.nguhcraft.christmas": "Christmas Chest",
+	"chest_variant.nguhcraft.pale_oak": "Pale Oak Chest",
+
 	"death.attack.minecart_run_over": "%1$s was run over by a minecart",
 	"death.attack.minecart_run_over.player": "%1$s was run over by %2$s",
 	"death.attack.minecart_run_over.item": "%1$s was run over by %2$s",

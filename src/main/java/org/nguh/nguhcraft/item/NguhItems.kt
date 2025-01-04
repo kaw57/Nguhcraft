@@ -4,8 +4,11 @@ import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents
 import net.minecraft.client.data.ItemModelGenerator
 import net.minecraft.client.data.Model
 import net.minecraft.client.data.Models
+import net.minecraft.component.ComponentChanges
+import net.minecraft.component.DataComponentTypes
 import net.minecraft.item.Item
 import net.minecraft.item.ItemGroups
+import net.minecraft.item.ItemStack
 import net.minecraft.item.Items
 import net.minecraft.item.SmithingTemplateItem
 import net.minecraft.item.equipment.trim.ArmorTrimPattern
@@ -15,13 +18,15 @@ import net.minecraft.registry.Registries
 import net.minecraft.registry.Registry
 import net.minecraft.registry.RegistryKey
 import net.minecraft.registry.RegistryKeys
-import net.minecraft.registry.tag.ItemTags
 import net.minecraft.text.Text
 import net.minecraft.util.Identifier
 import net.minecraft.util.Rarity
 import net.minecraft.util.Util
 import org.nguh.nguhcraft.Nguhcraft.Companion.Id
 import org.nguh.nguhcraft.Nguhcraft.Companion.RKey
+import org.nguh.nguhcraft.Utils
+import org.nguh.nguhcraft.block.ChestVariant
+import org.nguh.nguhcraft.block.NguhBlocks
 
 object NguhItems {
     // =========================================================================
@@ -102,6 +107,13 @@ object NguhItems {
             it.add(SLABLET_4)
             it.add(SLABLET_8)
             it.add(SLABLET_16)
+
+            ChestVariant.entries.forEach { CV ->
+                it.add(Utils.BuildItemStack(Items.CHEST) {
+                    add(DataComponentTypes.CUSTOM_NAME, CV.DefaultName)
+                    add(NguhBlocks.CHEST_VARIANT_COMPONENT, CV)
+                })
+            }
         }
 
         ItemGroupEvents.modifyEntriesEvent(ItemGroups.TOOLS).register {

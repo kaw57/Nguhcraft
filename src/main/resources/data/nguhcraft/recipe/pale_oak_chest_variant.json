@@ -14,7 +14,7 @@
 		"id": "minecraft:chest",
 		"components": {
 			"nguhcraft:chest_variant": "pale_oak",
-			"minecraft:custom_name": "{\"text\": \"Pale Oak Chest\", \"italic\": false }"
+			"minecraft:custom_name": "{\"translate\": \"chest_variant.nguhcraft.pale_oak\", \"italic\": false }"
 		}
 	}
 }
