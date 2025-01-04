@@ -44,6 +44,7 @@ import org.nguh.nguhcraft.Nguhcraft.Companion.Id
 import java.util.function.IntFunction
 
 enum class ChestVariant : StringIdentifiable {
+    CHRISTMAS,
     PALE_OAK;
 
     override fun asString() = name.lowercase()
@@ -157,7 +158,7 @@ object NguhBlocks {
         G.registerItemModel(LOCKED_DOOR.asItem())
         G.registerAxisRotated(PEARLESCENT_CHAIN, ModelIds.getBlockModelId(PEARLESCENT_CHAIN))
 
-        // Chest variants.
+        // Chest variants. Copied from registerChest().
         val Template = Models.TEMPLATE_CHEST.upload(Items.CHEST, TextureMap.particle(Blocks.OAK_PLANKS), G.modelCollector)
         val Normal = ItemModels.special(Template, ChestModelRenderer.Unbaked(ChestModelRenderer.NORMAL_ID))
         val Christmas = ItemModels.special(Template, ChestModelRenderer.Unbaked(ChestModelRenderer.CHRISTMAS_ID))
@@ -166,7 +167,8 @@ object NguhBlocks {
         G.itemModelOutput.accept(Items.CHEST, ItemModels.select(
             ChestVariantProperty(),
             ChristmasOrNormal,
-            ItemModels.switchCase(ChestVariant.PALE_OAK, PaleOak)
+            ItemModels.switchCase(ChestVariant.CHRISTMAS, Christmas),
+            ItemModels.switchCase(ChestVariant.PALE_OAK, PaleOak),
         ))
     }
 

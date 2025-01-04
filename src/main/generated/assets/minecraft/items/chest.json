@@ -8,6 +8,17 @@
           "base": "minecraft:item/chest",
           "model": {
             "type": "minecraft:chest",
+            "texture": "minecraft:christmas"
+          }
+        },
+        "when": "christmas"
+      },
+      {
+        "model": {
+          "type": "minecraft:special",
+          "base": "minecraft:item/chest",
+          "model": {
+            "type": "minecraft:chest",
             "texture": "nguhcraft:pale_oak"
           }
         },
