@@ -6,7 +6,7 @@ import net.minecraft.block.enums.ChestType;
 import net.minecraft.client.render.TexturedRenderLayers;
 import net.minecraft.client.util.SpriteIdentifier;
 import org.nguh.nguhcraft.accessors.ChestBlockEntityAccessor;
-import org.nguh.nguhcraft.block.ChestVariant;
+import org.nguh.nguhcraft.block.ChestTextureOverride;
 import org.nguh.nguhcraft.item.KeyItem;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -30,7 +30,7 @@ public abstract class TexturedRenderLayersMixin {
         if (BE instanceof ChestBlockEntity CBE) {
             var CV = ((ChestBlockEntityAccessor)CBE).Nguhcraft$GetChestVariant();
             var Locked = KeyItem.IsChestLocked(BE);
-            CIR.setReturnValue(ChestVariant.GetTexture(CV, Ty, Locked));
+            CIR.setReturnValue(ChestTextureOverride.GetTexture(CV, Ty, Locked));
         }
     }
 }

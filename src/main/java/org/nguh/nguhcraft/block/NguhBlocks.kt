@@ -92,6 +92,24 @@ class ChestTextureOverride(
             Key = "chest"
         )
 
+
+        @Environment(EnvType.CLIENT)
+        private val OVERRIDES = mapOf(
+            ChestVariant.CHRISTMAS to OverrideVanillaModel(
+                Single = TexturedRenderLayers.CHRISTMAS,
+                Left = TexturedRenderLayers.CHRISTMAS_LEFT,
+                Right = TexturedRenderLayers.CHRISTMAS_RIGHT,
+                Key = "christmas"
+            ),
+
+            ChestVariant.PALE_OAK to ChestTextureOverride("pale_oak")
+        )
+
+        @Environment(EnvType.CLIENT)
+        @JvmStatic
+        fun GetTexture(CV: ChestVariant?, CT: ChestType, Locked: Boolean) =
+            (CV?.let { OVERRIDES[CV] } ?: Normal).get(CT, Locked)
+
         internal fun OverrideVanillaModel(
             Single: SpriteIdentifier,
             Left: SpriteIdentifier,
@@ -123,23 +141,6 @@ enum class ChestVariant : StringIdentifiable {
 
         val CODEC: Codec<ChestVariant> = StringIdentifiable.createCodec(ChestVariant::values)
         val PACKET_CODEC: PacketCodec<ByteBuf, ChestVariant> = PacketCodecs.indexed(BY_ID, ChestVariant::ordinal)
-
-        @Environment(EnvType.CLIENT)
-        private val OVERRIDES = mapOf(
-            CHRISTMAS to ChestTextureOverride.OverrideVanillaModel(
-                Single = TexturedRenderLayers.CHRISTMAS,
-                Left = TexturedRenderLayers.CHRISTMAS_LEFT,
-                Right = TexturedRenderLayers.CHRISTMAS_RIGHT,
-                Key = "christmas"
-            ),
-
-            PALE_OAK to ChestTextureOverride("pale_oak")
-        )
-
-        @Environment(EnvType.CLIENT)
-        @JvmStatic
-        fun GetTexture(CV: ChestVariant?, CT: ChestType, Locked: Boolean) =
-            (CV?.let { OVERRIDES[CV] } ?: ChestTextureOverride.Normal).get(CT, Locked)
     }
 }
 
