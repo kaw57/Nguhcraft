@@ -146,7 +146,7 @@ class ChestVariantProperty : SelectProperty<ChestVariant> {
         LE: LivingEntity?,
         Seed: Int,
         MTM: ModelTransformationMode
-    ) = St.getOrDefault(NguhBlocks.CHEST_VARIANT_COMPONENT, null)
+    ) = St.get(NguhBlocks.CHEST_VARIANT_COMPONENT)
 
     override fun getType() = TYPE
     companion object {
