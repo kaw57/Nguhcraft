@@ -15,14 +15,17 @@ import net.minecraft.block.LanternBlock
 import net.minecraft.block.MapColor
 import net.minecraft.block.entity.BlockEntity
 import net.minecraft.block.entity.BlockEntityType
+import net.minecraft.block.enums.ChestType
 import net.minecraft.block.piston.PistonBehavior
 import net.minecraft.client.data.BlockStateModelGenerator
 import net.minecraft.client.data.ItemModels
 import net.minecraft.client.data.ModelIds
 import net.minecraft.client.data.Models
 import net.minecraft.client.data.TextureMap
+import net.minecraft.client.render.TexturedRenderLayers
 import net.minecraft.client.render.item.model.special.ChestModelRenderer
 import net.minecraft.client.render.item.property.select.SelectProperty
+import net.minecraft.client.util.SpriteIdentifier
 import net.minecraft.client.world.ClientWorld
 import net.minecraft.component.ComponentType
 import net.minecraft.entity.LivingEntity
@@ -43,6 +46,63 @@ import net.minecraft.util.function.ValueLists
 import org.nguh.nguhcraft.Nguhcraft.Companion.Id
 import java.util.function.IntFunction
 
+
+@Environment(EnvType.CLIENT)
+private fun MakeSprite(S: String) = SpriteIdentifier(
+    TexturedRenderLayers.CHEST_ATLAS_TEXTURE,
+    Id("entity/chest/$S")
+)
+
+@Environment(EnvType.CLIENT)
+class LockedChestVariant(
+    val Locked: SpriteIdentifier,
+    val Unlocked: SpriteIdentifier
+) {
+    constructor(S: String) : this(
+        Locked = MakeSprite("${S}_locked"),
+        Unlocked = MakeSprite(S)
+    )
+}
+
+@Environment(EnvType.CLIENT)
+class ChestTextureOverride(
+    val Single: LockedChestVariant,
+    val Left: LockedChestVariant,
+    val Right: LockedChestVariant,
+) {
+    internal constructor(S: String) : this(
+        Single = LockedChestVariant(S),
+        Left = LockedChestVariant("${S}_left"),
+        Right = LockedChestVariant("${S}_right")
+    )
+
+    internal fun get(CT: ChestType, Locked: Boolean) = when (CT) {
+        ChestType.LEFT -> if (Locked) Left.Locked else Left.Unlocked
+        ChestType.RIGHT -> if (Locked) Right.Locked else Right.Unlocked
+        else -> if (Locked) Single.Locked else Single.Unlocked
+    }
+
+    companion object {
+        internal val Normal = OverrideVanillaModel(
+            Single = TexturedRenderLayers.NORMAL,
+            Left = TexturedRenderLayers.NORMAL_LEFT,
+            Right = TexturedRenderLayers.NORMAL_RIGHT,
+            Key = "chest"
+        )
+
+        internal fun OverrideVanillaModel(
+            Single: SpriteIdentifier,
+            Left: SpriteIdentifier,
+            Right: SpriteIdentifier,
+            Key: String,
+        ) = ChestTextureOverride(
+            Single = LockedChestVariant(MakeSprite("${Key}_locked"), Single),
+            Left = LockedChestVariant(MakeSprite("${Key}_left_locked"), Left),
+            Right = LockedChestVariant(MakeSprite("${Key}_right_locked"), Right)
+        )
+    }
+}
+
 enum class ChestVariant : StringIdentifiable {
     CHRISTMAS,
     PALE_OAK;
@@ -58,6 +118,23 @@ enum class ChestVariant : StringIdentifiable {
 
         val CODEC: Codec<ChestVariant> = StringIdentifiable.createCodec(ChestVariant::values)
         val PACKET_CODEC: PacketCodec<ByteBuf, ChestVariant> = PacketCodecs.indexed(BY_ID, ChestVariant::ordinal)
+
+        @Environment(EnvType.CLIENT)
+        private val OVERRIDES = mapOf(
+            CHRISTMAS to ChestTextureOverride.OverrideVanillaModel(
+                Single = TexturedRenderLayers.CHRISTMAS,
+                Left = TexturedRenderLayers.CHRISTMAS_LEFT,
+                Right = TexturedRenderLayers.CHRISTMAS_RIGHT,
+                Key = "christmas"
+            ),
+
+            PALE_OAK to ChestTextureOverride("pale_oak")
+        )
+
+        @Environment(EnvType.CLIENT)
+        @JvmStatic
+        fun GetTexture(CV: ChestVariant?, CT: ChestType, Locked: Boolean) =
+            (CV?.let { OVERRIDES[CV] } ?: ChestTextureOverride.Normal).get(CT, Locked)
     }
 }
 
