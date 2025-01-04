@@ -13,6 +13,7 @@ import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents
 import net.minecraft.client.gui.DrawContext
 import net.minecraft.client.render.RenderLayer
+import net.minecraft.client.render.item.property.select.SelectProperties
 import net.minecraft.item.ItemGroup
 import net.minecraft.item.ItemStack
 import net.minecraft.item.Items
@@ -24,6 +25,7 @@ import net.minecraft.util.Formatting
 import net.minecraft.util.math.BlockPos
 import org.nguh.nguhcraft.server.MCBASIC
 import org.nguh.nguhcraft.Nguhcraft.Companion.Id
+import org.nguh.nguhcraft.block.ChestVariantProperty
 import org.nguh.nguhcraft.block.NguhBlocks
 import org.nguh.nguhcraft.client.ClientUtils.Client
 
@@ -55,6 +57,8 @@ class NguhcraftClient : ClientModInitializer {
             Vanished = false
             LastInteractedLecternPos = BlockPos.ORIGIN
         }
+
+        SelectProperties.ID_MAPPER.put(Id("chest_variant"), ChestVariantProperty.TYPE)
     }
 
     companion object {

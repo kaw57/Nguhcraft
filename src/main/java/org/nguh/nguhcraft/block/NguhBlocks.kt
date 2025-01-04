@@ -1,7 +1,10 @@
 package org.nguh.nguhcraft.block
 
 import com.mojang.serialization.Codec
+import com.mojang.serialization.MapCodec
 import io.netty.buffer.ByteBuf
+import net.fabricmc.api.EnvType
+import net.fabricmc.api.Environment
 import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents
 import net.fabricmc.fabric.api.`object`.builder.v1.block.entity.FabricBlockEntityTypeBuilder
 import net.minecraft.block.AbstractBlock
@@ -14,18 +17,27 @@ import net.minecraft.block.entity.BlockEntity
 import net.minecraft.block.entity.BlockEntityType
 import net.minecraft.block.piston.PistonBehavior
 import net.minecraft.client.data.BlockStateModelGenerator
+import net.minecraft.client.data.ItemModels
 import net.minecraft.client.data.ModelIds
+import net.minecraft.client.data.Models
+import net.minecraft.client.data.TextureMap
+import net.minecraft.client.render.item.model.special.ChestModelRenderer
+import net.minecraft.client.render.item.property.select.SelectProperty
+import net.minecraft.client.world.ClientWorld
 import net.minecraft.component.ComponentType
+import net.minecraft.entity.LivingEntity
 import net.minecraft.item.BlockItem
 import net.minecraft.item.Item
 import net.minecraft.item.ItemGroups
+import net.minecraft.item.ItemStack
+import net.minecraft.item.Items
+import net.minecraft.item.ModelTransformationMode
 import net.minecraft.network.codec.PacketCodec
 import net.minecraft.network.codec.PacketCodecs
 import net.minecraft.registry.Registries
 import net.minecraft.registry.Registry
 import net.minecraft.registry.RegistryKey
 import net.minecraft.registry.RegistryKeys
-import net.minecraft.util.DyeColor
 import net.minecraft.util.StringIdentifiable
 import net.minecraft.util.function.ValueLists
 import org.nguh.nguhcraft.Nguhcraft.Companion.Id
@@ -45,6 +57,25 @@ enum class ChestVariant : StringIdentifiable {
 
         val CODEC: Codec<ChestVariant> = StringIdentifiable.createCodec(ChestVariant::values)
         val PACKET_CODEC: PacketCodec<ByteBuf, ChestVariant> = PacketCodecs.indexed(BY_ID, ChestVariant::ordinal)
+    }
+}
+
+@Environment(EnvType.CLIENT)
+class ChestVariantProperty : SelectProperty<ChestVariant> {
+    override fun getValue(
+        St: ItemStack,
+        CW: ClientWorld?,
+        LE: LivingEntity?,
+        Seed: Int,
+        MTM: ModelTransformationMode
+    ) = St.getOrDefault(NguhBlocks.CHEST_VARIANT_COMPONENT, null)
+
+    override fun getType() = TYPE
+    companion object {
+        val TYPE: SelectProperty.Type<ChestVariantProperty, ChestVariant> = SelectProperty.Type.create(
+            MapCodec.unit(ChestVariantProperty()),
+            ChestVariant.CODEC
+        )
     }
 }
 
@@ -125,6 +156,18 @@ object NguhBlocks {
         G.registerItemModel(DECORATIVE_HOPPER.asItem())
         G.registerItemModel(LOCKED_DOOR.asItem())
         G.registerAxisRotated(PEARLESCENT_CHAIN, ModelIds.getBlockModelId(PEARLESCENT_CHAIN))
+
+        // Chest variants.
+        val Template = Models.TEMPLATE_CHEST.upload(Items.CHEST, TextureMap.particle(Blocks.OAK_PLANKS), G.modelCollector)
+        val Normal = ItemModels.special(Template, ChestModelRenderer.Unbaked(ChestModelRenderer.NORMAL_ID))
+        val Christmas = ItemModels.special(Template, ChestModelRenderer.Unbaked(ChestModelRenderer.CHRISTMAS_ID))
+        val ChristmasOrNormal = ItemModels.christmasSelect(Christmas, Normal)
+        val PaleOak = ItemModels.special(Template, ChestModelRenderer.Unbaked(Id("pale_oak")))
+        G.itemModelOutput.accept(Items.CHEST, ItemModels.select(
+            ChestVariantProperty(),
+            ChristmasOrNormal,
+            ItemModels.switchCase(ChestVariant.PALE_OAK, PaleOak)
+        ))
     }
 
     fun Init() {
