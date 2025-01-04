@@ -10,8 +10,10 @@ import net.fabricmc.fabric.api.datagen.v1.provider.FabricDynamicRegistryProvider
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricRecipeProvider
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricTagProvider
 import net.fabricmc.loader.api.FabricLoader
+import net.minecraft.block.Blocks
 import net.minecraft.client.data.BlockStateModelGenerator
 import net.minecraft.client.data.ItemModelGenerator
+import net.minecraft.component.DataComponentTypes
 import net.minecraft.data.recipe.ComplexRecipeJsonBuilder
 import net.minecraft.data.recipe.RecipeExporter
 import net.minecraft.data.recipe.RecipeGenerator
@@ -21,6 +23,11 @@ import net.minecraft.entity.decoration.painting.PaintingVariant
 import net.minecraft.item.Item
 import net.minecraft.item.ItemConvertible
 import net.minecraft.item.Items
+import net.minecraft.loot.LootPool
+import net.minecraft.loot.LootTable
+import net.minecraft.loot.entry.ItemEntry
+import net.minecraft.loot.function.CopyComponentsLootFunction
+import net.minecraft.loot.provider.number.ConstantLootNumberProvider
 import net.minecraft.recipe.book.RecipeCategory
 import net.minecraft.registry.RegistryBuilder
 import net.minecraft.registry.RegistryKey
@@ -34,6 +41,7 @@ import net.minecraft.registry.tag.TagKey
 import org.nguh.nguhcraft.NguhDamageTypes
 import org.nguh.nguhcraft.NguhPaintings
 import org.nguh.nguhcraft.Nguhcraft.Companion.Id
+import org.nguh.nguhcraft.block.ChestVariant
 import org.nguh.nguhcraft.block.NguhBlocks
 import org.nguh.nguhcraft.item.KeyDuplicationRecipe
 import org.nguh.nguhcraft.item.KeyLockPairingRecipe
@@ -81,6 +89,22 @@ class NguhcraftLootTableProvider(
 ) : FabricBlockLootTableProvider(O, RL) {
     override fun generate() {
         NguhBlocks.DROPS_SELF.forEach { addDrop(it) }
+
+        // Copied from nameableContainerDrops(), but modified to also
+        // copy the chest variant component.
+        addDrop(Blocks.CHEST) { B -> LootTable.builder()
+            .pool(addSurvivesExplosionCondition(
+                B,
+                LootPool.builder().rolls(ConstantLootNumberProvider.create(1.0F))
+                    .with(ItemEntry.builder(B)
+                        .apply(CopyComponentsLootFunction.builder(CopyComponentsLootFunction.Source.BLOCK_ENTITY)
+                            .include(DataComponentTypes.CUSTOM_NAME)
+                            .include(NguhBlocks.CHEST_VARIANT_COMPONENT)
+                        )
+                    )
+                )
+            )
+        }
     }
 }
 
