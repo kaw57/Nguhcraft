@@ -1,0 +1,16 @@
+{
+	"type": "minecraft:crafting_shapeless",
+	"category": "misc",
+	"ingredients": [
+		"minecraft:chest",
+		"minecraft:paper"
+	],
+	"result": {
+		"count": 1,
+		"id": "minecraft:chest",
+		"components": {
+			"nguhcraft:chest_variant": "christmas",
+			"minecraft:custom_name": "{\"text\": \"Christmas Chest\", \"italic\": false }"
+		}
+	}
+}
