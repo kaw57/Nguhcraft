@@ -28,6 +28,7 @@
 		"protect.MultifaceGrowthBlockMixin",
 		"protect.PistonBlockMixin",
 		"protect.PlayerEntityMixin",
+		"protect.WitherEntityMixin",
 		"protect.WitherSkullEntityMixin",
 		"protect.World_ServerWorldMixin",
 		"protect.WorldChunkMixin",
