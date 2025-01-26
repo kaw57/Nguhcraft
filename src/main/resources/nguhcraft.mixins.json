@@ -85,7 +85,8 @@
 		"server.command.ServerCommandSourceMixin",
 		"server.command.TeamMsgCommandMixin",
 		"server.command.TeleportCommandMixin",
-		"server.command.TriggerCommandMixin"
+		"server.command.TriggerCommandMixin",
+		"server.command.WhitelistCommandMixin"
 	],
 	"client": [
 		"client.AnvilScreenMixin",

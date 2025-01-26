@@ -198,6 +198,7 @@ object Chat {
     // TODO: Use colours when serialising components for the console.
 
     /** Send a message from the console. */
+    @JvmStatic
     fun SendServerMessage(S: MinecraftServer, Message: String) {
         LOGGER.info("{} {}", SERVER_COMPONENT, Message)
         DispatchMessage(S, null, Message)
