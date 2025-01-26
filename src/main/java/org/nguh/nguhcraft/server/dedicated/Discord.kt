@@ -52,10 +52,10 @@ import org.nguh.nguhcraft.server.IsVanished
 import org.nguh.nguhcraft.server.PlayerByUUID
 import org.nguh.nguhcraft.server.accessors.ServerPlayerAccessor
 import org.nguh.nguhcraft.server.accessors.ServerPlayerDiscordAccessor
-import org.nguh.nguhcraft.server.command.Commands
 import org.nguh.nguhcraft.server.command.Commands.Exn
+import org.nguh.nguhcraft.server.command.Error
+import org.nguh.nguhcraft.server.command.Reply
 import org.nguh.nguhcraft.server.dedicated.PlayerList.Companion.UpdateCacheEntry
-import org.nguh.nguhcraft.toUUID
 import org.slf4j.Logger
 import java.io.File
 import java.util.*
@@ -994,13 +994,29 @@ class PlayerList private constructor(private val ByID: HashMap<UUID, Entry>) : I
 object DiscordCommand {
     private val NOT_LINKED: SimpleCommandExceptionType = Exn("Player is not linked to a Discord account!")
     private val ALREADY_LINKED: SimpleCommandExceptionType = Exn("Player is already linked to a Discord account!")
-    private val LIST_ENTRY = Text.literal("\n  - ")
-    private val IS_LINKED_TO = Text.literal(" → ")
-    private val LPAREN = Text.literal(" (")
-    private val RPAREN = Text.literal(")")
-    private val ERR_EMPTY_FILTER = Text.literal("Filter may not be empty!")
-    private val ERR_EMPTY_QUERY = Text.literal("Query must not be empty!")
-    private val ERR_LIST_SYNTAX = Text.literal("Syntax: /discord list (all|linked|<regex>)")
+    private val LIST_ENTRY = Text.of("\n  - ")
+    private val IS_LINKED_TO = Text.of(" → ")
+    private val LPAREN = Text.of(" (")
+    private val RPAREN = Text.of(")")
+    private val IS_NOT_LINKED: Text = Text.literal("not linked").formatted(Formatting.GRAY)
+    private val ERR_EMPTY_FILTER = Text.of("Filter may not be empty!")
+    private val ERR_LIST_SYNTAX = Text.of("""
+        Syntax:
+          (1) /discord list all
+          (2) /discord list linked
+          (3) /discord list <regex>
+
+        Description:
+          (1) List all players, linked or not.
+          (2) List only linked players.
+          (3) List players whose data (name, id, ...) matches the regex.
+
+        Example:
+          /discord list 123
+
+          This lists all players with minecraft name, discord name,
+          uuid, or discord id containing '123'.
+    """.trimIndent())
 
     private fun AddPlayer(List: MutableText, PD: PlayerList.Entry) {
         if (PD.isLinked) {
@@ -1014,6 +1030,9 @@ object DiscordCommand {
         } else {
             List.append(LIST_ENTRY)
                 .append(Text.literal(PD.toString()).withColor(Constants.Lavender))
+                .append(LPAREN)
+                .append(IS_NOT_LINKED)
+                .append(RPAREN)
         }
     }
 
@@ -1025,7 +1044,7 @@ object DiscordCommand {
         for (PD in Players) if (All || PD.isLinked) AddPlayer(List, PD)
 
         // Send the list to the player.
-        S.sendMessage(List.formatted(Formatting.YELLOW))
+        S.Reply(List)
         return 1
     }
 
@@ -1036,23 +1055,21 @@ object DiscordCommand {
                 return 0
             }
 
+            // Find all players that match the filter.
             val Pat = Regex(Filter, RegexOption.IGNORE_CASE)
-
-            // Get ALL players, not just online ones.
-            val Players = PlayerList.AllPlayers()
-
-            // List all players that match the condition.
-            val List = Text.literal("Players: ")
-            for (PD in Players) {
-                if (!Pat.containsMatchIn(PD.toString())) continue
-                AddPlayer(List, PD)
+            val Players = PlayerList.AllPlayers().filter { Pat.containsMatchIn(NormaliseNFKCLower(it.toString())) }
+            if (Players.isEmpty()) {
+                S.Reply("No players matching '$Filter' were found.")
+                return 0
             }
 
-            // Send the list to the player.
-            S.sendMessage(List.formatted(Formatting.YELLOW))
-            return 1
+            // List all players that match the filter.
+            val List = Text.literal("Players: ")
+            for (PD in Players) AddPlayer(List, PD)
+            S.Reply(List)
+            return Players.size
         } catch (E: PatternSyntaxException) {
-            S.sendError(Text.literal("Invalid regular expression: '${E.message}'"))
+            S.Error("Invalid regular expression: ${E.message}")
             return 0
         }
     }
@@ -1060,54 +1077,6 @@ object DiscordCommand {
     fun ListSyntaxError(S: ServerCommandSource): Int {
         S.sendError(ERR_LIST_SYNTAX)
         return 0
-    }
-
-    fun QueryMemberInfo(S: ServerCommandSource, Message: String): Int {
-        val M = Message.trim()
-        val Players = PlayerList.AllPlayers()
-
-        // Message must not be empty.
-        if (M.isEmpty()) {
-            S.sendError(ERR_EMPTY_QUERY)
-            return 0
-        }
-
-        // We iterate separately each time to correctly handle the case of e.g. someone
-        // setting their name to someone else’s ID, in which case we still return the
-        // member whose *ID* matches the query, if there is one.
-        val Data = M.toLongOrNull()?.let { ID -> Players.find { it.DiscordID == ID }  }
-            ?: M.toUUID()?.let { Players.find(it) }
-            ?: NormaliseNFKCLower(M).let { Norm -> Players.find { it.NormalisedDiscordName == Norm } }
-            ?: Players.find { M.equals(it.MinecraftName, ignoreCase = true) }
-
-        // No player found.
-        if (Data == null) {
-            S.sendError(Text.literal("No player found for query: $Message"))
-            return 0
-        }
-
-        // We found a player.
-        return ShowLinkInfoForPlayer(S, Data)
-    }
-
-    fun ShowLinkInfoForPlayer(S: ServerCommandSource, SP: ServerPlayerEntity)
-            = ShowLinkInfoForPlayer(S, PlayerList.Player(SP), SP.discordAvatarURL)
-
-    fun ShowLinkInfoForPlayer(S: ServerCommandSource, PD: PlayerList.Entry, AvatarURL: String? = null): Int {
-        if (!PD.isLinked) {
-            S.sendMessage(Text.literal("Player '$PD' is not linked to a Discord account."))
-            return 1
-        }
-
-        val Msg = Text.literal("""
-                Player '$PD' is linked to ID ${PD.DiscordID}
-                  Discord Name: ${PD.DiscordName}
-                  Name Colour:  
-                """.trimIndent()
-        ).append(Text.literal("#${PD.DiscordColour.toString(16)}").withColor(PD.DiscordColour))
-        if (AvatarURL != null) Msg.append("\n  Avatar URL:   $AvatarURL")
-        S.sendMessage(Msg)
-        return 1
     }
 
     @Throws(CommandSyntaxException::class)
@@ -1119,7 +1088,7 @@ object DiscordCommand {
         } catch (E: Exception) {
             val Message = "Failed to send (un)link request: ${E.message}"
             E.printStackTrace()
-            S.sendError(Text.literal("$Message\nPlease report this to the server administrator."))
+            S.Error("$Message\nPlease report this to the server administrator.")
             return 0
         }
     }

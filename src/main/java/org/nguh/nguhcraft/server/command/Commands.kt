@@ -61,6 +61,9 @@ fun ServerCommandSource.Success(Msg: String) = Success(Text.literal(Msg))
 fun ServerCommandSource.Success(Msg: Text) = Success(Text.empty().append(Msg))
 fun ServerCommandSource.Success(Msg: MutableText) = sendMessage(Msg.formatted(Formatting.GREEN))
 
+val ServerCommandSource.HasModeratorPermissions: Boolean get() =
+    hasPermissionLevel(4) || (isExecutedByPlayer && playerOrThrow.IsModerator)
+
 fun ReplyMsg(Msg: String): Text = Text.literal(Msg).formatted(Formatting.YELLOW)
 
 object Commands {
@@ -752,23 +755,6 @@ object Commands {
 
     @Environment(EnvType.SERVER)
     private fun DiscordCommand(): LiteralArgumentBuilder<ServerCommandSource> = literal("discord")
-        .then(literal("info")
-            .requires { it.hasPermissionLevel(4) }
-            .then(argument("player", EntityArgumentType.player())
-                .executes {
-                    org.nguh.nguhcraft.server.dedicated.DiscordCommand.ShowLinkInfoForPlayer(
-                        it.source,
-                        EntityArgumentType.getPlayer(it, "player")
-                    )
-                }
-            )
-            .executes {
-                org.nguh.nguhcraft.server.dedicated.DiscordCommand.ShowLinkInfoForPlayer(
-                    it.source,
-                    it.source.playerOrThrow
-                )
-            }
-        )
         .then(literal("link")
             .requires { it.entity is ServerPlayerEntity && !(it.entity as ServerPlayerDiscordAccessor).isLinked }
             .then(argument("id", LongArgumentType.longArg())
@@ -782,10 +768,10 @@ object Commands {
             )
         )
         .then(literal("list")
-            .requires { it.hasPermissionLevel(4) }
+            .requires { it.HasModeratorPermissions }
             .then(literal("all").executes { org.nguh.nguhcraft.server.dedicated.DiscordCommand.ListAllOrLinked(it.source, true) })
             .then(literal("linked").executes { org.nguh.nguhcraft.server.dedicated.DiscordCommand.ListAllOrLinked(it.source, false) })
-            .then(argument("filter", StringArgumentType.string())
+            .then(argument("filter", StringArgumentType.greedyString())
                 .executes {
                     org.nguh.nguhcraft.server.dedicated.DiscordCommand.ListPlayers(
                         it.source,
@@ -795,20 +781,9 @@ object Commands {
             )
             .executes { org.nguh.nguhcraft.server.dedicated.DiscordCommand.ListSyntaxError(it.source) }
         )
-        .then(literal("query")
-            .requires { it.hasPermissionLevel(4) }
-            .then(argument("param", StringArgumentType.greedyString())
-                .executes {
-                    org.nguh.nguhcraft.server.dedicated.DiscordCommand.QueryMemberInfo(
-                        it.source,
-                        StringArgumentType.getString(it, "param")
-                    )
-                }
-            )
-        )
         .then(literal("unlink")
             .then(argument("player", EntityArgumentType.player())
-                .requires { it.hasPermissionLevel(4) }
+                .requires { it.HasModeratorPermissions }
                 .executes {
                     org.nguh.nguhcraft.server.dedicated.DiscordCommand.TryUnlink(
                         it.source,
