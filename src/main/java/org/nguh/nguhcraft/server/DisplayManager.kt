@@ -61,10 +61,21 @@ class DisplayManager(private val S: MinecraftServer) {
     fun Load(Parent: NbtCompound) {
         if (!Parent.contains(TAG_ROOT)) return
         val Tag = Parent.getCompound(TAG_ROOT)
-        val List = Tag.getList(TAG_DISPLAYS, NbtElement.COMPOUND_TYPE.toInt())
-        for (Element in List) {
+
+        // Load displays.
+        val TDisplays = Tag.getList(TAG_DISPLAYS, NbtElement.COMPOUND_TYPE.toInt())
+        for (Element in TDisplays) {
             val D = SyncedDisplay(Element as NbtCompound, S.registryManager)
             Displays[D.Id] = D
+        }
+
+        // Load active displays.
+        val TActiveDisplays = Tag.getCompound(TAG_ACTIVE_DISPLAYS)
+        for (Key in TActiveDisplays.keys) {
+            val Id = UUID.fromString(Key)
+            val DisplayId = TActiveDisplays.getString(Key)
+            val D = GetExisting(DisplayId) as SyncedDisplay?
+            if (D != null) ActiveDisplays[Id] = D
         }
     }
 
@@ -76,10 +87,17 @@ class DisplayManager(private val S: MinecraftServer) {
     /** Save displays to Nbt. */
     fun Save(Parent: NbtCompound) {
         val Tag = NbtCompound()
-        val List = NbtList()
-        for (D in Displays.values) List.add(D.Save(S.registryManager))
-        Tag.put(TAG_DISPLAYS, List)
         Parent.put(TAG_ROOT, Tag)
+
+        // Save displays.
+        val TDisplays = NbtList()
+        Tag.put(TAG_DISPLAYS, TDisplays)
+        for (D in Displays.values) TDisplays.add(D.Save(S.registryManager))
+
+        // Save active displays.
+        val TActiveDisplays = NbtCompound()
+        Tag.put(TAG_ACTIVE_DISPLAYS, TActiveDisplays)
+        for ((Id, Display) in ActiveDisplays) TActiveDisplays.putString(Id.toString(), Display.Id)
     }
 
     /** Send the current display to a player. */
@@ -122,5 +140,6 @@ class DisplayManager(private val S: MinecraftServer) {
     companion object {
         private const val TAG_ROOT = "Displays"
         private const val TAG_DISPLAYS = "Displays"
+        private const val TAG_ACTIVE_DISPLAYS = "ActiveDisplays"
     }
 }

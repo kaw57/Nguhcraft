@@ -91,9 +91,6 @@ object ServerUtils {
         SP.SetClientFlag(ClientFlags.BYPASSES_REGION_PROTECTION, SPA.bypassesRegionProtection)
         SP.SetClientFlag(ClientFlags.IN_HYPERSHOT_CONTEXT, LEA.hypershotContext != null)
         SP.SetClientFlag(ClientFlags.VANISHED, SP.IsVanished)
-
-        // TODO: TESTING ONLY. REMOVE.
-        SP.server.DisplayManager.SetActiveDisplay(SP, SP.server.DisplayManager.GetExisting("test"))
     }
 
     /**

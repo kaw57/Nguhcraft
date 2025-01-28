@@ -15,6 +15,7 @@ import org.nguh.nguhcraft.Utils.RBRACK_COMPONENT
 import org.nguh.nguhcraft.client.ClientUtils.Client
 import org.nguh.nguhcraft.client.accessors.ClientDisplayDataAccessor
 import org.nguh.nguhcraft.client.accessors.ClientPlayerListEntryAccessor
+import org.nguh.nguhcraft.client.accessors.DisplayData
 import org.nguh.nguhcraft.protect.ProtectionManagerAccessor
 import org.nguh.nguhcraft.network.*
 import java.util.concurrent.CompletableFuture
@@ -101,9 +102,8 @@ object ClientNetworkHandler {
     /** Sync display data. */
     private fun HandleSyncDisplayPacket(Packet: ClientboundSyncDisplayPacket) {
         Execute {
-            val A = (Client().networkHandler as? ClientDisplayDataAccessor)
-            A?.`Nguhcraft$GetDisplayData`()?.Lines = Packet.Lines
-            println("Received ${Packet.Lines.size} lines of display data.")
+            val D = Client().DisplayData ?: return@Execute
+            D.Lines = Packet.Lines
         }
     }
 

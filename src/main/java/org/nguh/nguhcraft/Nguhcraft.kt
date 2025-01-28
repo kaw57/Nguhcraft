@@ -227,12 +227,6 @@ class Nguhcraft : ModInitializer {
                 WarpManager.Load(Tag)
                 S.DisplayManager.Load(Tag)
 
-                // TODO: TESTING ONLY. REMOVE.
-                S.DisplayManager.UpdateDisplay("test") {
-                    it.Lines.clear()
-                    it.Lines.add(Text.of("Hello, world!"))
-                }
-
                 // Load world data.
                 for (SW in S.worlds) LoadExtraWorldData(SW)
 
