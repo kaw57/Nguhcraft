@@ -13,6 +13,7 @@ import org.nguh.nguhcraft.Utils
 import org.nguh.nguhcraft.Utils.LBRACK_COMPONENT
 import org.nguh.nguhcraft.Utils.RBRACK_COMPONENT
 import org.nguh.nguhcraft.client.ClientUtils.Client
+import org.nguh.nguhcraft.client.accessors.ClientDisplayDataAccessor
 import org.nguh.nguhcraft.client.accessors.ClientPlayerListEntryAccessor
 import org.nguh.nguhcraft.protect.ProtectionManagerAccessor
 import org.nguh.nguhcraft.network.*
@@ -97,6 +98,15 @@ object ClientNetworkHandler {
         }
     }
 
+    /** Sync display data. */
+    private fun HandleSyncDisplayPacket(Packet: ClientboundSyncDisplayPacket) {
+        Execute {
+            val A = (Client().networkHandler as? ClientDisplayDataAccessor)
+            A?.`Nguhcraft$GetDisplayData`()?.Lines = Packet.Lines
+            println("Received ${Packet.Lines.size} lines of display data.")
+        }
+    }
+
     /** Update the game rules. */
     private fun HandleSyncGameRulesPacket(Packet: ClientboundSyncGameRulesPacket) = SyncedGameRule.Update(Packet)
 
@@ -128,6 +138,7 @@ object ClientNetworkHandler {
         Register(ClientboundSyncGameRulesPacket.ID, ::HandleSyncGameRulesPacket)
         Register(ClientboundSyncFlagPacket.ID, ::HandleSyncProtectionBypassPacket)
         Register(ClientboundSyncProtectionMgrPacket.ID, ::HandleSyncProtectionMgrPacket)
+        Register(ClientboundSyncDisplayPacket.ID, ::HandleSyncDisplayPacket)
     }
 
     /** Register a packet handler. */
