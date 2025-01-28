@@ -7,7 +7,9 @@ import net.minecraft.nbt.NbtString
 import net.minecraft.registry.RegistryWrapper
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.network.ServerPlayerEntity
+import net.minecraft.text.MutableText
 import net.minecraft.text.Text
+import net.minecraft.util.Formatting
 import org.nguh.nguhcraft.Nbt
 import org.nguh.nguhcraft.NbtListOf
 import org.nguh.nguhcraft.network.ClientboundSyncDisplayPacket
@@ -19,7 +21,9 @@ val MinecraftServer.DisplayManager get(): DisplayManager
     = (this as DisplayManagerAccessor).`Nguhcraft$GetDisplayManager`()
 
 /** Abstract handle for a display. */
-abstract class DisplayHandle(val Id: String)
+abstract class DisplayHandle(val Id: String) {
+    abstract fun Listing(): Text
+}
 
 /** Client-side display managed by the server. */
 class SyncedDisplay(Id: String): DisplayHandle(Id) {
@@ -33,6 +37,14 @@ class SyncedDisplay(Id: String): DisplayHandle(Id) {
             val T = Text.Serialization.fromJson(Element.asString(), WL)
             if (T != null) Lines.add(T)
         }
+    }
+
+    /** Show all lines in the display. */
+    override fun Listing(): Text {
+        if (Lines.isEmpty()) return Text.literal("Display '$Id' is empty.").formatted(Formatting.YELLOW)
+        val T = Text.empty().append(Text.literal("Display '$Id':").formatted(Formatting.YELLOW))
+        for (L in Lines) T.append("\n").append(L)
+        return T
     }
 
     /** Save to Nbt. */
@@ -58,6 +70,17 @@ class DisplayManager(private val S: MinecraftServer) {
 
     /** Get a display if it exists. */
     fun GetExisting(Id: String): DisplayHandle? = Displays[Id]
+
+    /** Get the names of all displays. */
+    fun GetExistingDisplayNames(): Collection<String> = Displays.keys
+
+    /** List all displays. */
+    fun ListAll(): MutableText {
+        if (Displays.isEmpty()) return Text.literal("No displays defined.")
+        val T = Text.literal("Displays:")
+        for (D in Displays.values) T.append("\n  - ${D.Id}")
+        return T
+    }
 
     /** Load displays from Nbt. */
     fun Load(Parent: NbtCompound) {
