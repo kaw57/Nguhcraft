@@ -3,15 +3,17 @@ package org.nguh.nguhcraft.server
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
 import net.minecraft.nbt.NbtCompound
 import net.minecraft.nbt.NbtElement
-import net.minecraft.nbt.NbtList
 import net.minecraft.nbt.NbtString
 import net.minecraft.registry.RegistryWrapper
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.network.ServerPlayerEntity
 import net.minecraft.text.Text
+import org.nguh.nguhcraft.Nbt
+import org.nguh.nguhcraft.NbtListOf
 import org.nguh.nguhcraft.network.ClientboundSyncDisplayPacket
 import org.nguh.nguhcraft.server.accessors.DisplayManagerAccessor
-import java.util.UUID
+import org.nguh.nguhcraft.set
+import java.util.*
 
 val MinecraftServer.DisplayManager get(): DisplayManager
     = (this as DisplayManagerAccessor).`Nguhcraft$GetDisplayManager`()
@@ -34,13 +36,13 @@ class SyncedDisplay(Id: String): DisplayHandle(Id) {
     }
 
     /** Save to Nbt. */
-    fun Save(WL: RegistryWrapper.WrapperLookup): NbtCompound {
-        val Tag = NbtCompound()
-        val List = NbtList()
-        for (Line in Lines) List.add(NbtString.of(Text.Serialization.toJsonString(Line, WL)))
-        Tag.put(TAG_LINES, List)
-        Tag.putString(TAG_ID, Id)
-        return Tag
+    fun Save(WL: RegistryWrapper.WrapperLookup) = Nbt {
+        set(TAG_ID, Id)
+        set(TAG_LINES, NbtListOf {
+            for (Line in Lines) add(
+                NbtString.of(Text.Serialization.toJsonString(Line, WL))
+            )
+        })
     }
 
     companion object {
@@ -86,18 +88,10 @@ class DisplayManager(private val S: MinecraftServer) {
 
     /** Save displays to Nbt. */
     fun Save(Parent: NbtCompound) {
-        val Tag = NbtCompound()
-        Parent.put(TAG_ROOT, Tag)
-
-        // Save displays.
-        val TDisplays = NbtList()
-        Tag.put(TAG_DISPLAYS, TDisplays)
-        for (D in Displays.values) TDisplays.add(D.Save(S.registryManager))
-
-        // Save active displays.
-        val TActiveDisplays = NbtCompound()
-        Tag.put(TAG_ACTIVE_DISPLAYS, TActiveDisplays)
-        for ((Id, Display) in ActiveDisplays) TActiveDisplays.putString(Id.toString(), Display.Id)
+        Parent.put(TAG_ROOT, Nbt {
+            set(TAG_DISPLAYS, NbtListOf { for (D in Displays.values) add(D.Save(S.registryManager)) })
+            set(TAG_ACTIVE_DISPLAYS, Nbt { for ((Id, Display) in ActiveDisplays) set(Id.toString(), Display.Id) })
+        })
     }
 
     /** Send the current display to a player. */
