@@ -56,6 +56,7 @@ import org.nguh.nguhcraft.server.accessors.ServerPlayerDiscordAccessor
 import org.nguh.nguhcraft.server.command.Commands.Exn
 import org.nguh.nguhcraft.server.command.Error
 import org.nguh.nguhcraft.server.command.Reply
+import org.nguh.nguhcraft.server.command.Success
 import org.nguh.nguhcraft.server.dedicated.PlayerList.Companion.UpdateCacheEntry
 import org.slf4j.Logger
 import java.io.File
@@ -205,6 +206,9 @@ internal class Discord : ListenerAdapter() {
 
         private val MUST_ENABLE_DMS : SimpleCommandExceptionType
             = Exn("You must enable DMs from server members to link your account!")
+
+        private val PLEASE_WAIT : SimpleCommandExceptionType
+            = Exn("Bot is still starting; please wait a few seconds and try again.")
 
         private val LOGGER: Logger = LogUtils.getLogger()
         private const val BUTTON_ID_LINK = "ng_lnk:"
@@ -420,6 +424,27 @@ internal class Discord : ListenerAdapter() {
                 Character.MODIFIER_SYMBOL -> false
                 else -> true
             }
+        }
+
+        /**
+         * Force a member to link with a player, ignoring the
+         * usual permission checks.
+         */
+        fun ForceLink(S: ServerCommandSource, SP: ServerPlayerEntity, ID: Long) {
+            if (!Ready) throw PLEASE_WAIT.create()
+
+            // Fetch the member.
+            val Member = MemberByID(S, ID) ?: return
+
+            // Warn if they’re already linked and unlink them.
+            if (SP.isLinked) {
+                S.Reply("Warning: Member ${Member.effectiveName} is already linked to ${SP.nameForScoreboard}. Unlinking...")
+                PerformUnlink(SP)
+            }
+
+            // Finally, link them. No need for WithMember() here as this
+            // happens synchronously during the server tick.
+            PerformLink(SP, Member)
         }
 
         /**
@@ -1068,6 +1093,14 @@ object DiscordCommand {
                 .append(LPAREN)
                 .append(IS_NOT_LINKED)
                 .append(RPAREN)
+        }
+    }
+
+    @Throws(CommandSyntaxException::class)
+    fun ForceLink(S: ServerCommandSource, SP: ServerPlayerEntity, ID: Long): Int {
+        return Try(S) {
+            Discord.ForceLink(S, SP, ID)
+            1
         }
     }
 

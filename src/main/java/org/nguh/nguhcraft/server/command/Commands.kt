@@ -809,6 +809,20 @@ object Commands {
 
     @Environment(EnvType.SERVER)
     private fun DiscordCommand(): LiteralArgumentBuilder<ServerCommandSource> = literal("discord")
+        .then(literal("force-link")
+            .requires { it.hasPermissionLevel(4) }
+            .then(argument("player", EntityArgumentType.player())
+                .then(argument("id", LongArgumentType.longArg())
+                    .executes {
+                        org.nguh.nguhcraft.server.dedicated.DiscordCommand.ForceLink(
+                            it.source,
+                            EntityArgumentType.getPlayer(it, "player"),
+                            LongArgumentType.getLong(it, "id")
+                        )
+                    }
+                )
+            )
+        )
         .then(literal("link")
             .requires { it.entity is ServerPlayerEntity && !(it.entity as ServerPlayerDiscordAccessor).isLinked }
             .then(argument("id", LongArgumentType.longArg())
