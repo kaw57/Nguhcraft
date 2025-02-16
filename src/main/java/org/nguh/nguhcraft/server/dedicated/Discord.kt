@@ -56,7 +56,6 @@ import org.nguh.nguhcraft.server.accessors.ServerPlayerDiscordAccessor
 import org.nguh.nguhcraft.server.command.Commands.Exn
 import org.nguh.nguhcraft.server.command.Error
 import org.nguh.nguhcraft.server.command.Reply
-import org.nguh.nguhcraft.server.command.Success
 import org.nguh.nguhcraft.server.dedicated.PlayerList.Companion.UpdateCacheEntry
 import org.slf4j.Logger
 import java.io.File
@@ -169,13 +168,18 @@ internal class Discord : ListenerAdapter() {
     override fun onMessageReceived(E: MessageReceivedEvent) {
         // Prevent infinite loops and only consider messages in the designated channel.
         if (!Ready) return
-        val A = E.author
-        if (E.isWebhookMessage || A.isBot || E.channel.idLong != MessageChannel.idLong) return
-        val M = E.member
-        val Name = A.effectiveName
-        val Colour = M?.colorRaw ?: Constants.Grey
+        val M = E.member ?: return
+        if (
+            E.isWebhookMessage ||
+            E.author.isSystem ||
+            E.author.isBot ||
+            E.channel.idLong != MessageChannel.idLong
+        ) return
+
+        val Name = SanitiseForMinecraft(M.effectiveName)
+        val Colour = M.colorRaw
         val Mess = E.message
-        val Content = Mess.contentDisplay
+        val Content = SanitiseForMinecraft(Mess.contentDisplay)
         val HasAttachments = Mess.attachments.isNotEmpty()
         val HasReference = Mess.messageReference != null
         Server.execute {
@@ -356,7 +360,6 @@ internal class Discord : ListenerAdapter() {
         }
 
         private fun BroadcastPlayerUpdate(SP: ServerPlayerEntity) {
-            UpdatePlayerName(SP)
             Vanish.BroadcastIfNotVanished(
                 SP,
                 ClientboundLinkUpdatePacket(
@@ -657,15 +660,16 @@ internal class Discord : ListenerAdapter() {
         }
 
         /**
-         * An abbreviation of `Sanitise(SerialiseLegacyString(s))`
+         * Strip both Discord mentions and Minecraft colour codes.
          *
          * @param s a string
-         * @return the return value of `Sanitise(SerialiseLegacyString(s))`
+         * @return The string "null" if `s` is `null` and
+         * `SanitiseForDiscord(SanitiseForMinecraft(s))` otherwise.
          *
-         * @see .Sanitise
-         * @see .SerialiseLegacyString
+         * @see .SanitiseForDiscord
+         * @see .SanitiseForMinecraft
          */
-        private fun S(s: String?) = if (s == null) "null" else Sanitise(SerialiseLegacyString(s))!!
+        private fun S(s: String?) = if (s == null) "null" else SanitiseForDiscord(SanitiseForMinecraft(s))!!
 
         /**
          * Sanitise mentions by inserting a zero-width space after each @ sign in `s`
@@ -674,7 +678,27 @@ internal class Discord : ListenerAdapter() {
          * @return a copy of `s`, with all mentions sanitised
          */
         @Contract(value = "null -> null; !null -> !null")
-        fun Sanitise(s: String?) = s?.replace("@", "@\u200B")
+        fun SanitiseForDiscord(s: String?) = s?.replace("@", "@\u200B")
+
+        /**
+         * Remove all § colour codes from a String.
+         *
+         * Minecraft already strips those on input when you send a chat message, so this
+         * only needs to be used on strings that originate elsewhere, e.g. anything received
+         * from Discord.
+         *
+         * Note that the Discord display name of a member is sanitised on creation, so we
+         * don’t need to do that every time we send a chat message.
+         *
+         * @param s the string
+         * @return a copy of `s`, with all § colour codes removed
+         */
+        @Contract(value = "null -> null; !null -> !null")
+        fun SanitiseForMinecraft(s: String): String {
+            var Name = Formatting.strip(s) ?: ""
+            Name = Name.replace("§", "")
+            return if (Name.isEmpty()) "[Invalid Username]" else Name
+        }
 
         /**
          * Sanitise a username for use as the author of a webhook.
@@ -729,15 +753,6 @@ internal class Discord : ListenerAdapter() {
             )
         }
 
-        /**
-         * Remove all § colour codes from a String
-         *
-         * @param s the string
-         * @return a copy of `s`, with all § colour codes removed
-         */
-        @Contract(value = "null -> null; !null -> !null")
-        fun SerialiseLegacyString(s: String?) = s?.replace("§.".toRegex(), "")
-
         fun Unlink(S: ServerCommandSource, SP: ServerPlayerEntity) {
             if (!Ready) return
             PerformUnlink(SP)
@@ -783,9 +798,10 @@ internal class Discord : ListenerAdapter() {
 
             // Dew it.
             SP.discordId = ID
-            SP.discordName = DisplayName ?: ""
+            SP.discordName = SanitiseForMinecraft(DisplayName ?: "")
             SP.discordColour = NameColour
             SP.discordAvatarURL = AvatarURL ?: ""
+            UpdatePlayerName(SP)
 
             // Broadcast this player’s info to everyone.
             if (!SP.isDisconnected) {

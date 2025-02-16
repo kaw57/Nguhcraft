@@ -60,7 +60,8 @@ object Chat {
         // On the dedicated server, actually do everything properly.
         val Name = (
             if (Sender == null) SERVER_COMPONENT
-            else Sender.displayName!!.copy()
+            else Text.empty()
+                .append(Sender.displayName!!)
                 .append(COLON_COMPONENT.copy().withColor(
                     (Sender as ServerPlayerDiscordAccessor).discordColour)
                 )
