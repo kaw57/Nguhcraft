@@ -176,7 +176,7 @@ internal class Discord : ListenerAdapter() {
             E.channel.idLong != MessageChannel.idLong
         ) return
 
-        val Name = SanitiseForMinecraft(M.effectiveName)
+        val Name = SanitiseForMinecraft(M.effectiveName, "[Invalid Username]")
         val Colour = M.colorRaw
         val Mess = E.message
         val Content = SanitiseForMinecraft(Mess.contentDisplay)
@@ -690,14 +690,15 @@ internal class Discord : ListenerAdapter() {
          * Note that the Discord display name of a member is sanitised on creation, so we
          * don’t need to do that every time we send a chat message.
          *
-         * @param s the string
-         * @return a copy of `s`, with all § colour codes removed
+         * @param S the string
+         * @param IfEmpty a string to be returned if the result is empty
+         * @return a copy of `S`, with all § colour codes removed
          */
         @Contract(value = "null -> null; !null -> !null")
-        fun SanitiseForMinecraft(s: String): String {
-            var Name = Formatting.strip(s) ?: ""
+        fun SanitiseForMinecraft(S: String, IfEmpty: String = ""): String {
+            var Name = Formatting.strip(S) ?: ""
             Name = Name.replace("§", "")
-            return if (Name.isEmpty()) "[Invalid Username]" else Name
+            return Name.ifBlank { IfEmpty }
         }
 
         /**
@@ -798,7 +799,7 @@ internal class Discord : ListenerAdapter() {
 
             // Dew it.
             SP.discordId = ID
-            SP.discordName = SanitiseForMinecraft(DisplayName ?: "")
+            SP.discordName = SanitiseForMinecraft(DisplayName ?: "", "[Invalid Username]")
             SP.discordColour = NameColour
             SP.discordAvatarURL = AvatarURL ?: ""
             UpdatePlayerName(SP)
