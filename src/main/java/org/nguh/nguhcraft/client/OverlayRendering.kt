@@ -33,8 +33,20 @@ object OverlayRendering {
 
     fun RenderWorld(Ctx: WorldRenderContext) {
         Profilers.get().push("nguhcraft:overlay")
+
+        // Transform all points relative to the camera position.
+        val Pos = Ctx.camera().pos
+        val MS = RenderSystem.getModelViewStack()
+        MS.pushMatrix()
+        MS.translate(-Pos.x.toFloat(), -Pos.y.toFloat(), -Pos.z.toFloat())
+
+        // Render barriers.
         RenderBarriers(Ctx)
+
+        // Render regions.
         RenderRegions(Ctx)
+
+        MS.popMatrix()
         Profilers.get().pop()
     }
 
@@ -43,12 +55,7 @@ object OverlayRendering {
         val WR = Ctx.worldRenderer()
         val MinY = CW.bottomY
         val MaxY = CW.topYInclusive + 1
-
-        // Transform all points relative to the camera position.
-        val Pos = Ctx.camera().pos
-        val MS = RenderSystem.getModelViewStack()
-        MS.pushMatrix()
-        MS.translate(-Pos.x.toFloat(), -Pos.y.toFloat(), -Pos.z.toFloat())
+        val CameraPos = Ctx.camera().pos
 
         // Set up rendering params.
         val DT = -(Util.getMeasuringTimeMs() % 3000L).toFloat() / 3000.0f
@@ -61,7 +68,7 @@ object OverlayRendering {
         // Render each barrier.
         for (B in Barriers) {
             if (B.W != CW.registryKey) continue
-            if (B.XZ.DistanceFrom(Pos) > WR.viewDistance * 16) continue
+            if (B.XZ.DistanceFrom(CameraPos) > WR.viewDistance * 16) continue
 
             // Set shader colour. This is why we need to render each barrier separately.
             val VC = Tessellator.getInstance().begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE)
@@ -121,7 +128,6 @@ object OverlayRendering {
 
         BARRIER_TEX.endDrawing()
         SetShaderColour(Colors.WHITE)
-        MS.popMatrix()
     }
 
     private fun RenderRegions(Ctx: WorldRenderContext) {
@@ -130,13 +136,7 @@ object OverlayRendering {
         val WR = Ctx.worldRenderer()
         val MinY = CW.bottomY
         val MaxY = CW.topYInclusive + 1
-
-        // Transform all points relative to the camera position.
-        val Pos = Ctx.camera().pos
-        val MS = Ctx.matrixStack()!!
-        MS.push()
-        MS.translate(-Pos.x, -Pos.y, -Pos.z)
-        val MTX = MS.peek().positionMatrix
+        val CameraPos = Ctx.camera().pos
 
         // Set up rendering params.
         RenderSystem.setShader(ShaderProgramKeys.POSITION_COLOR)
@@ -147,7 +147,7 @@ object OverlayRendering {
 
         // Render each region.
         for (R in ProtectionManager.GetRegions(CW)) {
-            if (R.DistanceFrom(Pos) > WR.viewDistance * 16) continue
+            if (R.DistanceFrom(CameraPos) > WR.viewDistance * 16) continue
             val MinX = R.MinX
             val MaxX = R.RenderMaxX
             val MinZ = R.MinZ
@@ -161,7 +161,6 @@ object OverlayRendering {
 
             // Helper to add a vertex.
             fun Vertex(X: Int, Y: Int, Z: Int) = VC.vertex(
-                MTX,
                 X.toFloat(),
                 Y.toFloat(),
                 Z.toFloat()
@@ -197,8 +196,6 @@ object OverlayRendering {
 
             BufferRenderer.drawWithGlobalProgram(VC.end())
         }
-
-        MS.pop()
     }
 
     fun RenderHUD(Ctx: DrawContext) {
