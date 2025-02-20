@@ -90,6 +90,7 @@ object ServerUtils {
         SyncedGameRule.Send(SP)
         SP.server.ProtectionManager.Send(SP)
         SP.server.DisplayManager.Send(SP)
+        SP.server.BarrierManager.Send(SP)
         SP.SetClientFlag(ClientFlags.BYPASSES_REGION_PROTECTION, SPA.bypassesRegionProtection)
         SP.SetClientFlag(ClientFlags.IN_HYPERSHOT_CONTEXT, LEA.hypershotContext != null)
         SP.SetClientFlag(ClientFlags.VANISHED, SP.IsVanished)

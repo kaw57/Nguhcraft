@@ -13,12 +13,12 @@ import net.minecraft.util.Formatting
 import org.nguh.nguhcraft.Nbt
 import org.nguh.nguhcraft.NbtListOf
 import org.nguh.nguhcraft.network.ClientboundSyncDisplayPacket
-import org.nguh.nguhcraft.server.accessors.DisplayManagerAccessor
+import org.nguh.nguhcraft.server.accessors.ManagerAccessor
 import org.nguh.nguhcraft.set
 import java.util.*
 
 val MinecraftServer.DisplayManager get(): DisplayManager
-    = (this as DisplayManagerAccessor).`Nguhcraft$GetDisplayManager`()
+    = (this as ManagerAccessor).`Nguhcraft$GetDisplayManager`()
 
 /** Abstract handle for a display. */
 abstract class DisplayHandle(val Id: String) {

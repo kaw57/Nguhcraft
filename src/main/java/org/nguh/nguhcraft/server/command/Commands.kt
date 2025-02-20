@@ -544,7 +544,7 @@ object Commands {
         fun PrintRegionInfo(S: ServerCommandSource, SP: ServerPlayerEntity): Int {
             val W = SP.world
             val Regions = ProtectionManager.GetRegions(W)
-            val R = Regions.find { it.Contains(SP.blockPos) }
+            val R = Regions.find { SP.blockPos in it }
             if (R == null) {
                 S.sendError(NOT_IN_ANY_REGION)
                 return 0

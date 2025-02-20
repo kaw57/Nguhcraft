@@ -23,7 +23,6 @@ import net.minecraft.text.Text
 import net.minecraft.util.Colors
 import net.minecraft.util.Formatting
 import net.minecraft.util.math.BlockPos
-import org.nguh.nguhcraft.server.MCBASIC
 import org.nguh.nguhcraft.Nguhcraft.Companion.Id
 import org.nguh.nguhcraft.block.ChestVariantProperty
 import org.nguh.nguhcraft.block.NguhBlocks
@@ -34,10 +33,10 @@ class NguhcraftClient : ClientModInitializer {
     override fun onInitializeClient() {
         ClientNetworkHandler.Init()
 
-        WorldRenderEvents.BEFORE_DEBUG_RENDER.register { RegionRenderer.Render(it) }
+        WorldRenderEvents.BEFORE_DEBUG_RENDER.register { OverlayRendering.RenderWorld(it) }
         HudRenderCallback.EVENT.register {
             Ctx, _ ->
-            RegionRenderer.RenderHUD(Ctx)
+            OverlayRendering.RenderHUD(Ctx)
             DisplayRenderer.RenderHUD(Ctx)
             RenderVanishedMessage(Ctx)
         }
@@ -57,6 +56,8 @@ class NguhcraftClient : ClientModInitializer {
             BypassesRegionProtection = false
             Vanished = false
             LastInteractedLecternPos = BlockPos.ORIGIN
+            OverlayRendering.RenderRegions = false
+            OverlayRendering.Barriers = listOf()
         }
 
         SelectProperties.ID_MAPPER.put(Id("chest_variant"), ChestVariantProperty.TYPE)
@@ -86,9 +87,9 @@ class NguhcraftClient : ClientModInitializer {
         fun RenderCommand(): LiteralArgumentBuilder<FabricClientCommandSource> = literal<FabricClientCommandSource>("render")
             .then(literal<FabricClientCommandSource>("regions")
                 .executes {
-                    RegionRenderer.ShouldRender = !RegionRenderer.ShouldRender
+                    OverlayRendering.RenderRegions = !OverlayRendering.RenderRegions
                     it.source.sendFeedback(Text.literal(
-                        "Region rendering is now ${if (RegionRenderer.ShouldRender) "enabled" else "disabled"}."
+                        "Region rendering is now ${if (OverlayRendering.RenderRegions) "enabled" else "disabled"}."
                     ).formatted(Formatting.YELLOW))
                     0
                 }

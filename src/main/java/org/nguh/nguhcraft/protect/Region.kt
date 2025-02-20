@@ -1,12 +1,10 @@
 package org.nguh.nguhcraft.protect
 
-import net.minecraft.network.RegistryByteBuf
 import net.minecraft.registry.RegistryKey
 import net.minecraft.util.math.BlockPos
 import net.minecraft.util.math.Vec2f
 import net.minecraft.world.World
-import kotlin.math.max
-import kotlin.math.min
+import org.nguh.nguhcraft.XZRect
 
 /**
  * A protected region.
@@ -25,6 +23,11 @@ abstract class Region(
     FromZ: Int,
     ToX: Int,
     ToZ: Int
+) : XZRect(
+    FromX = FromX,
+    FromZ = FromZ,
+    ToX = ToX,
+    ToZ = ToZ
 ) {
     /**
     * Flags.
@@ -121,12 +124,6 @@ abstract class Region(
     /** Flags that are set for this region. */
     protected var RegionFlags: Long = 0
 
-    /** Bounds of the region. */
-    val MinX: Int = min(FromX, ToX)
-    val MinZ: Int = min(FromZ, ToZ)
-    val MaxX: Int = max(FromX, ToX)
-    val MaxZ: Int = max(FromZ, ToZ)
-
     /** Check if this region allows players to attack non-hostile mobs. */
     fun AllowsAttackingFriendlyEntities() = Test(Flags.ATTACK_FRIENDLY)
 
@@ -165,33 +162,6 @@ abstract class Region(
 
     /** Check if this region allows trading with villagers. */
     fun AllowsVillagerTrading() = Test(Flags.ENTITY_INTERACT) || Test(Flags.TRADE)
-
-    /** Get the centre of a region. */
-    val Center: BlockPos get() = BlockPos((MinX + MaxX) / 2, 0, (MinZ + MaxZ) / 2)
-
-    /** Check if this region contains a block or region. */
-    fun Contains(Pos: BlockPos): Boolean = Contains(Pos.x, Pos.z)
-    fun Contains(X: Int, Z: Int): Boolean = X in MinX..MaxX && Z in MinZ..MaxZ
-    fun Contains(R: Region) = Contains(R.MinX, R.MinZ) && Contains(R.MaxX, R.MaxZ)
-
-    /** Check if a region intersects another. */
-    fun Intersects(Other: Region) = Intersects(
-        MinX = Other.MinX,
-        MinZ = Other.MinZ,
-        MaxX = Other.MaxX,
-        MaxZ = Other.MaxZ
-    )
-
-    /** Check if a region intersects a rectangle. */
-    fun Intersects(MinX: Int, MinZ: Int, MaxX: Int, MaxZ: Int) =
-        MinX <= this.MaxX && MaxX >= this.MinX && MinZ <= this.MaxZ && MaxZ >= this.MinZ
-
-    /** Get the radius of the region. */
-    val Radius: Vec2f get() {
-        val X = (MaxX - MinX) / 2
-        val Z = (MaxZ - MinZ) / 2
-        return Vec2f(X.toFloat(), Z.toFloat())
-    }
 
     /** Helper to simplify testing flags. */
     protected fun Test(Flag: Flags) = RegionFlags and Flag.Bit() != 0L

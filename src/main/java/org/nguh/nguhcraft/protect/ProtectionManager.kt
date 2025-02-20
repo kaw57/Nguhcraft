@@ -150,7 +150,7 @@ abstract class ProtectionManager(
 
     /** Find the region that contains a block. */
     private fun _FindRegionContainingBlock(W: World, Pos: BlockPos) =
-        RegionListFor(W).find { it.Contains(Pos) }
+        RegionListFor(W).find { Pos in it }
 
     /**
      * Handle interaction (= right-click), optionally with a block.

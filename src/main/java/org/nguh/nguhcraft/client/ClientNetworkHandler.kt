@@ -99,6 +99,11 @@ object ClientNetworkHandler {
         }
     }
 
+    /** Sync barriers. */
+    private fun HandleSyncBarriersPacket(Packet: ClientboundSyncBarriersPacket) {
+        Execute { OverlayRendering.Barriers = Packet.Barriers }
+    }
+
     /** Sync display data. */
     private fun HandleSyncDisplayPacket(Packet: ClientboundSyncDisplayPacket) {
         Execute {
@@ -139,6 +144,7 @@ object ClientNetworkHandler {
         Register(ClientboundSyncFlagPacket.ID, ::HandleSyncProtectionBypassPacket)
         Register(ClientboundSyncProtectionMgrPacket.ID, ::HandleSyncProtectionMgrPacket)
         Register(ClientboundSyncDisplayPacket.ID, ::HandleSyncDisplayPacket)
+        Register(ClientboundSyncBarriersPacket.ID, ::HandleSyncBarriersPacket)
     }
 
     /** Register a packet handler. */
