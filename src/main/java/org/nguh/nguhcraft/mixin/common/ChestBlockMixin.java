@@ -21,12 +21,10 @@ public abstract class ChestBlockMixin {
         CallbackInfoReturnable<Direction> CIR
     ) {
         var Variant = Ctx.getStack().get(NguhBlocks.CHEST_VARIANT_COMPONENT);
-        if (Variant != null) {
-            var BE = Ctx.getWorld().getBlockEntity(Ctx.getBlockPos().offset(D));
-            if (BE instanceof ChestBlockEntity CBE) {
-                var OtherVariant = ((ChestBlockEntityAccessor)CBE).Nguhcraft$GetChestVariant();
-                if (OtherVariant != Variant) CIR.setReturnValue(null);
-            }
+        var BE = Ctx.getWorld().getBlockEntity(Ctx.getBlockPos().offset(D));
+        if (BE instanceof ChestBlockEntity CBE) {
+            var OtherVariant = ((ChestBlockEntityAccessor)CBE).Nguhcraft$GetChestVariant();
+            if (OtherVariant != Variant) CIR.setReturnValue(null);
         }
     }
 }
