@@ -4,6 +4,7 @@ import net.fabricmc.api.EnvType
 import net.fabricmc.api.Environment
 import net.minecraft.client.render.*
 import net.minecraft.client.render.RenderLayer.*
+import net.minecraft.util.Colors
 import net.minecraft.util.TriState
 
 @Environment(EnvType.CLIENT)
@@ -13,6 +14,9 @@ class VertexAllocator(private val L: RenderLayer) {
         C(VC)
         val Vertices = VC.endNullable()
         if (Vertices != null) BufferRenderer.drawWithGlobalProgram(Vertices)
+
+        // Reset the shader colour to our rendering from accidentally tinting other things.
+        Renderer.SetShaderColour(Colors.WHITE)
     }
 }
 
