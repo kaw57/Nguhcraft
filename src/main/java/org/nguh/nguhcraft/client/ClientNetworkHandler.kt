@@ -13,9 +13,9 @@ import org.nguh.nguhcraft.Utils
 import org.nguh.nguhcraft.Utils.LBRACK_COMPONENT
 import org.nguh.nguhcraft.Utils.RBRACK_COMPONENT
 import org.nguh.nguhcraft.client.ClientUtils.Client
-import org.nguh.nguhcraft.client.accessors.ClientDisplayDataAccessor
 import org.nguh.nguhcraft.client.accessors.ClientPlayerListEntryAccessor
 import org.nguh.nguhcraft.client.accessors.DisplayData
+import org.nguh.nguhcraft.client.render.WorldRendering
 import org.nguh.nguhcraft.protect.ProtectionManagerAccessor
 import org.nguh.nguhcraft.network.*
 import java.util.concurrent.CompletableFuture
@@ -101,7 +101,7 @@ object ClientNetworkHandler {
 
     /** Sync barriers. */
     private fun HandleSyncBarriersPacket(Packet: ClientboundSyncBarriersPacket) {
-        Execute { OverlayRendering.Barriers = Packet.Barriers }
+        Execute { WorldRendering.Barriers = Packet.Barriers }
     }
 
     /** Sync display data. */

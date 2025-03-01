@@ -33,6 +33,7 @@ import kotlin.math.min
 typealias MojangPair<A, B> = com.mojang.datafixers.util.Pair<A, B>
 operator fun <A, B> MojangPair<A, B>.component1(): A = this.first
 operator fun <A, B> MojangPair<A, B>.component2(): B = this.second
+operator fun Vec3d.unaryMinus() = Vec3d(-x, -y, -z)
 
 /**
 * Transform 'this' using a function iff 'Cond' is true and return
