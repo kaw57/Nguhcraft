@@ -3,6 +3,7 @@ package org.nguh.nguhcraft.server.command
 import com.mojang.brigadier.arguments.*
 import com.mojang.brigadier.builder.LiteralArgumentBuilder
 import com.mojang.brigadier.context.CommandContext
+import com.mojang.brigadier.exceptions.DynamicCommandExceptionType
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType
 import net.fabricmc.api.EnvType
 import net.fabricmc.api.Environment
@@ -42,6 +43,7 @@ import org.nguh.nguhcraft.item.KeyItem
 import org.nguh.nguhcraft.network.ClientFlags
 import org.nguh.nguhcraft.protect.ProtectionManager
 import org.nguh.nguhcraft.protect.Region
+import org.nguh.nguhcraft.protect.TeleportResult
 import org.nguh.nguhcraft.server.*
 import org.nguh.nguhcraft.server.ServerUtils.IsIntegratedServer
 import org.nguh.nguhcraft.server.ServerUtils.StrikeLightning
@@ -247,7 +249,10 @@ object Commands {
     }
 
     object HomeCommand {
-        private val CANT_TOUCH_THIS = Exn("The \"bed\" home is special and cannot be deleted or set!")
+        private val CANT_TOUCH_THIS = Exn("The 'bed' home is special and cannot be deleted or set!")
+        private val CANT_ENTER = DynamicCommandExceptionType { Text.literal("The home '$it' is in a region that restricts teleporting!") }
+        private val CANT_LEAVE = DynamicCommandExceptionType { Text.literal("Teleporting out of this region is not allowed!") }
+        private val CANT_SETHOME_HERE = Exn("Cannot /sethome here as this region restricts teleporting!")
         private val CONNOR_MACLEOD = Exn("You may only have one home!")
         private val NO_HOMES = ReplyMsg("No homes defined!")
 
@@ -294,18 +299,39 @@ object Commands {
             val (TargetPlayer, Name) = HomeArgumentType.MapOrThrow(SP, RawName)
             if (Name == Home.BED_HOME) throw CANT_TOUCH_THIS.create()
             val Homes = (TargetPlayer as ServerPlayerAccessor).Homes()
+
+            // If this region doesn’t allow entry by teleport, then setting a home here makes
+            // no sense as we can’t use it, which might not be obvious to people.
+            //
+            // Note that we pass in 'SP', not 'TargetPlayer' as the player whose permissions to
+            // check here; this allows admins to set someone else’s home in a restricted region if
+            // need be.
+            if (!ProtectionManager.AllowTeleportToFromAnywhere(SP, SP.world, SP.blockPos))
+                throw CANT_SETHOME_HERE.create()
+
+            // Remove the home *after* the check above to ensure we only remove it if we’re about
+            // to add a new home to the list.
             Homes.removeIf { it.Name == Name }
 
-            // And add the new one.
-            if (!TargetPlayer.hasPermissionLevel(4) && Homes.isNotEmpty()) throw CONNOR_MACLEOD.create()
-            Homes.add(Home(Name, SP.world.registryKey, SP.blockPos))
+            // Check that either there are no other homes or this player can have more than one home.
+            if (!TargetPlayer.hasPermissionLevel(4) && Homes.isNotEmpty())
+                throw CONNOR_MACLEOD.create()
 
+            // If yes, add it.
+            Homes.add(Home(Name, SP.world.registryKey, SP.blockPos))
             S.Success(Text.literal("Set home ").append(Text.literal(Name).formatted(Formatting.AQUA)))
             return 1
         }
 
         fun Teleport(SP: ServerPlayerEntity, H: Home): Int {
-            SP.Teleport(SP.server.getWorld(H.World)!!, H.Pos, true)
+            val World = SP.server.getWorld(H.World)!!
+            when (ProtectionManager.GetTeleportResult(SP, World, H.Pos)) {
+                TeleportResult.ENTRY_DISALLOWED -> throw CANT_ENTER.create(H.Name)
+                TeleportResult.EXIT_DISALLOWED -> throw CANT_LEAVE.create(H.Name)
+                else -> {}
+            }
+
+            SP.Teleport(World, H.Pos, true)
             return 1
         }
 
@@ -694,7 +720,7 @@ object Commands {
                 var Pos = BlockPos.Mutable(X, Y, Z)
 
                 // Check that it is not in a region.
-                if (!ProtectionManager.IsLegalTeleportTarget(SW, Pos)) continue
+                if (!ProtectionManager.AllowTeleport(SP, SW, Pos)) continue
 
                 // Check if we can place the player somewhere in this XZ columns.
                 //

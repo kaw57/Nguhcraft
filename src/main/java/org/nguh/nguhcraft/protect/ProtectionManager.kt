@@ -34,6 +34,12 @@ import org.nguh.nguhcraft.protect.ProtectionManager.Companion.IsProtectedBlock
 import org.nguh.nguhcraft.protect.ProtectionManager.Companion.IsProtectedEntity
 import java.util.function.Consumer
 
+/** Enum denotes if an entity can teleport somewhere, or why it can’t. */
+enum class TeleportResult {
+    OK,
+    EXIT_DISALLOWED,
+    ENTRY_DISALLOWED,
+}
 
 /**
  * Handler that contains common code paths related to world protection.
@@ -168,6 +174,46 @@ abstract class ProtectionManager(
     private fun _AllowPlayerExit(R: Region, PE: PlayerEntity): Boolean {
         if (_BypassesRegionProtection(PE)) return true
         return R.AllowsPlayerExit()
+    }
+
+    /**
+     * Check if an entity, especially a player, is allowed to teleport to a location.
+     *
+     * This is used for ender pearls, chorus fruit, /wild, /home, but NOT admin
+     * commands like /tp.
+     */
+    private fun _AllowTeleport(E: Entity, DestWorld: World, Pos: BlockPos): TeleportResult {
+        // Always allow non-players to teleport; this is necessary so we can
+        // move mobs and other entities with commands if need be.
+        if (E !is PlayerEntity || _BypassesRegionProtection(E)) return TeleportResult.OK
+
+        // Check if the player is allowed to leave their current region.
+        //
+        // Note that even if the source and destination region are the same, we still count
+        // this as exiting/entering, because there might just be a particular PART of the
+        // region that we don’t want people to be able to leave or enter.
+        FindRegionContainingBlock(E.world, E.blockPos)?.let {
+            if (!it.AllowsPlayerExit()) return TeleportResult.EXIT_DISALLOWED
+        }
+
+        // Check if the player is allowed to enter the destination region.
+        return _AllowTeleportToImpl(DestWorld, Pos)
+    }
+
+    /** Same as AllowTeleport(), but only cares about the destination region. */
+    private fun _AllowTeleportToFromAnywhere(E: Entity, DestWorld: World, Pos: BlockPos): Boolean {
+        // Always allow non-players to teleport; this is necessary so we can
+        // move mobs and other entities with commands if need be.
+        if (E !is PlayerEntity || _BypassesRegionProtection(E)) return true
+
+        // Check if the player is allowed to enter the destination region.
+        return _AllowTeleportToImpl(DestWorld, Pos) == TeleportResult.OK
+    }
+
+    private fun _AllowTeleportToImpl(DestWorld: World, Pos: BlockPos): TeleportResult {
+        val Dest = FindRegionContainingBlock(DestWorld, Pos) ?: return TeleportResult.OK
+        return if (Dest.AllowsPlayerEntry() && Dest.AllowsTeleportation()) TeleportResult.OK
+        else TeleportResult.ENTRY_DISALLOWED
     }
 
     /** Check if a player bypasses region protection. */
@@ -444,6 +490,14 @@ abstract class ProtectionManager(
             Get(PE.world)._AllowPlayerExit(R, PE)
 
         @JvmStatic
+        fun AllowTeleport(TeleportingEntity: Entity, DestWorld: World, Pos: BlockPos) =
+            GetTeleportResult(TeleportingEntity, DestWorld, Pos) == TeleportResult.OK
+
+        @JvmStatic
+        fun AllowTeleportToFromAnywhere(TeleportingEntity: Entity, DestWorld: World, Pos: BlockPos) =
+            Get(DestWorld)._AllowTeleportToFromAnywhere(TeleportingEntity, DestWorld, Pos)
+
+        @JvmStatic
         fun BypassesRegionProtection(PE: PlayerEntity) =
             Get(PE.world)._BypassesRegionProtection(PE)
 
@@ -463,6 +517,10 @@ abstract class ProtectionManager(
         @JvmStatic
         fun GetRegion(W: World, Name: String) =
             Get(W).RegionListFor(W).find { it.Name == Name }
+
+        @JvmStatic
+        fun GetTeleportResult(TeleportingEntity: Entity, DestWorld: World, Pos: BlockPos) =
+            Get(DestWorld)._AllowTeleport(TeleportingEntity, DestWorld, Pos)
 
         @JvmStatic
         fun HandleBlockInteract(PE: PlayerEntity, W: World, Pos: BlockPos, Stack: ItemStack?) =
