@@ -73,12 +73,21 @@ class ServerRegion(
         if (Name.isEmpty()) throw IllegalArgumentException("Region name cannot be empty!")
 
         // Read flags.
+        //
+        // Take care to start with the default flags in the accumulator
+        // so that existing regions inherit new default flags. Note that
+        // a flag may be stored in one of THREE states: true, false, or
+        // not present. The last one is used to indicate that we should
+        // not override the default value and will be true when a region
+        // is first loaded after adding new flags.
         val FlagsTag = Tag.getCompound(TAG_FLAGS)
-        RegionFlags = Flags.entries.fold(0L) { Acc, Flag ->
-            if (FlagsTag.getBoolean(Flag.name.lowercase())) Acc or Flag.Bit() else Acc
+        RegionFlags = Flags.entries.fold(RegionFlags) { Acc, Flag ->
+            val N = Flag.name.lowercase()
+            if (!FlagsTag.contains(N)) Acc
+            else if (FlagsTag.getBoolean(N)) Acc or Flag.Bit()
+            else Acc and Flag.Bit().inv()
         }
     }
-
 
     /** Display the region’s bounds. */
     fun AppendBounds(MT: MutableText): MutableText = MT.append(Text.literal(" ["))

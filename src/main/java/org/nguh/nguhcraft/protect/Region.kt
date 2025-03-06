@@ -1,8 +1,9 @@
 package org.nguh.nguhcraft.protect
 
 import net.minecraft.registry.RegistryKey
-import net.minecraft.util.math.BlockPos
-import net.minecraft.util.math.Vec2f
+import net.minecraft.util.function.BooleanBiFunction
+import net.minecraft.util.shape.VoxelShape
+import net.minecraft.util.shape.VoxelShapes
 import net.minecraft.world.World
 import org.nguh.nguhcraft.XZRect
 
@@ -22,7 +23,10 @@ abstract class Region(
     FromX: Int,
     FromZ: Int,
     ToX: Int,
-    ToZ: Int
+    ToZ: Int,
+
+    /** Barrier colour, if any. */
+    val Colour: Int? = null
 ) : XZRect(
     FromX = FromX,
     FromZ = FromZ,
@@ -82,6 +86,12 @@ abstract class Region(
          */
         HOSTILE_MOB_SPAWNING,
 
+        /** Allow players to enter this region. */
+        PLAYER_ENTRY,
+
+        /** Allow players to leave this region. */
+        PLAYER_EXIT,
+
         /**
          * Allow fall damage.
          *
@@ -99,6 +109,10 @@ abstract class Region(
 
         /**
          * Allow teleportation.
+         *
+         * Note that this flag only handles teleporting inside of a region;
+         * PLAYER_ENTRY and PLAYER_EXIT override this flag for the purposes
+         * of entering and exiting it.
          *
          * This restricts the use of ender pearls and chorus fruit, but NOT
          * the /tp command, command blocks, or other forms of hard-coded
@@ -121,8 +135,36 @@ abstract class Region(
         fun Bit() = 1L shl ordinal
     }
 
-    /** Flags that are set for this region. */
-    protected var RegionFlags: Long = 0
+    /**
+     * Flags that are set for this region.
+     *
+     * By default, players are allowed to enter and exit a region.
+     */
+    protected var RegionFlags: Long = Flags.PLAYER_ENTRY.Bit() or Flags.PLAYER_EXIT.Bit()
+
+    /** Voxel shape for collisions from the inside. */
+    val InsideShape: VoxelShape = VoxelShapes.combineAndSimplify(
+        VoxelShapes.UNBOUNDED,
+        VoxelShapes.cuboid(
+            MinX.toDouble(),
+            Double.NEGATIVE_INFINITY,
+            MinZ.toDouble(),
+            OutsideMaxX.toDouble(),
+            Double.POSITIVE_INFINITY,
+            OutsideMaxZ.toDouble()
+        ),
+        BooleanBiFunction.ONLY_FIRST
+    )
+
+    /** Voxel shape for collisions from the outside. */
+    val OutsideShape: VoxelShape = VoxelShapes.cuboid(
+        MinX.toDouble(),
+        Double.NEGATIVE_INFINITY,
+        MinZ.toDouble(),
+        OutsideMaxX.toDouble(),
+        Double.POSITIVE_INFINITY,
+        OutsideMaxZ.toDouble()
+    ).simplify()
 
     /** Check if this region allows players to attack non-hostile mobs. */
     fun AllowsAttackingFriendlyEntities() = Test(Flags.ATTACK_FRIENDLY)
@@ -144,6 +186,12 @@ abstract class Region(
 
     /** Check if this region allows natural spawning of hostile mobs. */
     fun AllowsHostileMobSpawning() = Test(Flags.HOSTILE_MOB_SPAWNING)
+
+    /** Check if this region allows players to enter. */
+    fun AllowsPlayerEntry() = Test(Flags.PLAYER_ENTRY)
+
+    /** Check if this region allows players to exit. */
+    fun AllowsPlayerExit() = Test(Flags.PLAYER_EXIT)
 
     /** Check if entities should be affected by fall damage. */
     fun AllowsPlayerFallDamage() = Test(Flags.PLAYER_FALL_DAMAGE)

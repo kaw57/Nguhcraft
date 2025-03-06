@@ -56,9 +56,9 @@ object WorldRendering {
 
         // Helper to add a quad from (x, y, z).
         val MinX = B.XZ.MinX
-        val MaxX = B.XZ.RenderMaxX
+        val MaxX = B.XZ.OutsideMaxX
         val MinZ = B.XZ.MinZ
-        val MaxZ = B.XZ.RenderMaxZ
+        val MaxZ = B.XZ.OutsideMaxZ
 
         // Helper to draw a 2×2 quad in the XY or ZY plane.
         fun Quad(Dir: Direction, X: Int, Y: Int, Z: Int, InvertScroll: Boolean) {
@@ -122,9 +122,9 @@ object WorldRendering {
 
     private fun RenderRegion(VC: VertexConsumer, R: Region, Colour: Int, MinY: Int, MaxY: Int) {
         val MinX = R.MinX
-        val MaxX = R.RenderMaxX
+        val MaxX = R.OutsideMaxX
         val MinZ = R.MinZ
-        val MaxZ = R.RenderMaxZ
+        val MaxZ = R.OutsideMaxZ
 
         // Helper to add a vertex.
         fun Vertex(X: Int, Y: Int, Z: Int) = VC.vertex(

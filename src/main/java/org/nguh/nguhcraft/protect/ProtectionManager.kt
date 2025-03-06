@@ -17,10 +17,23 @@ import net.minecraft.registry.tag.BlockTags
 import net.minecraft.registry.tag.DamageTypeTags
 import net.minecraft.util.ActionResult
 import net.minecraft.util.math.BlockPos
+import net.minecraft.util.math.Box
+import net.minecraft.util.shape.VoxelShape
 import net.minecraft.world.World
 import org.nguh.nguhcraft.block.LockableBlockEntity
 import org.nguh.nguhcraft.isa
 import org.nguh.nguhcraft.item.KeyItem
+import org.nguh.nguhcraft.protect.ProtectionManager.Companion.AllowBlockModify
+import org.nguh.nguhcraft.protect.ProtectionManager.Companion.AllowEntityAttack
+import org.nguh.nguhcraft.protect.ProtectionManager.Companion.AllowEntityInteract
+import org.nguh.nguhcraft.protect.ProtectionManager.Companion.AllowItemUse
+import org.nguh.nguhcraft.protect.ProtectionManager.Companion.GetRegion
+import org.nguh.nguhcraft.protect.ProtectionManager.Companion.GetRegions
+import org.nguh.nguhcraft.protect.ProtectionManager.Companion.HandleBlockInteract
+import org.nguh.nguhcraft.protect.ProtectionManager.Companion.IsProtectedBlock
+import org.nguh.nguhcraft.protect.ProtectionManager.Companion.IsProtectedEntity
+import java.util.function.Consumer
+
 
 /**
  * Handler that contains common code paths related to world protection.
@@ -145,12 +158,34 @@ abstract class ProtectionManager(
         return true
     }
 
+    /** Check if a player is allowed to enter a region. */
+    private fun _AllowPlayerEntry(R: Region, PE: PlayerEntity): Boolean {
+        if (_BypassesRegionProtection(PE)) return true
+        return R.AllowsPlayerEntry()
+    }
+
+    /** Check if a player is allowed to exit a region. */
+    private fun _AllowPlayerExit(R: Region, PE: PlayerEntity): Boolean {
+        if (_BypassesRegionProtection(PE)) return true
+        return R.AllowsPlayerExit()
+    }
+
     /** Check if a player bypasses region protection. */
     abstract fun _BypassesRegionProtection(PE: PlayerEntity): Boolean
 
     /** Find the region that contains a block. */
     private fun _FindRegionContainingBlock(W: World, Pos: BlockPos) =
         RegionListFor(W).find { Pos in it }
+
+    /** Get entity collisions. */
+    private fun _GetCollisionsForEntity(W: World, E: Entity, BB: Box, Consumer: Consumer<List<VoxelShape>>) {
+        if (E !is PlayerEntity || _BypassesRegionProtection(E)) return
+
+        // Find all regions that contain the BB.
+        val List = RegionListFor(W)
+        Consumer.accept(List.filter { !it.AllowsPlayerExit() && it.Contains(E.x, E.z) }.map { it.InsideShape })
+        Consumer.accept(List.filter { !it.AllowsPlayerEntry() && !it.Contains(E.x, E.z) }.map { it.OutsideShape })
+    }
 
     /**
      * Handle interaction (= right-click), optionally with a block.
@@ -290,7 +325,7 @@ abstract class ProtectionManager(
     }
 
     /** Check if the passed bounding box intersects a protected region. */
-    private fun _IsProtectedRegion(W: World, MinX: Int, MinZ: Int, MaxX: Int, MaxZ: Int): Boolean {
+    private fun _IsProtectedRegion(W: World, MinX: Double, MinZ: Double, MaxX: Double, MaxZ: Double): Boolean {
         val Regions = RegionListFor(W)
         return Regions.any { it.Intersects(MinX, MinZ, MaxX, MaxZ) }
     }
@@ -401,6 +436,14 @@ abstract class ProtectionManager(
             Get(W)._AllowItemUse(PE, W, St)
 
         @JvmStatic
+        fun AllowPlayerEntry(R: Region, PE: PlayerEntity) =
+            Get(PE.world)._AllowPlayerEntry(R, PE)
+
+        @JvmStatic
+        fun AllowPlayerExit(R: Region, PE: PlayerEntity) =
+            Get(PE.world)._AllowPlayerExit(R, PE)
+
+        @JvmStatic
         fun BypassesRegionProtection(PE: PlayerEntity) =
             Get(PE.world)._BypassesRegionProtection(PE)
 
@@ -408,6 +451,10 @@ abstract class ProtectionManager(
         @JvmStatic
         fun FindRegionContainingBlock(W: World, Pos: BlockPos) =
             Get(W)._FindRegionContainingBlock(W, Pos)
+
+        @JvmStatic
+        fun GetCollisionsForEntity(W: World, E: Entity, BB: Box, Consumer: Consumer<List<VoxelShape>>) =
+            Get(W)._GetCollisionsForEntity(W, E, BB, Consumer)
 
         @JvmStatic
         fun GetRegions(W: World) =
@@ -442,7 +489,7 @@ abstract class ProtectionManager(
             Get(E.world)._IsProtectedEntity(E, DS)
 
         @JvmStatic
-        fun IsProtectedRegion(W: World, MinX: Int, MinZ: Int, MaxX: Int, MaxZ: Int) =
+        fun IsProtectedRegion(W: World, MinX: Double, MinZ: Double, MaxX: Double, MaxZ: Double) =
             Get(W)._IsProtectedRegion(W, MinX, MinZ, MaxX, MaxZ)
 
         @JvmStatic

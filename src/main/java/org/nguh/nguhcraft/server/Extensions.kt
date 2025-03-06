@@ -44,6 +44,14 @@ fun Entity.Teleport(
 fun Entity.Teleport(
     ToWorld: ServerWorld,
     To: Vec3d,
+    SaveLastPos: Boolean = false
+) {
+    Teleport(TeleportTarget(ToWorld, To, Vec3d.ZERO, yaw, pitch, TeleportTarget.NO_OP), SaveLastPos)
+}
+
+fun Entity.Teleport(
+    ToWorld: ServerWorld,
+    To: Vec3d,
     Yaw: Float,
     Pitch: Float,
     SaveLastPos: Boolean = false

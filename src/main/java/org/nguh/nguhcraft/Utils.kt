@@ -1,7 +1,6 @@
 package org.nguh.nguhcraft
 
 import com.mojang.logging.LogUtils
-import com.mojang.serialization.Codec
 import net.minecraft.component.ComponentChanges
 import net.minecraft.enchantment.Enchantment
 import net.minecraft.enchantment.EnchantmentHelper
@@ -12,7 +11,6 @@ import net.minecraft.nbt.NbtCompound
 import net.minecraft.nbt.NbtElement
 import net.minecraft.nbt.NbtOps
 import net.minecraft.network.RegistryByteBuf
-import net.minecraft.network.codec.PacketCodec
 import net.minecraft.network.packet.CustomPayload
 import net.minecraft.registry.Registries
 import net.minecraft.registry.RegistryKey
@@ -20,6 +18,7 @@ import net.minecraft.registry.RegistryKeys
 import net.minecraft.text.MutableText
 import net.minecraft.text.Text
 import net.minecraft.util.math.BlockPos
+import net.minecraft.util.math.Box
 import net.minecraft.util.math.Vec2f
 import net.minecraft.util.math.Vec3d
 import net.minecraft.world.World
@@ -58,8 +57,8 @@ open class XZRect(FromX: Int, FromZ: Int, ToX: Int, ToZ: Int) {
      * so for rendering, we need to add 1 to the maximum values to include the last
      * block within the region.
      */
-    val RenderMaxX get() = MaxX + 1
-    val RenderMaxZ get() = MaxZ + 1
+    val OutsideMaxX get() = MaxX + 1
+    val OutsideMaxZ get() = MaxZ + 1
 
     /** Get the centre of this rectangle. */
     val Center: BlockPos get() = BlockPos((MinX + MaxX) / 2, 0, (MinZ + MaxZ) / 2)
@@ -70,8 +69,8 @@ open class XZRect(FromX: Int, FromZ: Int, ToX: Int, ToZ: Int) {
     operator fun contains(XZ: XZRect) = Contains(XZ.MinX, XZ.MinZ) && Contains(XZ.MaxX, XZ.MaxZ)
     fun Contains(X: Int, Z: Int): Boolean = X in MinX..MaxX && Z in MinZ..MaxZ
     fun Contains(X: Double, Z: Double): Boolean =
-        X in MinX.toDouble()..MaxX.toDouble() &&
-        Z in MinZ.toDouble()..MaxZ.toDouble()
+        X in MinX.toDouble()..OutsideMaxX.toDouble() &&
+        Z in MinZ.toDouble()..OutsideMaxZ.toDouble()
 
     /**
      * Get the distance of a position to the nearest side of the
@@ -92,14 +91,24 @@ open class XZRect(FromX: Int, FromZ: Int, ToX: Int, ToZ: Int) {
 
     /** Check if a rectangle intersects another. */
     fun Intersects(XZ: XZRect) = Intersects(
-        MinX = XZ.MinX,
-        MinZ = XZ.MinZ,
-        MaxX = XZ.MaxX,
-        MaxZ = XZ.MaxZ
+        MinX = XZ.MinX.toDouble(),
+        MinZ = XZ.MinZ.toDouble(),
+        MaxX = XZ.OutsideMaxX.toDouble(),
+        MaxZ = XZ.OutsideMaxZ.toDouble()
     )
 
-    fun Intersects(MinX: Int, MinZ: Int, MaxX: Int, MaxZ: Int) =
-        MinX <= this.MaxX && MaxX >= this.MinX && MinZ <= this.MaxZ && MaxZ >= this.MinZ
+    fun Intersects(MinX: Double, MinZ: Double, MaxX: Double, MaxZ: Double) =
+        MinX <= OutsideMaxX.toDouble() &&
+        MaxX >= this.MinX.toDouble() &&
+        MinZ <= OutsideMaxX.toDouble() &&
+        MaxZ >= this.MinZ.toDouble()
+
+    fun Intersects(BB: Box) = Intersects(
+        MinX = BB.minX,
+        MinZ = BB.minZ,
+        MaxX = BB.maxX,
+        MaxZ = BB.maxZ
+    )
 
     /** Get the radius of this rectangle. */
     val Radius: Vec2f get() {
