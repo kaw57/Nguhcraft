@@ -25,8 +25,8 @@ abstract class Region(
     ToX: Int,
     ToZ: Int,
 
-    /** Barrier colour, if any. */
-    val Colour: Int? = null
+    /** Barrier colour override, if any. */
+    ColourOverride: Int?  = null
 ) : XZRect(
     FromX = FromX,
     FromZ = FromZ,
@@ -142,6 +142,10 @@ abstract class Region(
      */
     protected var RegionFlags: Long = Flags.PLAYER_ENTRY.Bit() or Flags.PLAYER_EXIT.Bit()
 
+    /** Colour override, if any. */
+    var ColourOverride: Int? = ColourOverride
+        protected set
+
     /** Voxel shape for collisions from the inside. */
     val InsideShape: VoxelShape = VoxelShapes.combineAndSimplify(
         VoxelShapes.UNBOUNDED,
@@ -217,5 +221,9 @@ abstract class Region(
     /** Get a string representation of this region. */
     override fun toString(): String {
         return "Region($Name, [$MinX, $MinZ] -> [$MaxX, $MaxZ]): $RegionFlags"
+    }
+
+    companion object {
+        const val COLOUR_OVERRIDE_NONE_ENC = 0
     }
 }

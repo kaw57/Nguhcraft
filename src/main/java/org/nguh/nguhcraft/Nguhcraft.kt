@@ -11,21 +11,13 @@ import net.minecraft.registry.Registry
 import net.minecraft.registry.RegistryKey
 import net.minecraft.server.MinecraftServer
 import net.minecraft.server.world.ServerWorld
-import net.minecraft.text.Text
 import net.minecraft.util.Identifier
 import net.minecraft.util.WorldSavePath
-import net.minecraft.world.World
-import net.minecraft.world.border.WorldBorderStage
 import org.nguh.nguhcraft.block.NguhBlocks
 import org.nguh.nguhcraft.item.NguhItems
 import org.nguh.nguhcraft.network.*
 import org.nguh.nguhcraft.protect.ProtectionManager
-import org.nguh.nguhcraft.server.BarrierManager
-import org.nguh.nguhcraft.server.DisplayManager
-import org.nguh.nguhcraft.server.ProcedureManager
-import org.nguh.nguhcraft.server.ServerNetworkHandler
-import org.nguh.nguhcraft.server.ServerProtectionManager
-import org.nguh.nguhcraft.server.WarpManager
+import org.nguh.nguhcraft.server.*
 import org.nguh.nguhcraft.server.command.Commands
 import java.nio.file.Path
 import kotlin.io.path.inputStream
@@ -167,7 +159,6 @@ class Nguhcraft : ModInitializer {
         PayloadTypeRegistry.playS2C().register(ClientboundSyncFlagPacket.ID, ClientboundSyncFlagPacket.CODEC)
         PayloadTypeRegistry.playS2C().register(ClientboundSyncProtectionMgrPacket.ID, ClientboundSyncProtectionMgrPacket.CODEC)
         PayloadTypeRegistry.playS2C().register(ClientboundSyncDisplayPacket.ID, ClientboundSyncDisplayPacket.CODEC)
-        PayloadTypeRegistry.playS2C().register(ClientboundSyncBarriersPacket.ID, ClientboundSyncBarriersPacket.CODEC)
 
         // Serverbound packets.
         PayloadTypeRegistry.playC2S().register(ServerboundChatPacket.ID, ServerboundChatPacket.CODEC)
@@ -217,7 +208,6 @@ class Nguhcraft : ModInitializer {
             SyncedGameRule.Reset()
             WarpManager.Reset()
             S.DisplayManager.Reset()
-            S.BarrierManager.Reset()
 
             // Load saved state.
             try {
@@ -231,7 +221,6 @@ class Nguhcraft : ModInitializer {
                 SyncedGameRule.Load(Tag)
                 WarpManager.Load(Tag)
                 S.DisplayManager.Load(Tag)
-                S.BarrierManager.Load(Tag)
 
                 // Load world data.
                 for (SW in S.worlds) LoadExtraWorldData(SW)
@@ -273,7 +262,6 @@ class Nguhcraft : ModInitializer {
             SyncedGameRule.Save(Tag)
             WarpManager.Save(Tag)
             S.DisplayManager.Save(Tag)
-            S.BarrierManager.Save(Tag)
 
             // Save world data.
             for (SW in S.worlds) SaveExtraWorldData(SW)

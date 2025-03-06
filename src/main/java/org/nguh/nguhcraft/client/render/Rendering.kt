@@ -11,16 +11,11 @@ import net.minecraft.util.math.ColorHelper
 import net.minecraft.util.math.Vec3d
 import org.joml.Matrix4fStack
 
-class Property {
-    private var value = TriState.DEFAULT
-}
-
 /** RAII helper to avoid leaking rendering state. */
 @Environment(EnvType.CLIENT)
 object Renderer {
     fun ActOnSessionStart() {
         WorldRendering.RenderRegions = false
-        WorldRendering.Barriers = listOf()
     }
 
     fun Init() {

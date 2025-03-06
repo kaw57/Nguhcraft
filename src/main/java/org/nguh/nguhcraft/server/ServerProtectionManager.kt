@@ -87,6 +87,10 @@ class ServerRegion(
             else if (FlagsTag.getBoolean(N)) Acc or Flag.Bit()
             else Acc and Flag.Bit().inv()
         }
+
+        // Read colour override.
+        if (Tag.contains(TAG_COLOUR_OVERRIDE, NbtElement.INT_TYPE.toInt()))
+            ColourOverride = Tag.getInt(TAG_COLOUR_OVERRIDE)
     }
 
     /** Display the region’s bounds. */
@@ -144,6 +148,15 @@ class ServerRegion(
         set(TAG_FLAGS, Nbt {
             Flags.entries.forEach { set(it.name.lowercase(), Test(it)) }
         })
+
+        if (ColourOverride != null) set(TAG_COLOUR_OVERRIDE, ColourOverride!!)
+    }
+
+    /** Set the region colour. */
+    fun SetColour(S: MinecraftServer, Colour: Int) {
+        if (Colour == ColourOverride) return
+        ColourOverride = Colour
+        S.ProtectionManager.Sync(S)
     }
 
     /** Set a region flag. */
@@ -207,12 +220,14 @@ class ServerRegion(
         buf.writeString(Name)
         WriteXZRect(buf)
         buf.writeLong(RegionFlags)
+        buf.writeInt(ColourOverride ?: COLOUR_OVERRIDE_NONE_ENC)
     }
 
     companion object {
         private val REGION_TRIGGER_TEXT: Text = Text.of("Region trigger")
         private const val TAG_FLAGS = "RegionFlags"
         private const val TAG_NAME = "Name"
+        private const val TAG_COLOUR_OVERRIDE = "ColourOverride"
     }
 }
 
