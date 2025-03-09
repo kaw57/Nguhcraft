@@ -3,6 +3,8 @@ package org.nguh.nguhcraft.protect
 import net.minecraft.block.Blocks
 import net.minecraft.block.LecternBlock
 import net.minecraft.entity.Entity
+import net.minecraft.entity.LivingEntity
+import net.minecraft.entity.SpawnReason
 import net.minecraft.entity.damage.DamageSource
 import net.minecraft.entity.mob.Monster
 import net.minecraft.entity.passive.VillagerEntity
@@ -345,7 +347,41 @@ abstract class ProtectionManager(
 
     /** Check whether an entity is allowed to spawn here. */
     fun _IsSpawningAllowed(E: Entity): Boolean {
+        // We currently only have restrictions on hostile mobs, so always allow
+        // friendly entities to spawn. Note the difference between 'Monster' and
+        // 'HostileEntity'; the former is what we want since it also includes e.g.
+        // hoglins and ghasts whereas the former does not.
         if (E !is Monster) return true
+
+        // If E is a living entity, then we will have saved the spawn reason for it;
+        // check that first so we always allow commands and spawn eggs to work properly.
+        //
+        // Note that this is a WHITELIST, i.e. the reasons here are always ALLOWED; only
+        // list things here that are absolutely required for the game to function properly,
+        // such as chunk loading, commands, and dimension travel.
+        when ((E as? LivingEntity)?.SpawnReason) {
+            // Command.
+            SpawnReason.COMMAND,
+
+            // Entity teleporting or travelling through a portal.
+            SpawnReason.DIMENSION_TRAVEL,
+
+            // Spawn eggs (and minecarts and boats, but those aren’t living entities) in
+            // dispensers.
+            SpawnReason.DISPENSER,
+
+            // Loading a saved entity. This is kind of required, else entities will
+            // be deleted on restarts.
+            SpawnReason.LOAD,
+
+            // Spawn eggs (and boats, but those still aren’t living entities).
+            SpawnReason.SPAWN_ITEM_USE -> return true
+
+            // Do nothing and fall through to the checks below.
+            else -> {}
+        }
+
+        // Otherwise, check region flags.
         val R = _FindRegionContainingBlock(E.world, E.blockPos) ?: return true
         return R.AllowsHostileMobSpawning()
     }
