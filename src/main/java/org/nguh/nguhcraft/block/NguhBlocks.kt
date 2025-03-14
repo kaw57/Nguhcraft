@@ -225,7 +225,6 @@ object NguhBlocks {
 
     val DROPS_SELF = arrayOf(
         DECORATIVE_HOPPER,
-        LOCKED_DOOR,
         PEARLESCENT_LANTERN,
         PEARLESCENT_CHAIN
     )
