@@ -5,6 +5,7 @@ import com.mojang.serialization.MapCodec
 import io.netty.buffer.ByteBuf
 import net.fabricmc.api.EnvType
 import net.fabricmc.api.Environment
+import net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap
 import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents
 import net.fabricmc.fabric.api.`object`.builder.v1.block.entity.FabricBlockEntityTypeBuilder
 import net.minecraft.block.AbstractBlock
@@ -22,6 +23,7 @@ import net.minecraft.client.data.ItemModels
 import net.minecraft.client.data.ModelIds
 import net.minecraft.client.data.Models
 import net.minecraft.client.data.TextureMap
+import net.minecraft.client.render.RenderLayer
 import net.minecraft.client.render.TexturedRenderLayers
 import net.minecraft.client.render.item.model.special.ChestModelRenderer
 import net.minecraft.client.render.item.property.select.SelectProperty
@@ -208,6 +210,13 @@ object NguhBlocks {
             .mapColor(MapColor.GRAY)
     )
 
+    val WROUGHT_IRON_BLOCK = Register(
+        "wrought_iron_block",
+        ::Block,
+        AbstractBlock.Settings.copy(Blocks.IRON_BLOCK)
+            .mapColor(MapColor.GRAY)
+    )
+
     // Block entities.
     val LOCKED_DOOR_BLOCK_ENTITY = RegisterEntity(
         "lockable_door",
@@ -220,13 +229,15 @@ object NguhBlocks {
         DECORATIVE_HOPPER,
         LOCKED_DOOR,
         PEARLESCENT_LANTERN,
-        PEARLESCENT_CHAIN
+        PEARLESCENT_CHAIN,
+        WROUGHT_IRON_BLOCK
     )
 
     val DROPS_SELF = arrayOf(
         DECORATIVE_HOPPER,
         PEARLESCENT_LANTERN,
-        PEARLESCENT_CHAIN
+        PEARLESCENT_CHAIN,
+        WROUGHT_IRON_BLOCK
     )
 
     fun BootstrapModels(G: BlockStateModelGenerator) {
@@ -238,6 +249,7 @@ object NguhBlocks {
         G.registerItemModel(PEARLESCENT_CHAIN.asItem())
         G.registerItemModel(DECORATIVE_HOPPER.asItem())
         G.registerItemModel(LOCKED_DOOR.asItem())
+        G.registerSimpleCubeAll(WROUGHT_IRON_BLOCK)
         G.registerAxisRotated(PEARLESCENT_CHAIN, ModelIds.getBlockModelId(PEARLESCENT_CHAIN))
 
         // Chest variants. Copied from registerChest().
@@ -257,6 +269,7 @@ object NguhBlocks {
     fun Init() {
         ItemGroupEvents.modifyEntriesEvent(ItemGroups.REDSTONE).register {
             it.add(DECORATIVE_HOPPER)
+            it.add(WROUGHT_IRON_BLOCK)
         }
 
         ItemGroupEvents.modifyEntriesEvent(ItemGroups.BUILDING_BLOCKS).register {
@@ -267,6 +280,13 @@ object NguhBlocks {
             it.add(PEARLESCENT_LANTERN)
             it.add(PEARLESCENT_CHAIN)
         }
+    }
+
+    @Environment(EnvType.CLIENT)
+    fun InitRenderLayers() {
+        BlockRenderLayerMap.INSTANCE.putBlock(LOCKED_DOOR, RenderLayer.getCutout())
+        BlockRenderLayerMap.INSTANCE.putBlock(PEARLESCENT_LANTERN, RenderLayer.getCutout())
+        BlockRenderLayerMap.INSTANCE.putBlock(PEARLESCENT_CHAIN, RenderLayer.getCutout())
     }
 
     private fun Register(

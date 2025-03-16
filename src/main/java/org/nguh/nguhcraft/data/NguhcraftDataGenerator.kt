@@ -201,6 +201,13 @@ class NguhcraftRecipeGenerator(
             cinput('#', Items.PEARLESCENT_FROGLIGHT)
         }
 
+        offerShaped(NguhBlocks.WROUGHT_IRON_BLOCK) {
+            pattern("###")
+            pattern("# #")
+            pattern("###")
+            cinput('#', Items.IRON_INGOT)
+        }
+
         // Special recipes.
         ComplexRecipeJsonBuilder.create(::KeyLockPairingRecipe).offerTo(E, "key_lock_pairing")
         ComplexRecipeJsonBuilder.create(::KeyDuplicationRecipe).offerTo(E, "key_duplication")
