@@ -2,7 +2,7 @@
   "type": "minecraft:crafting_shaped",
   "category": "misc",
   "key": {
-    "#": "minecraft:iron_ingot"
+    "#": "minecraft:smooth_stone"
   },
   "pattern": [
     "###",
@@ -11,6 +11,6 @@
   ],
   "result": {
     "count": 4,
-    "id": "nguhcraft:wrought_iron_block"
+    "id": "nguhcraft:compressed_stone"
   }
 }

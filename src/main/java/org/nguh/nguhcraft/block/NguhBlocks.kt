@@ -217,6 +217,13 @@ object NguhBlocks {
             .mapColor(MapColor.GRAY)
     )
 
+    val COMPRESSED_STONE = Register(
+        "compressed_stone",
+        ::Block,
+        AbstractBlock.Settings.copy(Blocks.STONE)
+            .mapColor(MapColor.STONE_GRAY)
+    )
+
     // Block entities.
     val LOCKED_DOOR_BLOCK_ENTITY = RegisterEntity(
         "lockable_door",
@@ -230,14 +237,16 @@ object NguhBlocks {
         LOCKED_DOOR,
         PEARLESCENT_LANTERN,
         PEARLESCENT_CHAIN,
-        WROUGHT_IRON_BLOCK
+        WROUGHT_IRON_BLOCK,
+        COMPRESSED_STONE,
     )
 
     val DROPS_SELF = arrayOf(
         DECORATIVE_HOPPER,
         PEARLESCENT_LANTERN,
         PEARLESCENT_CHAIN,
-        WROUGHT_IRON_BLOCK
+        WROUGHT_IRON_BLOCK,
+        COMPRESSED_STONE,
     )
 
     fun BootstrapModels(G: BlockStateModelGenerator) {
@@ -250,6 +259,7 @@ object NguhBlocks {
         G.registerItemModel(DECORATIVE_HOPPER.asItem())
         G.registerItemModel(LOCKED_DOOR.asItem())
         G.registerSimpleCubeAll(WROUGHT_IRON_BLOCK)
+        G.registerSimpleCubeAll(COMPRESSED_STONE)
         G.registerAxisRotated(PEARLESCENT_CHAIN, ModelIds.getBlockModelId(PEARLESCENT_CHAIN))
 
         // Chest variants. Copied from registerChest().
@@ -269,11 +279,12 @@ object NguhBlocks {
     fun Init() {
         ItemGroupEvents.modifyEntriesEvent(ItemGroups.REDSTONE).register {
             it.add(DECORATIVE_HOPPER)
-            it.add(WROUGHT_IRON_BLOCK)
         }
 
         ItemGroupEvents.modifyEntriesEvent(ItemGroups.BUILDING_BLOCKS).register {
             it.add(LOCKED_DOOR)
+            it.add(COMPRESSED_STONE)
+            it.add(WROUGHT_IRON_BLOCK)
         }
 
         ItemGroupEvents.modifyEntriesEvent(ItemGroups.FUNCTIONAL).register {

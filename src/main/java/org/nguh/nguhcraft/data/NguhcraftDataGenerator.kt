@@ -201,11 +201,18 @@ class NguhcraftRecipeGenerator(
             cinput('#', Items.PEARLESCENT_FROGLIGHT)
         }
 
-        offerShaped(NguhBlocks.WROUGHT_IRON_BLOCK) {
+        offerShaped(NguhBlocks.WROUGHT_IRON_BLOCK, 4) {
             pattern("###")
             pattern("# #")
             pattern("###")
             cinput('#', Items.IRON_INGOT)
+        }
+
+        offerShaped(NguhBlocks.COMPRESSED_STONE, 4) {
+            pattern("###")
+            pattern("# #")
+            pattern("###")
+            cinput('#', Items.SMOOTH_STONE)
         }
 
         // Special recipes.
