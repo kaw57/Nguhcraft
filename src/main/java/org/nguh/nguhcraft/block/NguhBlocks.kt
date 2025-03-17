@@ -8,21 +8,20 @@ import net.fabricmc.api.Environment
 import net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap
 import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents
 import net.fabricmc.fabric.api.`object`.builder.v1.block.entity.FabricBlockEntityTypeBuilder
-import net.minecraft.block.AbstractBlock
-import net.minecraft.block.Block
-import net.minecraft.block.Blocks
-import net.minecraft.block.ChainBlock
-import net.minecraft.block.LanternBlock
-import net.minecraft.block.MapColor
+import net.minecraft.block.*
 import net.minecraft.block.entity.BlockEntity
 import net.minecraft.block.entity.BlockEntityType
 import net.minecraft.block.enums.ChestType
 import net.minecraft.block.piston.PistonBehavior
 import net.minecraft.client.data.BlockStateModelGenerator
+import net.minecraft.client.data.BlockStateVariant
 import net.minecraft.client.data.ItemModels
 import net.minecraft.client.data.ModelIds
 import net.minecraft.client.data.Models
+import net.minecraft.client.data.MultipartBlockStateSupplier
 import net.minecraft.client.data.TextureMap
+import net.minecraft.client.data.VariantSettings
+import net.minecraft.client.data.When
 import net.minecraft.client.render.RenderLayer
 import net.minecraft.client.render.TexturedRenderLayers
 import net.minecraft.client.render.item.model.special.ChestModelRenderer
@@ -31,24 +30,21 @@ import net.minecraft.client.util.SpriteIdentifier
 import net.minecraft.client.world.ClientWorld
 import net.minecraft.component.ComponentType
 import net.minecraft.entity.LivingEntity
-import net.minecraft.item.BlockItem
-import net.minecraft.item.Item
-import net.minecraft.item.ItemGroups
-import net.minecraft.item.ItemStack
-import net.minecraft.item.Items
-import net.minecraft.item.ModelTransformationMode
+import net.minecraft.item.*
 import net.minecraft.network.codec.PacketCodec
 import net.minecraft.network.codec.PacketCodecs
 import net.minecraft.registry.Registries
 import net.minecraft.registry.Registry
 import net.minecraft.registry.RegistryKey
 import net.minecraft.registry.RegistryKeys
+import net.minecraft.state.property.Properties
 import net.minecraft.text.Style
 import net.minecraft.text.Text
 import net.minecraft.util.StringIdentifiable
 import net.minecraft.util.function.ValueLists
 import org.nguh.nguhcraft.Nguhcraft.Companion.Id
 import java.util.function.IntFunction
+import kotlin.text.lowercase
 
 
 @Environment(EnvType.CLIENT)
