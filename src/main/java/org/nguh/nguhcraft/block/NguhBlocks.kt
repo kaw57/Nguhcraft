@@ -213,6 +213,13 @@ object NguhBlocks {
             .mapColor(MapColor.GRAY)
     )
 
+    val WROUGHT_IRON_BARS = Register(
+        "wrought_iron_bars",
+        ::PaneBlock,
+        AbstractBlock.Settings.copy(Blocks.IRON_BARS)
+            .mapColor(MapColor.GRAY)
+    )
+
     val COMPRESSED_STONE = Register(
         "compressed_stone",
         ::Block,
@@ -234,6 +241,7 @@ object NguhBlocks {
         PEARLESCENT_LANTERN,
         PEARLESCENT_CHAIN,
         WROUGHT_IRON_BLOCK,
+        WROUGHT_IRON_BARS,
         COMPRESSED_STONE,
     )
 
@@ -242,6 +250,7 @@ object NguhBlocks {
         PEARLESCENT_LANTERN,
         PEARLESCENT_CHAIN,
         WROUGHT_IRON_BLOCK,
+        WROUGHT_IRON_BARS,
         COMPRESSED_STONE,
     )
 
@@ -257,6 +266,7 @@ object NguhBlocks {
         G.registerSimpleCubeAll(WROUGHT_IRON_BLOCK)
         G.registerSimpleCubeAll(COMPRESSED_STONE)
         G.registerAxisRotated(PEARLESCENT_CHAIN, ModelIds.getBlockModelId(PEARLESCENT_CHAIN))
+        RegisterBarsModel(G, WROUGHT_IRON_BARS)
 
         // Chest variants. Copied from registerChest().
         val Template = Models.TEMPLATE_CHEST.upload(Items.CHEST, TextureMap.particle(Blocks.OAK_PLANKS), G.modelCollector)
@@ -281,6 +291,7 @@ object NguhBlocks {
             it.add(LOCKED_DOOR)
             it.add(COMPRESSED_STONE)
             it.add(WROUGHT_IRON_BLOCK)
+            it.add(WROUGHT_IRON_BARS)
         }
 
         ItemGroupEvents.modifyEntriesEvent(ItemGroups.FUNCTIONAL).register {
@@ -291,9 +302,12 @@ object NguhBlocks {
 
     @Environment(EnvType.CLIENT)
     fun InitRenderLayers() {
-        BlockRenderLayerMap.INSTANCE.putBlock(LOCKED_DOOR, RenderLayer.getCutout())
-        BlockRenderLayerMap.INSTANCE.putBlock(PEARLESCENT_LANTERN, RenderLayer.getCutout())
-        BlockRenderLayerMap.INSTANCE.putBlock(PEARLESCENT_CHAIN, RenderLayer.getCutout())
+        val Cutout = RenderLayer.getCutout()
+        val CutoutMipped = RenderLayer.getCutoutMipped()
+        BlockRenderLayerMap.INSTANCE.putBlock(LOCKED_DOOR, Cutout)
+        BlockRenderLayerMap.INSTANCE.putBlock(PEARLESCENT_LANTERN, Cutout)
+        BlockRenderLayerMap.INSTANCE.putBlock(PEARLESCENT_CHAIN, Cutout)
+        BlockRenderLayerMap.INSTANCE.putBlock(WROUGHT_IRON_BARS, CutoutMipped)
     }
 
     private fun Register(
@@ -330,4 +344,65 @@ object NguhBlocks {
         Id(Key),
         Type
     )
+
+    // Copied from ::registerIronBars()
+    fun RegisterBarsModel(G: BlockStateModelGenerator, B: Block) {
+        val identifier = ModelIds.getBlockSubModelId(B, "_post_ends")
+        val identifier2 = ModelIds.getBlockSubModelId(B, "_post")
+        val identifier3 = ModelIds.getBlockSubModelId(B, "_cap")
+        val identifier4 = ModelIds.getBlockSubModelId(B, "_cap_alt")
+        val identifier5 = ModelIds.getBlockSubModelId(B, "_side")
+        val identifier6 = ModelIds.getBlockSubModelId(B, "_side_alt")
+        G.blockStateCollector
+            .accept(
+                MultipartBlockStateSupplier.create(B)
+                    .with(BlockStateVariant.create().put(VariantSettings.MODEL, identifier))
+                    .with(
+                        When.create().set(Properties.NORTH, false).set(Properties.EAST, false).set(Properties.SOUTH, false)
+                            .set(Properties.WEST, false),
+                        BlockStateVariant.create().put(VariantSettings.MODEL, identifier2)
+                    )
+                    .with(
+                        When.create().set(Properties.NORTH, true).set(Properties.EAST, false).set(Properties.SOUTH, false)
+                            .set(Properties.WEST, false),
+                        BlockStateVariant.create().put(VariantSettings.MODEL, identifier3)
+                    )
+                    .with(
+                        When.create().set(Properties.NORTH, false).set(Properties.EAST, true).set(Properties.SOUTH, false)
+                            .set(Properties.WEST, false),
+                        BlockStateVariant.create().put(VariantSettings.MODEL, identifier3)
+                            .put(VariantSettings.Y, VariantSettings.Rotation.R90)
+                    )
+                    .with(
+                        When.create().set(Properties.NORTH, false).set(Properties.EAST, false).set(Properties.SOUTH, true)
+                            .set(Properties.WEST, false),
+                        BlockStateVariant.create().put(VariantSettings.MODEL, identifier4)
+                    )
+                    .with(
+                        When.create().set(Properties.NORTH, false).set(Properties.EAST, false).set(Properties.SOUTH, false)
+                            .set(Properties.WEST, true),
+                        BlockStateVariant.create().put(VariantSettings.MODEL, identifier4)
+                            .put(VariantSettings.Y, VariantSettings.Rotation.R90)
+                    )
+                    .with(
+                        When.create().set(Properties.NORTH, true),
+                        BlockStateVariant.create().put(VariantSettings.MODEL, identifier5)
+                    )
+                    .with(
+                        When.create().set(Properties.EAST, true),
+                        BlockStateVariant.create().put(VariantSettings.MODEL, identifier5)
+                            .put(VariantSettings.Y, VariantSettings.Rotation.R90)
+                    )
+                    .with(
+                        When.create().set(Properties.SOUTH, true),
+                        BlockStateVariant.create().put(VariantSettings.MODEL, identifier6)
+                    )
+                    .with(
+                        When.create().set(Properties.WEST, true),
+                        BlockStateVariant.create().put(VariantSettings.MODEL, identifier6)
+                            .put(VariantSettings.Y, VariantSettings.Rotation.R90)
+                    )
+            )
+        G.registerItemModel(B)
+    }
 }
