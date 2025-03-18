@@ -562,11 +562,13 @@ object NguhBlocks {
     // =========================================================================
     //  Models
     // =========================================================================
-    val CHAIN_MODEL_TEMPLATE: TexturedModel.Factory = TexturedModel.makeFactory(
+    @Environment(EnvType.CLIENT)
+    fun ChainModelTemplate(): TexturedModel.Factory = TexturedModel.makeFactory(
         TextureMap::all,
         Model(Optional.of<Identifier>(Id("block/template_chain")), empty(), ALL)
     )
 
+    @Environment(EnvType.CLIENT)
     fun BootstrapModels(G: BlockStateModelGenerator) {
         // The door and hopper block state models are very complicated and not exposed
         // as helper functions (the door is actually exposed but our door has an extra
@@ -584,7 +586,7 @@ object NguhBlocks {
             G.registerLantern(Lantern)
             G.registerItemModel(Chain.asItem())
             G.registerAxisRotated(Chain, getBlockModelId(Chain))
-            CHAIN_MODEL_TEMPLATE.upload(Chain, G.modelCollector)
+            ChainModelTemplate().upload(Chain, G.modelCollector)
         }
 
         // Bars.
@@ -696,6 +698,7 @@ object NguhBlocks {
     )
 
     // Copied from ::registerIronBars()
+    @Environment(EnvType.CLIENT)
     fun RegisterBarsModel(G: BlockStateModelGenerator, B: Block) {
         val identifier = ModelIds.getBlockSubModelId(B, "_post_ends")
         val identifier2 = ModelIds.getBlockSubModelId(B, "_post")
