@@ -134,6 +134,20 @@ object NguhBlocks {
             .mapColor(MapColor.STONE_GRAY)
     )
 
+    val PYRITE = Register(
+        "pyrite",
+        ::Block,
+        AbstractBlock.Settings.copy(Blocks.GOLD_BLOCK)
+            .mapColor(MapColor.GOLD)
+    )
+
+    val PYRITE_BRICKS = Register(
+        "pyrite_bricks",
+        ::Block,
+        AbstractBlock.Settings.copy(Blocks.GOLD_BLOCK)
+            .mapColor(MapColor.GOLD)
+    )
+
     // =========================================================================
     //  Lanterns and Chains
     // =========================================================================
@@ -447,6 +461,8 @@ object NguhBlocks {
         WROUGHT_IRON_BARS,
         GOLD_BARS,
         COMPRESSED_STONE,
+        PYRITE,
+        PYRITE_BRICKS,
     ).also {
         it.addAll(CHAINS_AND_LANTERNS.flatten())
         it.addAll(STONE_VARIANT_FAMILY_BLOCKS)
@@ -458,6 +474,8 @@ object NguhBlocks {
         WROUGHT_IRON_BARS,
         GOLD_BARS,
         COMPRESSED_STONE,
+        PYRITE,
+        PYRITE_BRICKS,
     ).also {
         it.addAll(CHAINS_AND_LANTERNS.flatten())
 
@@ -479,6 +497,8 @@ object NguhBlocks {
             it.add(WROUGHT_IRON_BLOCK)
             it.add(WROUGHT_IRON_BARS)
             it.add(GOLD_BARS)
+            it.add(PYRITE)
+            it.add(PYRITE_BRICKS)
             for (B in ALL_VARIANT_FAMILY_BLOCKS) it.add(B)
         }
 

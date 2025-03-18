@@ -10,6 +10,7 @@ import net.minecraft.data.recipe.ShapedRecipeJsonBuilder
 import net.minecraft.item.Item
 import net.minecraft.item.ItemConvertible
 import net.minecraft.item.Items
+import net.minecraft.recipe.Recipe
 import net.minecraft.recipe.book.RecipeCategory
 import net.minecraft.registry.Registries
 import net.minecraft.registry.RegistryKey
@@ -121,6 +122,19 @@ class NguhcraftRecipeGenerator(
             cinput('#', Items.SMOOTH_STONE)
         }
 
+        offerShaped(NguhBlocks.PYRITE, 2) {
+            pattern("GI")
+            pattern("IG")
+            cinput('G', Items.GLOWSTONE_DUST)
+            cinput('I', Items.IRON_NUGGET)
+        }
+
+        offerShaped(NguhBlocks.PYRITE_BRICKS, 4) {
+            pattern("##")
+            pattern("##")
+            cinput('#', NguhBlocks.PYRITE)
+        }
+
         offerChainAndLantern(NguhBlocks.OCHRE_CHAIN, NguhBlocks.OCHRE_LANTERN, Items.RESIN_CLUMP, Items.OCHRE_FROGLIGHT)
         offerChainAndLantern(NguhBlocks.PEARLESCENT_CHAIN, NguhBlocks.PEARLESCENT_LANTERN, Items.AMETHYST_SHARD, Items.PEARLESCENT_FROGLIGHT)
         offerChainAndLantern(NguhBlocks.VERDANT_CHAIN, NguhBlocks.VERDANT_LANTERN, Items.EMERALD, Items.VERDANT_FROGLIGHT)
@@ -219,6 +233,7 @@ class NguhcraftRecipeGenerator(
         for (F in NguhBlocks.STONE_FAMILY_GROUPS) offerRelatedStonecuttingFamilies(F)
         offerStonecuttingFamily(NguhBlocks.POLISHED_CALCITE_FAMILY, Blocks.CALCITE)
         offerStonecuttingFamily(NguhBlocks.CALCITE_BRICK_FAMILY, Blocks.CALCITE)
+        offerStonecuttingRecipe(RecipeCategory.BUILDING_BLOCKS, NguhBlocks.PYRITE_BRICKS, NguhBlocks.PYRITE)
 
         // =========================================================================
         //  Special Recipes
