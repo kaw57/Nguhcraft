@@ -14,6 +14,8 @@ import net.minecraft.block.entity.BlockEntityType
 import net.minecraft.block.enums.ChestType
 import net.minecraft.block.piston.PistonBehavior
 import net.minecraft.client.data.*
+import net.minecraft.client.data.ModelIds.getBlockModelId
+import net.minecraft.client.data.TextureKey.ALL
 import net.minecraft.client.render.RenderLayer
 import net.minecraft.client.render.TexturedRenderLayers
 import net.minecraft.client.render.item.model.special.ChestModelRenderer
@@ -34,9 +36,13 @@ import net.minecraft.registry.RegistryKeys
 import net.minecraft.state.property.Properties
 import net.minecraft.text.Style
 import net.minecraft.text.Text
+import net.minecraft.util.Identifier
 import net.minecraft.util.StringIdentifiable
 import net.minecraft.util.function.ValueLists
 import org.nguh.nguhcraft.Nguhcraft.Companion.Id
+import org.nguh.nguhcraft.flatten
+import java.util.Optional
+import java.util.Optional.empty
 import java.util.function.IntFunction
 
 
@@ -174,7 +180,9 @@ object NguhBlocks {
             .build()
     )
 
-    // Blocks.
+    // =========================================================================
+    //  Miscellaneous Blocks
+    // =========================================================================
     val DECORATIVE_HOPPER = Register(
         "decorative_hopper",
         ::DecorativeHopperBlock,
@@ -189,20 +197,6 @@ object NguhBlocks {
             .requiresTool().strength(5.0f, 3600000.0F)
             .nonOpaque()
             .pistonBehavior(PistonBehavior.IGNORE)
-    )
-
-    val PEARLESCENT_LANTERN = Register(
-        "pearlescent_lantern",
-        ::LanternBlock,
-        AbstractBlock.Settings.copy(Blocks.LANTERN)
-            .mapColor(MapColor.DULL_PINK)
-    )
-
-    val PEARLESCENT_CHAIN = Register(
-        "pearlescent_chain",
-        ::ChainBlock,
-        AbstractBlock.Settings.copy(Blocks.CHAIN)
-            .mapColor(MapColor.GRAY)
     )
 
     val WROUGHT_IRON_BLOCK = Register(
@@ -234,7 +228,58 @@ object NguhBlocks {
     )
 
     // =========================================================================
-    // Cinnabar blocks
+    //  Lanterns and Chains
+    // =========================================================================
+    val OCHRE_LANTERN = Register(
+        "ochre_lantern",
+        ::LanternBlock,
+        AbstractBlock.Settings.copy(Blocks.LANTERN)
+            .mapColor(MapColor.ORANGE)
+    )
+
+    val OCHRE_CHAIN = Register(
+        "ochre_chain",
+        ::ChainBlock,
+        AbstractBlock.Settings.copy(Blocks.CHAIN)
+            .mapColor(MapColor.GRAY)
+    )
+
+    val PEARLESCENT_LANTERN = Register(
+        "pearlescent_lantern",
+        ::LanternBlock,
+        AbstractBlock.Settings.copy(Blocks.LANTERN)
+            .mapColor(MapColor.DULL_PINK)
+    )
+
+    val PEARLESCENT_CHAIN = Register(
+        "pearlescent_chain",
+        ::ChainBlock,
+        AbstractBlock.Settings.copy(Blocks.CHAIN)
+            .mapColor(MapColor.GRAY)
+    )
+
+    val VERDANT_LANTERN = Register(
+        "verdant_lantern",
+        ::LanternBlock,
+        AbstractBlock.Settings.copy(Blocks.LANTERN)
+            .mapColor(MapColor.PALE_GREEN)
+    )
+
+    val VERDANT_CHAIN = Register(
+        "verdant_chain",
+        ::ChainBlock,
+        AbstractBlock.Settings.copy(Blocks.CHAIN)
+            .mapColor(MapColor.GRAY)
+    )
+
+    val CHAINS_AND_LANTERNS = listOf(
+        OCHRE_CHAIN to OCHRE_LANTERN,
+        PEARLESCENT_CHAIN to PEARLESCENT_LANTERN,
+        VERDANT_CHAIN to VERDANT_LANTERN
+    )
+
+    // =========================================================================
+    //  Cinnabar Blocks
     // =========================================================================
     val CINNABAR = Register(
         "cinnabar",
@@ -269,7 +314,7 @@ object NguhBlocks {
     val CINNABAR_BRICK_WALL = RegisterVariant(CINNABAR_BRICKS, "wall", ::WallBlock)
 
     // =========================================================================
-    // Calcite blocks
+    //  Calcite blocks
     // =========================================================================
     val POLISHED_CALCITE = Register(
         "polished_calcite",
@@ -308,7 +353,7 @@ object NguhBlocks {
     )
 
     // =========================================================================
-    // Gilded calcite
+    //  Gilded calcite
     // =========================================================================
     val GILDED_CALCITE = Register(
         "gilded_calcite",
@@ -357,7 +402,7 @@ object NguhBlocks {
     )
 
     // =========================================================================
-    // Block entities.
+    //  Block entities
     // =========================================================================
     val LOCKED_DOOR_BLOCK_ENTITY = RegisterEntity(
         "lockable_door",
@@ -367,7 +412,7 @@ object NguhBlocks {
     )
 
     // =========================================================================
-    // Block families
+    //  Block families
     // =========================================================================
     val CINNABAR_FAMILY: BlockFamily = BlockFamilies.register(CINNABAR)
         .polished(POLISHED_CINNABAR)
@@ -452,30 +497,36 @@ object NguhBlocks {
     val PICKAXE_MINEABLE = mutableSetOf(
         DECORATIVE_HOPPER,
         LOCKED_DOOR,
-        PEARLESCENT_LANTERN,
-        PEARLESCENT_CHAIN,
-        WROUGHT_IRON_BLOCK,
-        WROUGHT_IRON_BARS,
-        GOLD_BARS,
-        COMPRESSED_STONE,
-    ).also { it.addAll(STONE_VARIANT_FAMILY_BLOCKS) }.toTypedArray()
-
-    val DROPS_SELF = mutableSetOf(
-        DECORATIVE_HOPPER,
-        PEARLESCENT_LANTERN,
-        PEARLESCENT_CHAIN,
         WROUGHT_IRON_BLOCK,
         WROUGHT_IRON_BARS,
         GOLD_BARS,
         COMPRESSED_STONE,
     ).also {
+        it.addAll(CHAINS_AND_LANTERNS.flatten())
+        it.addAll(STONE_VARIANT_FAMILY_BLOCKS)
+    }.toTypedArray()
+
+    val DROPS_SELF = mutableSetOf(
+        DECORATIVE_HOPPER,
+        WROUGHT_IRON_BLOCK,
+        WROUGHT_IRON_BARS,
+        GOLD_BARS,
+        COMPRESSED_STONE,
+    ).also {
+        it.addAll(CHAINS_AND_LANTERNS.flatten())
+
         // Slabs may drop 2 or 1 and are thus handled separately.
         it.addAll(STONE_VARIANT_FAMILY_BLOCKS.filter { it !is SlabBlock })
     }.toTypedArray()
 
     // =========================================================================
-    // Models
+    //  Models
     // =========================================================================
+    val CHAIN_MODEL_TEMPLATE: TexturedModel.Factory = TexturedModel.makeFactory(
+        TextureMap::all,
+        Model(Optional.of<Identifier>(Id("block/template_chain")), empty(), ALL)
+    )
+
     fun BootstrapModels(G: BlockStateModelGenerator) {
         // The door and hopper block state models are very complicated and not exposed
         // as helper functions (the door is actually exposed but our door has an extra
@@ -485,11 +536,16 @@ object NguhBlocks {
         G.registerItemModel(LOCKED_DOOR.asItem())
 
         // Simple blocks.
-        G.registerLantern(PEARLESCENT_LANTERN)
-        G.registerItemModel(PEARLESCENT_CHAIN.asItem())
         G.registerSimpleCubeAll(WROUGHT_IRON_BLOCK)
         G.registerSimpleCubeAll(COMPRESSED_STONE)
-        G.registerAxisRotated(PEARLESCENT_CHAIN, ModelIds.getBlockModelId(PEARLESCENT_CHAIN))
+
+        // Chains and lanterns.
+        for ((Chain, Lantern) in CHAINS_AND_LANTERNS) {
+            G.registerLantern(Lantern)
+            G.registerItemModel(Chain.asItem())
+            G.registerAxisRotated(Chain, getBlockModelId(Chain))
+            CHAIN_MODEL_TEMPLATE.upload(Chain, G.modelCollector)
+        }
 
         // Bars.
         RegisterBarsModel(G, WROUGHT_IRON_BARS)
@@ -529,20 +585,21 @@ object NguhBlocks {
         }
 
         ItemGroupEvents.modifyEntriesEvent(ItemGroups.FUNCTIONAL).register {
-            it.add(PEARLESCENT_LANTERN)
-            it.add(PEARLESCENT_CHAIN)
+            for (B in CHAINS_AND_LANTERNS.flatten()) it.add(B)
         }
     }
 
     @Environment(EnvType.CLIENT)
     fun InitRenderLayers() {
-        val Cutout = RenderLayer.getCutout()
-        val CutoutMipped = RenderLayer.getCutoutMipped()
-        BlockRenderLayerMap.INSTANCE.putBlock(LOCKED_DOOR, Cutout)
-        BlockRenderLayerMap.INSTANCE.putBlock(PEARLESCENT_LANTERN, Cutout)
-        BlockRenderLayerMap.INSTANCE.putBlock(PEARLESCENT_CHAIN, Cutout)
-        BlockRenderLayerMap.INSTANCE.putBlock(WROUGHT_IRON_BARS, CutoutMipped)
-        BlockRenderLayerMap.INSTANCE.putBlock(GOLD_BARS, CutoutMipped)
+        RenderLayer.getCutout().let {
+            BlockRenderLayerMap.INSTANCE.putBlock(LOCKED_DOOR, it)
+            for (B in CHAINS_AND_LANTERNS.flatten()) BlockRenderLayerMap.INSTANCE.putBlock(B, it)
+        }
+
+        RenderLayer.getCutoutMipped().let {
+            BlockRenderLayerMap.INSTANCE.putBlock(WROUGHT_IRON_BARS, it)
+            BlockRenderLayerMap.INSTANCE.putBlock(GOLD_BARS, it)
+        }
     }
 
     @Suppress("DEPRECATION")

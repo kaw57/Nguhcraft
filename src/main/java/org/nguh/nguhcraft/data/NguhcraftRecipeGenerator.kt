@@ -94,23 +94,6 @@ class NguhcraftRecipeGenerator(
             cinput('#', Items.GOLD_INGOT)
         }
 
-        offerShaped(NguhBlocks.PEARLESCENT_CHAIN) {
-            pattern("N")
-            pattern("A")
-            pattern("N")
-            cinput('A', Items.AMETHYST_SHARD)
-            cinput('N', Items.IRON_NUGGET)
-        }
-
-        offerShaped(NguhBlocks.PEARLESCENT_LANTERN) {
-            pattern("NAN")
-            pattern("A#A")
-            pattern("NNN")
-            cinput('A', Items.AMETHYST_SHARD)
-            cinput('N', Items.IRON_NUGGET)
-            cinput('#', Items.PEARLESCENT_FROGLIGHT)
-        }
-
         offerShaped(NguhBlocks.WROUGHT_IRON_BLOCK, 4) {
             pattern("###")
             pattern("# #")
@@ -136,6 +119,10 @@ class NguhcraftRecipeGenerator(
             pattern("###")
             cinput('#', Items.SMOOTH_STONE)
         }
+
+        offerChainAndLantern(NguhBlocks.OCHRE_CHAIN, NguhBlocks.OCHRE_LANTERN, Items.RESIN_CLUMP, Items.OCHRE_FROGLIGHT)
+        offerChainAndLantern(NguhBlocks.PEARLESCENT_CHAIN, NguhBlocks.PEARLESCENT_LANTERN, Items.AMETHYST_SHARD, Items.PEARLESCENT_FROGLIGHT)
+        offerChainAndLantern(NguhBlocks.VERDANT_CHAIN, NguhBlocks.VERDANT_LANTERN, Items.EMERALD, Items.VERDANT_FROGLIGHT)
 
         offerShapelessRecipe(Items.HOPPER, 1, NguhBlocks.DECORATIVE_HOPPER to 1, Items.CHEST to 1)
         offerShapelessRecipe(NguhBlocks.DECORATIVE_HOPPER, 1, Items.HOPPER to 1)
@@ -238,6 +225,26 @@ class NguhcraftRecipeGenerator(
         for (I in Families.indices)
             for (J in I + 1..<Families.size)
                 offerStonecuttingFamily(Families[J], Families[I].baseBlock)
+    }
+
+    /** Offer a lantern and chain recipe. */
+    fun offerChainAndLantern(Chain: Block, Lantern: Block, Material: Item, Froglight: Item) {
+        offerShaped(Chain) {
+            pattern("N")
+            pattern("A")
+            pattern("N")
+            cinput('A', Material)
+            cinput('N', Items.IRON_NUGGET)
+        }
+
+        offerShaped(Lantern) {
+            pattern("NAN")
+            pattern("A#A")
+            pattern("NNN")
+            cinput('A', Material)
+            cinput('N', Items.IRON_NUGGET)
+            cinput('#', Froglight)
+        }
     }
 
     // Combines a call to input() and criterion() because having to specify the latter
