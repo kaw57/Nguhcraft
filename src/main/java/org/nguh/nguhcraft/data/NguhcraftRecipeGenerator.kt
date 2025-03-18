@@ -19,6 +19,7 @@ import net.minecraft.registry.tag.ItemTags
 import net.minecraft.registry.tag.TagKey
 import org.nguh.nguhcraft.Nguhcraft
 import org.nguh.nguhcraft.block.Chiseled
+import org.nguh.nguhcraft.block.Fence
 import org.nguh.nguhcraft.block.NguhBlocks
 import org.nguh.nguhcraft.block.Polished
 import org.nguh.nguhcraft.block.Slab
@@ -128,7 +129,7 @@ class NguhcraftRecipeGenerator(
         offerShapelessRecipe(NguhBlocks.DECORATIVE_HOPPER, 1, Items.HOPPER to 1)
 
         // =========================================================================
-        //  Stone Families
+        //  Block Families
         // =========================================================================
         for ((Base, Gilded) in listOf(
             Blocks.CALCITE to NguhBlocks.GILDED_CALCITE,
@@ -149,8 +150,24 @@ class NguhcraftRecipeGenerator(
             cinput('#', Items.CALCITE)
         }
 
+        offerShaped(NguhBlocks.TINTED_OAK_PLANKS, 4) {
+            pattern(" # ")
+            pattern("#A#")
+            pattern(" # ")
+            cinput('#', Items.PALE_OAK_PLANKS)
+            cinput('A', Items.AMETHYST_SHARD)
+        }
+
         // Usual crafting recipes for custom stone types.
-        for (F in NguhBlocks.STONE_VARIANT_FAMILIES) {
+        for (F in NguhBlocks.ALL_VARIANT_FAMILIES) {
+            F.Fence?.let {
+                offerShaped(it, 6) {
+                    pattern("###")
+                    pattern("###")
+                    cinput('#', F.baseBlock)
+                }
+            }
+
             F.Slab?.let {
                 offerShaped(it, 3) {
                     pattern("###")
@@ -199,7 +216,7 @@ class NguhcraftRecipeGenerator(
         //  Stone Cutting
         // =========================================================================
         for (F in NguhBlocks.STONE_VARIANT_FAMILIES) offerStonecuttingFamily(F)
-        for (F in NguhBlocks.FAMILY_GROUPS) offerRelatedStonecuttingFamilies(F)
+        for (F in NguhBlocks.STONE_FAMILY_GROUPS) offerRelatedStonecuttingFamilies(F)
         offerStonecuttingFamily(NguhBlocks.POLISHED_CALCITE_FAMILY, Blocks.CALCITE)
         offerStonecuttingFamily(NguhBlocks.CALCITE_BRICK_FAMILY, Blocks.CALCITE)
 

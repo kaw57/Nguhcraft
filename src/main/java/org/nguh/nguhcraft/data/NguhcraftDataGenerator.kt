@@ -31,6 +31,7 @@ import net.minecraft.registry.tag.PaintingVariantTags
 import net.minecraft.registry.tag.TagKey
 import org.nguh.nguhcraft.NguhDamageTypes
 import org.nguh.nguhcraft.NguhPaintings
+import org.nguh.nguhcraft.block.Fence
 import org.nguh.nguhcraft.block.NguhBlocks
 import org.nguh.nguhcraft.block.Slab
 import org.nguh.nguhcraft.block.Stairs
@@ -46,6 +47,10 @@ class NguhcraftBlockTagProvider(
     RF: CompletableFuture<RegistryWrapper.WrapperLookup>
 ) : FabricTagProvider.BlockTagProvider(O, RF) {
     override fun configure(WL: RegistryWrapper.WrapperLookup) {
+        getOrCreateTagBuilder(BlockTags.AXE_MINEABLE).let {
+            for (B in NguhBlocks.AXE_MINEABLE) it.add(B)
+        }
+
         getOrCreateTagBuilder(BlockTags.PICKAXE_MINEABLE).let {
             for (B in NguhBlocks.PICKAXE_MINEABLE) it.add(B)
         }
@@ -53,10 +58,12 @@ class NguhcraftBlockTagProvider(
         getOrCreateTagBuilder(BlockTags.DOORS).add(NguhBlocks.LOCKED_DOOR)
 
         // Add blocks from families.
+        val Fences = getOrCreateTagBuilder(BlockTags.FENCES)
         val Walls = getOrCreateTagBuilder(BlockTags.WALLS)
         val Stairs = getOrCreateTagBuilder(BlockTags.STAIRS)
         val Slabs = getOrCreateTagBuilder(BlockTags.SLABS)
-        for (B in NguhBlocks.STONE_VARIANT_FAMILIES) {
+        for (B in NguhBlocks.ALL_VARIANT_FAMILIES) {
+            B.Fence?.let { Fences.add(it) }
             B.Slab?.let { Slabs.add(it) }
             B.Stairs?.let { Stairs.add(it) }
             B.Wall?.let { Walls.add(it) }
@@ -90,7 +97,7 @@ class NguhcraftLootTableProvider(
     override fun generate() {
         NguhBlocks.DROPS_SELF.forEach { addDrop(it) }
         addDrop(NguhBlocks.LOCKED_DOOR) { B: Block -> doorDrops(B) }
-        for (S in NguhBlocks.STONE_VARIANT_FAMILY_BLOCKS.filter { it is SlabBlock })
+        for (S in NguhBlocks.ALL_VARIANT_FAMILY_BLOCKS.filter { it is SlabBlock })
             addDrop(S, ::slabDrops)
 
         // Copied from nameableContainerDrops(), but modified to also

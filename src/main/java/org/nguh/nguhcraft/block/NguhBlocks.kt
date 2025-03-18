@@ -161,6 +161,7 @@ class ChestVariantProperty : SelectProperty<ChestVariant> {
 }
 
 val BlockFamily.Chiseled get() = this.variants[BlockFamily.Variant.CHISELED]
+val BlockFamily.Fence get() = this.variants[BlockFamily.Variant.FENCE]
 val BlockFamily.Polished get() = this.variants[BlockFamily.Variant.POLISHED]
 val BlockFamily.Slab get() = this.variants[BlockFamily.Variant.SLAB]
 val BlockFamily.Stairs get() = this.variants[BlockFamily.Variant.STAIRS]
@@ -402,6 +403,20 @@ object NguhBlocks {
     )
 
     // =========================================================================
+    //  Tinted Oak
+    // =========================================================================
+    val TINTED_OAK_PLANKS = Register(
+        "tinted_oak_planks",
+        ::Block,
+        AbstractBlock.Settings.copy(Blocks.PALE_OAK_PLANKS)
+            .mapColor(MapColor.PALE_PURPLE)
+    )
+
+    val TINTED_OAK_SLAB = RegisterVariant(TINTED_OAK_PLANKS, "slab", ::SlabBlock)
+    val TINTED_OAK_STAIRS = RegisterStairs(TINTED_OAK_PLANKS)
+    val TINTED_OAK_FENCE = RegisterVariant(TINTED_OAK_PLANKS, "fence", ::FenceBlock)
+
+    // =========================================================================
     //  Block entities
     // =========================================================================
     val LOCKED_DOOR_BLOCK_ENTITY = RegisterEntity(
@@ -466,10 +481,16 @@ object NguhBlocks {
         .chiseled(GILDED_CHISELED_CALCITE_BRICKS)
         .build()
 
+    val TINTED_OAK_FAMILY: BlockFamily = BlockFamilies.register(TINTED_OAK_PLANKS)
+        .slab(TINTED_OAK_SLAB)
+        .stairs(TINTED_OAK_STAIRS)
+        .fence(TINTED_OAK_FENCE)
+        .build()
+
     val CINNABAR_FAMILIES = listOf(CINNABAR_FAMILY, POLISHED_CINNABAR_FAMILY, CINNABAR_BRICK_FAMILY)
     val CALCITE_FAMILIES = listOf(POLISHED_CALCITE_FAMILY, CALCITE_BRICK_FAMILY)
     val GILDED_CALCITE_FAMILIES = listOf(GILDED_CALCITE_FAMILY, GILDED_POLISHED_CALCITE_FAMILY, GILDED_CALCITE_BRICK_FAMILY)
-    val FAMILY_GROUPS = listOf(CINNABAR_FAMILIES, CALCITE_FAMILIES, GILDED_CALCITE_FAMILIES)
+    val STONE_FAMILY_GROUPS = listOf(CINNABAR_FAMILIES, CALCITE_FAMILIES, GILDED_CALCITE_FAMILIES)
 
     val STONE_VARIANT_FAMILIES = arrayOf(
         CINNABAR_FAMILY,
@@ -482,6 +503,12 @@ object NguhBlocks {
         GILDED_CALCITE_BRICK_FAMILY
     )
 
+    val WOOD_VARIANT_FAMILIES = arrayOf(
+        TINTED_OAK_FAMILY
+    )
+
+    val ALL_VARIANT_FAMILIES = STONE_VARIANT_FAMILIES + WOOD_VARIANT_FAMILIES
+
     val STONE_VARIANT_FAMILY_BLOCKS = mutableSetOf<Block>().also {
         for (F in STONE_VARIANT_FAMILIES) {
             it.add(F.baseBlock)
@@ -489,9 +516,22 @@ object NguhBlocks {
         }
     }.toTypedArray()
 
+    val WOOD_VARIANT_FAMILY_BLOCKS = mutableSetOf<Block>().also {
+        for (F in WOOD_VARIANT_FAMILIES) {
+            it.add(F.baseBlock)
+            it.addAll(F.variants.values)
+        }
+    }.toTypedArray()
+
+    val ALL_VARIANT_FAMILY_BLOCKS = STONE_VARIANT_FAMILY_BLOCKS + WOOD_VARIANT_FAMILY_BLOCKS
+
     // =========================================================================
     // Tags
     // =========================================================================
+    val AXE_MINEABLE = mutableSetOf<Block>().also {
+        it.addAll(WOOD_VARIANT_FAMILY_BLOCKS)
+    }.toTypedArray()
+
     // Note: These are seemingly randomly shuffled everytime datagen runs; I have
     // no idea why, but they all seem to be there so I don’t care.
     val PICKAXE_MINEABLE = mutableSetOf(
@@ -516,7 +556,7 @@ object NguhBlocks {
         it.addAll(CHAINS_AND_LANTERNS.flatten())
 
         // Slabs may drop 2 or 1 and are thus handled separately.
-        it.addAll(STONE_VARIANT_FAMILY_BLOCKS.filter { it !is SlabBlock })
+        it.addAll(ALL_VARIANT_FAMILY_BLOCKS.filter { it !is SlabBlock })
     }.toTypedArray()
 
     // =========================================================================
@@ -552,7 +592,7 @@ object NguhBlocks {
         RegisterBarsModel(G, GOLD_BARS)
 
         // Block families.
-        STONE_VARIANT_FAMILIES
+        ALL_VARIANT_FAMILIES
             .filter(BlockFamily::shouldGenerateModels)
             .forEach { G.registerCubeAllModelTexturePool(it.baseBlock).family(it) }
 
@@ -581,7 +621,7 @@ object NguhBlocks {
             it.add(WROUGHT_IRON_BLOCK)
             it.add(WROUGHT_IRON_BARS)
             it.add(GOLD_BARS)
-            for (B in STONE_VARIANT_FAMILY_BLOCKS) it.add(B)
+            for (B in ALL_VARIANT_FAMILY_BLOCKS) it.add(B)
         }
 
         ItemGroupEvents.modifyEntriesEvent(ItemGroups.FUNCTIONAL).register {
