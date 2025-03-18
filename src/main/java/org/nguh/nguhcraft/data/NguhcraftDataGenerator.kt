@@ -32,6 +32,7 @@ import net.minecraft.registry.tag.TagKey
 import org.nguh.nguhcraft.NguhDamageTypes
 import org.nguh.nguhcraft.NguhPaintings
 import org.nguh.nguhcraft.block.Fence
+import org.nguh.nguhcraft.block.NguhBlockModels
 import org.nguh.nguhcraft.block.NguhBlocks
 import org.nguh.nguhcraft.block.Slab
 import org.nguh.nguhcraft.block.Stairs
@@ -120,7 +121,7 @@ class NguhcraftLootTableProvider(
 
 class NguhcraftModelGenerator(O: FabricDataOutput) : FabricModelProvider(O) {
     override fun generateBlockStateModels(G: BlockStateModelGenerator) {
-        NguhBlocks.BootstrapModels(G)
+        NguhBlockModels.BootstrapModels(G)
     }
 
     override fun generateItemModels(G: ItemModelGenerator) {

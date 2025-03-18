@@ -45,81 +45,6 @@ import java.util.Optional
 import java.util.Optional.empty
 import java.util.function.IntFunction
 
-
-@Environment(EnvType.CLIENT)
-private fun MakeSprite(S: String) = SpriteIdentifier(
-    TexturedRenderLayers.CHEST_ATLAS_TEXTURE,
-    Id("entity/chest/$S")
-)
-
-@Environment(EnvType.CLIENT)
-class LockedChestVariant(
-    val Locked: SpriteIdentifier,
-    val Unlocked: SpriteIdentifier
-) {
-    constructor(S: String) : this(
-        Locked = MakeSprite("${S}_locked"),
-        Unlocked = MakeSprite(S)
-    )
-}
-
-@Environment(EnvType.CLIENT)
-class ChestTextureOverride(
-    val Single: LockedChestVariant,
-    val Left: LockedChestVariant,
-    val Right: LockedChestVariant,
-) {
-    internal constructor(S: String) : this(
-        Single = LockedChestVariant(S),
-        Left = LockedChestVariant("${S}_left"),
-        Right = LockedChestVariant("${S}_right")
-    )
-
-    internal fun get(CT: ChestType, Locked: Boolean) = when (CT) {
-        ChestType.LEFT -> if (Locked) Left.Locked else Left.Unlocked
-        ChestType.RIGHT -> if (Locked) Right.Locked else Right.Unlocked
-        else -> if (Locked) Single.Locked else Single.Unlocked
-    }
-
-    companion object {
-        internal val Normal = OverrideVanillaModel(
-            Single = TexturedRenderLayers.NORMAL,
-            Left = TexturedRenderLayers.NORMAL_LEFT,
-            Right = TexturedRenderLayers.NORMAL_RIGHT,
-            Key = "chest"
-        )
-
-
-        @Environment(EnvType.CLIENT)
-        private val OVERRIDES = mapOf(
-            ChestVariant.CHRISTMAS to OverrideVanillaModel(
-                Single = TexturedRenderLayers.CHRISTMAS,
-                Left = TexturedRenderLayers.CHRISTMAS_LEFT,
-                Right = TexturedRenderLayers.CHRISTMAS_RIGHT,
-                Key = "christmas"
-            ),
-
-            ChestVariant.PALE_OAK to ChestTextureOverride("pale_oak")
-        )
-
-        @Environment(EnvType.CLIENT)
-        @JvmStatic
-        fun GetTexture(CV: ChestVariant?, CT: ChestType, Locked: Boolean) =
-            (CV?.let { OVERRIDES[CV] } ?: Normal).get(CT, Locked)
-
-        internal fun OverrideVanillaModel(
-            Single: SpriteIdentifier,
-            Left: SpriteIdentifier,
-            Right: SpriteIdentifier,
-            Key: String,
-        ) = ChestTextureOverride(
-            Single = LockedChestVariant(MakeSprite("${Key}_locked"), Single),
-            Left = LockedChestVariant(MakeSprite("${Key}_left_locked"), Left),
-            Right = LockedChestVariant(MakeSprite("${Key}_right_locked"), Right)
-        )
-    }
-}
-
 enum class ChestVariant : StringIdentifiable {
     CHRISTMAS,
     PALE_OAK;
@@ -138,25 +63,6 @@ enum class ChestVariant : StringIdentifiable {
 
         val CODEC: Codec<ChestVariant> = StringIdentifiable.createCodec(ChestVariant::values)
         val PACKET_CODEC: PacketCodec<ByteBuf, ChestVariant> = PacketCodecs.indexed(BY_ID, ChestVariant::ordinal)
-    }
-}
-
-@Environment(EnvType.CLIENT)
-class ChestVariantProperty : SelectProperty<ChestVariant> {
-    override fun getValue(
-        St: ItemStack,
-        CW: ClientWorld?,
-        LE: LivingEntity?,
-        Seed: Int,
-        MTM: ModelTransformationMode
-    ) = St.get(NguhBlocks.CHEST_VARIANT_COMPONENT)
-
-    override fun getType() = TYPE
-    companion object {
-        val TYPE: SelectProperty.Type<ChestVariantProperty, ChestVariant> = SelectProperty.Type.create(
-            MapCodec.unit(ChestVariantProperty()),
-            ChestVariant.CODEC
-        )
     }
 }
 
@@ -560,58 +466,8 @@ object NguhBlocks {
     }.toTypedArray()
 
     // =========================================================================
-    //  Models
+    //  Initialisation
     // =========================================================================
-    @Environment(EnvType.CLIENT)
-    fun ChainModelTemplate(): TexturedModel.Factory = TexturedModel.makeFactory(
-        TextureMap::all,
-        Model(Optional.of<Identifier>(Id("block/template_chain")), empty(), ALL)
-    )
-
-    @Environment(EnvType.CLIENT)
-    fun BootstrapModels(G: BlockStateModelGenerator) {
-        // The door and hopper block state models are very complicated and not exposed
-        // as helper functions (the door is actually exposed but our door has an extra
-        // block state), so those are currently hard-coded as JSON files instead of being
-        // generated here.
-        G.registerItemModel(DECORATIVE_HOPPER.asItem())
-        G.registerItemModel(LOCKED_DOOR.asItem())
-
-        // Simple blocks.
-        G.registerSimpleCubeAll(WROUGHT_IRON_BLOCK)
-        G.registerSimpleCubeAll(COMPRESSED_STONE)
-
-        // Chains and lanterns.
-        for ((Chain, Lantern) in CHAINS_AND_LANTERNS) {
-            G.registerLantern(Lantern)
-            G.registerItemModel(Chain.asItem())
-            G.registerAxisRotated(Chain, getBlockModelId(Chain))
-            ChainModelTemplate().upload(Chain, G.modelCollector)
-        }
-
-        // Bars.
-        RegisterBarsModel(G, WROUGHT_IRON_BARS)
-        RegisterBarsModel(G, GOLD_BARS)
-
-        // Block families.
-        ALL_VARIANT_FAMILIES
-            .filter(BlockFamily::shouldGenerateModels)
-            .forEach { G.registerCubeAllModelTexturePool(it.baseBlock).family(it) }
-
-        // Chest variants. Copied from registerChest().
-        val Template = Models.TEMPLATE_CHEST.upload(Items.CHEST, TextureMap.particle(Blocks.OAK_PLANKS), G.modelCollector)
-        val Normal = ItemModels.special(Template, ChestModelRenderer.Unbaked(ChestModelRenderer.NORMAL_ID))
-        val Christmas = ItemModels.special(Template, ChestModelRenderer.Unbaked(ChestModelRenderer.CHRISTMAS_ID))
-        val ChristmasOrNormal = ItemModels.christmasSelect(Christmas, Normal)
-        val PaleOak = ItemModels.special(Template, ChestModelRenderer.Unbaked(Id("pale_oak")))
-        G.itemModelOutput.accept(Items.CHEST, ItemModels.select(
-            ChestVariantProperty(),
-            ChristmasOrNormal,
-            ItemModels.switchCase(ChestVariant.CHRISTMAS, Christmas),
-            ItemModels.switchCase(ChestVariant.PALE_OAK, PaleOak),
-        ))
-    }
-
     fun Init() {
         ItemGroupEvents.modifyEntriesEvent(ItemGroups.REDSTONE).register {
             it.add(DECORATIVE_HOPPER)
@@ -628,19 +484,6 @@ object NguhBlocks {
 
         ItemGroupEvents.modifyEntriesEvent(ItemGroups.FUNCTIONAL).register {
             for (B in CHAINS_AND_LANTERNS.flatten()) it.add(B)
-        }
-    }
-
-    @Environment(EnvType.CLIENT)
-    fun InitRenderLayers() {
-        RenderLayer.getCutout().let {
-            BlockRenderLayerMap.INSTANCE.putBlock(LOCKED_DOOR, it)
-            for (B in CHAINS_AND_LANTERNS.flatten()) BlockRenderLayerMap.INSTANCE.putBlock(B, it)
-        }
-
-        RenderLayer.getCutoutMipped().let {
-            BlockRenderLayerMap.INSTANCE.putBlock(WROUGHT_IRON_BARS, it)
-            BlockRenderLayerMap.INSTANCE.putBlock(GOLD_BARS, it)
         }
     }
 
@@ -696,66 +539,4 @@ object NguhBlocks {
         Id(Key),
         Type
     )
-
-    // Copied from ::registerIronBars()
-    @Environment(EnvType.CLIENT)
-    fun RegisterBarsModel(G: BlockStateModelGenerator, B: Block) {
-        val identifier = ModelIds.getBlockSubModelId(B, "_post_ends")
-        val identifier2 = ModelIds.getBlockSubModelId(B, "_post")
-        val identifier3 = ModelIds.getBlockSubModelId(B, "_cap")
-        val identifier4 = ModelIds.getBlockSubModelId(B, "_cap_alt")
-        val identifier5 = ModelIds.getBlockSubModelId(B, "_side")
-        val identifier6 = ModelIds.getBlockSubModelId(B, "_side_alt")
-        G.blockStateCollector
-            .accept(
-                MultipartBlockStateSupplier.create(B)
-                    .with(BlockStateVariant.create().put(VariantSettings.MODEL, identifier))
-                    .with(
-                        When.create().set(Properties.NORTH, false).set(Properties.EAST, false).set(Properties.SOUTH, false)
-                            .set(Properties.WEST, false),
-                        BlockStateVariant.create().put(VariantSettings.MODEL, identifier2)
-                    )
-                    .with(
-                        When.create().set(Properties.NORTH, true).set(Properties.EAST, false).set(Properties.SOUTH, false)
-                            .set(Properties.WEST, false),
-                        BlockStateVariant.create().put(VariantSettings.MODEL, identifier3)
-                    )
-                    .with(
-                        When.create().set(Properties.NORTH, false).set(Properties.EAST, true).set(Properties.SOUTH, false)
-                            .set(Properties.WEST, false),
-                        BlockStateVariant.create().put(VariantSettings.MODEL, identifier3)
-                            .put(VariantSettings.Y, VariantSettings.Rotation.R90)
-                    )
-                    .with(
-                        When.create().set(Properties.NORTH, false).set(Properties.EAST, false).set(Properties.SOUTH, true)
-                            .set(Properties.WEST, false),
-                        BlockStateVariant.create().put(VariantSettings.MODEL, identifier4)
-                    )
-                    .with(
-                        When.create().set(Properties.NORTH, false).set(Properties.EAST, false).set(Properties.SOUTH, false)
-                            .set(Properties.WEST, true),
-                        BlockStateVariant.create().put(VariantSettings.MODEL, identifier4)
-                            .put(VariantSettings.Y, VariantSettings.Rotation.R90)
-                    )
-                    .with(
-                        When.create().set(Properties.NORTH, true),
-                        BlockStateVariant.create().put(VariantSettings.MODEL, identifier5)
-                    )
-                    .with(
-                        When.create().set(Properties.EAST, true),
-                        BlockStateVariant.create().put(VariantSettings.MODEL, identifier5)
-                            .put(VariantSettings.Y, VariantSettings.Rotation.R90)
-                    )
-                    .with(
-                        When.create().set(Properties.SOUTH, true),
-                        BlockStateVariant.create().put(VariantSettings.MODEL, identifier6)
-                    )
-                    .with(
-                        When.create().set(Properties.WEST, true),
-                        BlockStateVariant.create().put(VariantSettings.MODEL, identifier6)
-                            .put(VariantSettings.Y, VariantSettings.Rotation.R90)
-                    )
-            )
-        G.registerItemModel(B)
-    }
 }
