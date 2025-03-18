@@ -164,9 +164,6 @@ class NguhcraftRecipeGenerator(
 
         // Usual crafting recipes for custom stone types.
         for (F in NguhBlocks.STONE_VARIANT_FAMILIES) {
-            if (F.Chiseled != null && F.Polished != null)
-                throw IllegalStateException("A block family must not have both a polished and chiseled variant")
-
             F.Slab?.let {
                 offerShaped(it, 3) {
                     pattern("###")
