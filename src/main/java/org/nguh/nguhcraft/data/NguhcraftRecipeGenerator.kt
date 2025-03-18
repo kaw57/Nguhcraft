@@ -146,6 +146,7 @@ class NguhcraftRecipeGenerator(
         for ((Base, Gilded) in listOf(
             Blocks.CALCITE to NguhBlocks.GILDED_CALCITE,
             NguhBlocks.POLISHED_CALCITE to NguhBlocks.GILDED_POLISHED_CALCITE,
+            NguhBlocks.CALCITE_BRICKS to NguhBlocks.GILDED_CALCITE_BRICKS,
             NguhBlocks.CHISELED_CALCITE to NguhBlocks.GILDED_CHISELED_CALCITE,
             NguhBlocks.CHISELED_CALCITE_BRICKS to NguhBlocks.GILDED_CHISELED_CALCITE_BRICKS
         )) offerShaped(Gilded, 2, "from_${Registries.BLOCK.getKey(Base).get().value.path.lowercase()}_and_gold_ingot") {
@@ -237,8 +238,9 @@ class NguhcraftRecipeGenerator(
 
     /** Add stonecutting recipes for a list of related families. */
     fun offerRelatedStonecuttingFamilies(Families: List<BlockFamily>) {
-        for ((Base, F) in Families.windowed(2))
-                offerStonecuttingFamily(F, Base.baseBlock)
+        for (I in Families.indices)
+            for (J in I + 1..<Families.size)
+                offerStonecuttingFamily(Families[J], Families[I].baseBlock)
     }
 
     // Combines a call to input() and criterion() because having to specify the latter
