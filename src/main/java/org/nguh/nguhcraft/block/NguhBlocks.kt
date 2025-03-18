@@ -13,15 +13,7 @@ import net.minecraft.block.entity.BlockEntity
 import net.minecraft.block.entity.BlockEntityType
 import net.minecraft.block.enums.ChestType
 import net.minecraft.block.piston.PistonBehavior
-import net.minecraft.client.data.BlockStateModelGenerator
-import net.minecraft.client.data.BlockStateVariant
-import net.minecraft.client.data.ItemModels
-import net.minecraft.client.data.ModelIds
-import net.minecraft.client.data.Models
-import net.minecraft.client.data.MultipartBlockStateSupplier
-import net.minecraft.client.data.TextureMap
-import net.minecraft.client.data.VariantSettings
-import net.minecraft.client.data.When
+import net.minecraft.client.data.*
 import net.minecraft.client.render.RenderLayer
 import net.minecraft.client.render.TexturedRenderLayers
 import net.minecraft.client.render.item.model.special.ChestModelRenderer
@@ -29,6 +21,7 @@ import net.minecraft.client.render.item.property.select.SelectProperty
 import net.minecraft.client.util.SpriteIdentifier
 import net.minecraft.client.world.ClientWorld
 import net.minecraft.component.ComponentType
+import net.minecraft.data.family.BlockFamilies
 import net.minecraft.data.family.BlockFamily
 import net.minecraft.entity.LivingEntity
 import net.minecraft.item.*
@@ -45,7 +38,6 @@ import net.minecraft.util.StringIdentifiable
 import net.minecraft.util.function.ValueLists
 import org.nguh.nguhcraft.Nguhcraft.Companion.Id
 import java.util.function.IntFunction
-import kotlin.text.lowercase
 
 
 @Environment(EnvType.CLIENT)
@@ -162,6 +154,12 @@ class ChestVariantProperty : SelectProperty<ChestVariant> {
     }
 }
 
+val BlockFamily.Chiseled get() = this.variants[BlockFamily.Variant.CHISELED]
+val BlockFamily.Polished get() = this.variants[BlockFamily.Variant.POLISHED]
+val BlockFamily.Slab get() = this.variants[BlockFamily.Variant.SLAB]
+val BlockFamily.Stairs get() = this.variants[BlockFamily.Variant.STAIRS]
+val BlockFamily.Wall get() = this.variants[BlockFamily.Variant.WALL]
+
 object NguhBlocks {
     // Components.
     @JvmField val CHEST_VARIANT_ID = Id("chest_variant")
@@ -235,7 +233,132 @@ object NguhBlocks {
             .mapColor(MapColor.STONE_GRAY)
     )
 
+    // =========================================================================
+    // Cinnabar blocks
+    // =========================================================================
+    val CINNABAR = Register(
+        "cinnabar",
+        ::Block,
+        AbstractBlock.Settings.copy(Blocks.TUFF)
+            .mapColor(MapColor.DARK_RED)
+    )
+
+    val CINNABAR_SLAB = RegisterVariant(CINNABAR, "slab", ::SlabBlock)
+    val CINNABAR_STAIRS = RegisterStairs(CINNABAR)
+
+    val POLISHED_CINNABAR = Register(
+        "polished_cinnabar",
+        ::Block,
+        AbstractBlock.Settings.copy(Blocks.STONE)
+            .mapColor(MapColor.DARK_RED)
+    )
+
+    val POLISHED_CINNABAR_SLAB = RegisterVariant(POLISHED_CINNABAR, "slab", ::SlabBlock)
+    val POLISHED_CINNABAR_STAIRS = RegisterStairs(POLISHED_CINNABAR)
+    val POLISHED_CINNABAR_WALL = RegisterVariant(POLISHED_CINNABAR, "wall", ::WallBlock)
+
+    val CINNABAR_BRICKS = Register(
+        "cinnabar_bricks",
+        ::Block,
+        AbstractBlock.Settings.copy(Blocks.STONE)
+            .mapColor(MapColor.DARK_RED)
+    )
+
+    val CINNABAR_BRICK_SLAB = RegisterVariant(CINNABAR_BRICKS, "slab", ::SlabBlock)
+    val CINNABAR_BRICK_STAIRS = RegisterStairs(CINNABAR_BRICKS)
+    val CINNABAR_BRICK_WALL = RegisterVariant(CINNABAR_BRICKS, "wall", ::WallBlock)
+
+    // =========================================================================
+    // Calcite blocks
+    // =========================================================================
+    val POLISHED_CALCITE = Register(
+        "polished_calcite",
+        ::Block,
+        AbstractBlock.Settings.copy(Blocks.CALCITE)
+            .mapColor(MapColor.TERRACOTTA_WHITE)
+    )
+
+    val POLISHED_CALCITE_SLAB = RegisterVariant(POLISHED_CALCITE, "slab", ::SlabBlock)
+    val POLISHED_CALCITE_STAIRS = RegisterStairs(POLISHED_CALCITE)
+    val POLISHED_CALCITE_WALL = RegisterVariant(POLISHED_CALCITE, "wall", ::WallBlock)
+
+    val CHISELED_CALCITE = Register(
+        "chiseled_calcite",
+        ::Block,
+        AbstractBlock.Settings.copy(Blocks.CALCITE)
+            .mapColor(MapColor.TERRACOTTA_WHITE)
+    )
+
+    val CALCITE_BRICKS = Register(
+        "calcite_bricks",
+        ::Block,
+        AbstractBlock.Settings.copy(Blocks.CALCITE)
+            .mapColor(MapColor.TERRACOTTA_WHITE)
+    )
+
+    val CALCITE_BRICK_SLAB = RegisterVariant(CALCITE_BRICKS, "slab", ::SlabBlock)
+    val CALCITE_BRICK_STAIRS = RegisterStairs(CALCITE_BRICKS)
+    val CALCITE_BRICK_WALL = RegisterVariant(CALCITE_BRICKS, "wall", ::WallBlock)
+
+    val CHISELED_CALCITE_BRICKS = Register(
+        "chiseled_calcite_bricks",
+        ::Block,
+        AbstractBlock.Settings.copy(Blocks.CALCITE)
+            .mapColor(MapColor.TERRACOTTA_WHITE)
+    )
+
+    // =========================================================================
+    // Gilded calcite
+    // =========================================================================
+    val GILDED_CALCITE = Register(
+        "gilded_calcite",
+        ::Block,
+        AbstractBlock.Settings.copy(Blocks.CALCITE)
+            .mapColor(MapColor.TERRACOTTA_WHITE)
+    )
+
+    val GILDED_CALCITE_SLAB = RegisterVariant(GILDED_CALCITE, "slab", ::SlabBlock)
+    val GILDED_CALCITE_STAIRS = RegisterStairs(GILDED_CALCITE)
+
+    val GILDED_POLISHED_CALCITE = Register(
+        "gilded_polished_calcite",
+        ::Block,
+        AbstractBlock.Settings.copy(Blocks.CALCITE)
+            .mapColor(MapColor.TERRACOTTA_WHITE)
+    )
+
+    val GILDED_POLISHED_CALCITE_SLAB = RegisterVariant(GILDED_POLISHED_CALCITE, "slab", ::SlabBlock)
+    val GILDED_POLISHED_CALCITE_STAIRS = RegisterStairs(GILDED_POLISHED_CALCITE)
+    val GILDED_POLISHED_CALCITE_WALL = RegisterVariant(GILDED_POLISHED_CALCITE, "wall", ::WallBlock)
+
+    val GILDED_CHISELED_CALCITE = Register(
+        "gilded_chiseled_calcite",
+        ::Block,
+        AbstractBlock.Settings.copy(Blocks.CALCITE)
+            .mapColor(MapColor.TERRACOTTA_WHITE)
+    )
+
+    val GILDED_CALCITE_BRICKS = Register(
+        "gilded_calcite_bricks",
+        ::Block,
+        AbstractBlock.Settings.copy(Blocks.CALCITE)
+            .mapColor(MapColor.TERRACOTTA_WHITE)
+    )
+
+    val GILDED_CALCITE_BRICK_SLAB = RegisterVariant(GILDED_CALCITE_BRICKS, "slab", ::SlabBlock)
+    val GILDED_CALCITE_BRICK_STAIRS = RegisterStairs(GILDED_CALCITE_BRICKS)
+    val GILDED_CALCITE_BRICK_WALL = RegisterVariant(GILDED_CALCITE_BRICKS, "wall", ::WallBlock)
+
+    val GILDED_CHISELED_CALCITE_BRICKS = Register(
+        "gilded_chiseled_calcite_bricks",
+        ::Block,
+        AbstractBlock.Settings.copy(Blocks.CALCITE)
+            .mapColor(MapColor.TERRACOTTA_WHITE)
+    )
+
+    // =========================================================================
     // Block entities.
+    // =========================================================================
     val LOCKED_DOOR_BLOCK_ENTITY = RegisterEntity(
         "lockable_door",
         FabricBlockEntityTypeBuilder
@@ -243,7 +366,90 @@ object NguhBlocks {
             .build()
     )
 
-    val PICKAXE_MINEABLE = arrayOf(
+    // =========================================================================
+    // Block families
+    // =========================================================================
+    val CINNABAR_FAMILY: BlockFamily = BlockFamilies.register(CINNABAR)
+        .polished(POLISHED_CINNABAR)
+        .slab(CINNABAR_SLAB)
+        .stairs(CINNABAR_STAIRS)
+        .build()
+
+    val POLISHED_CINNABAR_FAMILY: BlockFamily = BlockFamilies.register(POLISHED_CINNABAR)
+        .slab(POLISHED_CINNABAR_SLAB)
+        .stairs(POLISHED_CINNABAR_STAIRS)
+        .wall(POLISHED_CINNABAR_WALL)
+        .build()
+
+    val CINNABAR_BRICK_FAMILY: BlockFamily = BlockFamilies.register(CINNABAR_BRICKS)
+        .slab(CINNABAR_BRICK_SLAB)
+        .stairs(CINNABAR_BRICK_STAIRS)
+        .wall(CINNABAR_BRICK_WALL)
+        .build()
+
+    val POLISHED_CALCITE_FAMILY: BlockFamily = BlockFamilies.register(POLISHED_CALCITE)
+        .slab(POLISHED_CALCITE_SLAB)
+        .stairs(POLISHED_CALCITE_STAIRS)
+        .wall(POLISHED_CALCITE_WALL)
+        .chiseled(CHISELED_CALCITE)
+        .build()
+
+    val CALCITE_BRICK_FAMILY: BlockFamily = BlockFamilies.register(CALCITE_BRICKS)
+        .slab(CALCITE_BRICK_SLAB)
+        .stairs(CALCITE_BRICK_STAIRS)
+        .wall(CALCITE_BRICK_WALL)
+        .chiseled(CHISELED_CALCITE_BRICKS)
+        .build()
+
+    val GILDED_CALCITE_FAMILY: BlockFamily = BlockFamilies.register(GILDED_CALCITE)
+        .polished(GILDED_POLISHED_CALCITE)
+        .slab(GILDED_CALCITE_SLAB)
+        .stairs(GILDED_CALCITE_STAIRS)
+        .build()
+
+    val GILDED_POLISHED_CALCITE_FAMILY: BlockFamily = BlockFamilies.register(GILDED_POLISHED_CALCITE)
+        .slab(GILDED_POLISHED_CALCITE_SLAB)
+        .stairs(GILDED_POLISHED_CALCITE_STAIRS)
+        .wall(GILDED_POLISHED_CALCITE_WALL)
+        .chiseled(GILDED_CHISELED_CALCITE)
+        .build()
+
+    val GILDED_CALCITE_BRICK_FAMILY: BlockFamily = BlockFamilies.register(GILDED_CALCITE_BRICKS)
+        .slab(GILDED_CALCITE_BRICK_SLAB)
+        .stairs(GILDED_CALCITE_BRICK_STAIRS)
+        .wall(GILDED_CALCITE_BRICK_WALL)
+        .chiseled(GILDED_CHISELED_CALCITE_BRICKS)
+        .build()
+
+    val CINNABAR_FAMILIES = listOf(CINNABAR_FAMILY, POLISHED_CINNABAR_FAMILY, CINNABAR_BRICK_FAMILY)
+    val CALCITE_FAMILIES = listOf(POLISHED_CALCITE_FAMILY, CALCITE_BRICK_FAMILY)
+    val GILDED_CALCITE_FAMILIES = listOf(GILDED_CALCITE_FAMILY, GILDED_POLISHED_CALCITE_FAMILY, GILDED_CALCITE_BRICK_FAMILY)
+    val FAMILY_GROUPS = listOf(CINNABAR_FAMILIES, CALCITE_FAMILIES, GILDED_CALCITE_FAMILIES)
+
+    val STONE_VARIANT_FAMILIES = arrayOf(
+        CINNABAR_FAMILY,
+        POLISHED_CINNABAR_FAMILY,
+        CINNABAR_BRICK_FAMILY,
+        POLISHED_CALCITE_FAMILY,
+        CALCITE_BRICK_FAMILY,
+        GILDED_CALCITE_FAMILY,
+        GILDED_POLISHED_CALCITE_FAMILY,
+        GILDED_CALCITE_BRICK_FAMILY
+    )
+
+    val STONE_VARIANT_FAMILY_BLOCKS = mutableSetOf<Block>().also {
+        for (F in STONE_VARIANT_FAMILIES) {
+            it.add(F.baseBlock)
+            it.addAll(F.variants.values)
+        }
+    }.toTypedArray()
+
+    // =========================================================================
+    // Tags
+    // =========================================================================
+    // Note: These are seemingly randomly shuffled everytime datagen runs; I have
+    // no idea why, but they all seem to be there so I don’t care.
+    val PICKAXE_MINEABLE = mutableSetOf(
         DECORATIVE_HOPPER,
         LOCKED_DOOR,
         PEARLESCENT_LANTERN,
@@ -252,9 +458,9 @@ object NguhBlocks {
         WROUGHT_IRON_BARS,
         GOLD_BARS,
         COMPRESSED_STONE,
-    )
+    ).also { it.addAll(STONE_VARIANT_FAMILY_BLOCKS) }.toTypedArray()
 
-    val DROPS_SELF = arrayOf(
+    val DROPS_SELF = mutableSetOf(
         DECORATIVE_HOPPER,
         PEARLESCENT_LANTERN,
         PEARLESCENT_CHAIN,
@@ -262,22 +468,37 @@ object NguhBlocks {
         WROUGHT_IRON_BARS,
         GOLD_BARS,
         COMPRESSED_STONE,
-    )
+    ).also {
+        // Slabs may drop 2 or 1 and are thus handled separately.
+        it.addAll(STONE_VARIANT_FAMILY_BLOCKS.filter { it !is SlabBlock })
+    }.toTypedArray()
 
+    // =========================================================================
+    // Models
+    // =========================================================================
     fun BootstrapModels(G: BlockStateModelGenerator) {
         // The door and hopper block state models are very complicated and not exposed
         // as helper functions (the door is actually exposed but our door has an extra
         // block state), so those are currently hard-coded as JSON files instead of being
         // generated here.
-        G.registerLantern(PEARLESCENT_LANTERN)
-        G.registerItemModel(PEARLESCENT_CHAIN.asItem())
         G.registerItemModel(DECORATIVE_HOPPER.asItem())
         G.registerItemModel(LOCKED_DOOR.asItem())
+
+        // Simple blocks.
+        G.registerLantern(PEARLESCENT_LANTERN)
+        G.registerItemModel(PEARLESCENT_CHAIN.asItem())
         G.registerSimpleCubeAll(WROUGHT_IRON_BLOCK)
         G.registerSimpleCubeAll(COMPRESSED_STONE)
         G.registerAxisRotated(PEARLESCENT_CHAIN, ModelIds.getBlockModelId(PEARLESCENT_CHAIN))
+
+        // Bars.
         RegisterBarsModel(G, WROUGHT_IRON_BARS)
         RegisterBarsModel(G, GOLD_BARS)
+
+        // Block families.
+        STONE_VARIANT_FAMILIES
+            .filter(BlockFamily::shouldGenerateModels)
+            .forEach { G.registerCubeAllModelTexturePool(it.baseBlock).family(it) }
 
         // Chest variants. Copied from registerChest().
         val Template = Models.TEMPLATE_CHEST.upload(Items.CHEST, TextureMap.particle(Blocks.OAK_PLANKS), G.modelCollector)
@@ -304,6 +525,7 @@ object NguhBlocks {
             it.add(WROUGHT_IRON_BLOCK)
             it.add(WROUGHT_IRON_BARS)
             it.add(GOLD_BARS)
+            for (B in STONE_VARIANT_FAMILY_BLOCKS) it.add(B)
         }
 
         ItemGroupEvents.modifyEntriesEvent(ItemGroups.FUNCTIONAL).register {
@@ -322,6 +544,24 @@ object NguhBlocks {
         BlockRenderLayerMap.INSTANCE.putBlock(WROUGHT_IRON_BARS, CutoutMipped)
         BlockRenderLayerMap.INSTANCE.putBlock(GOLD_BARS, CutoutMipped)
     }
+
+    @Suppress("DEPRECATION")
+    private fun RegisterVariant(
+        Parent: Block,
+        Suffix: String,
+        Ctor: (AbstractBlock.Settings) -> Block
+    ) = Register(
+        "${Registries.BLOCK.getKey(Parent).get().value.path}_$Suffix",
+        Ctor,
+        AbstractBlock.Settings.copyShallow(Parent)
+    )
+
+    @Suppress("DEPRECATION")
+    private fun RegisterStairs(Parent: Block) = Register(
+        "${Registries.BLOCK.getKey(Parent).get().value.path}_stairs",
+        { StairsBlock(Parent.defaultState, it) },
+        AbstractBlock.Settings.copyShallow(Parent)
+    )
 
     private fun Register(
         Key: String,
