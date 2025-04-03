@@ -197,7 +197,7 @@ internal class Discord : ListenerAdapter() {
         if (Interaction.name == "players") Server.execute {
             try {
                 val S = buildString {
-                    val PL = Server.playerManager.playerList
+                    val PL = Server.playerManager.playerList.filter { !Vanish.IsVanished(it) }
                     append(when (PL.size) {
                         0 -> "**There are currently no players online.**"
                         1 -> "**There is currently 1 player online:**"
