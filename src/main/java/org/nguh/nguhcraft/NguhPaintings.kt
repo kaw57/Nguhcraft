@@ -39,6 +39,7 @@ object NguhPaintings {
         Register("gold_nguh", 1, 1)
         Register("gold_nguh_small", 1, 1)
         Register("kozdenen_rail_diagram", 3, 2)
+        Register("leshrail_diagram", 2, 2)
         Register("map", 5, 5)
         Register("rabo", 1, 4)
         Register("rail_diagram", 3, 3)
