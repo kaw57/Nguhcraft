@@ -326,7 +326,7 @@ internal class MarkdownParser private constructor(private val MD: String) {
                 // We found an emoji, skip over the second colon and add it as a literal.
                 if (Emoji != null) {
                     Nodes.add(Span(StartOfText, Offs))
-                    Nodes.add(LiteralText(Emoji.toString()))
+                    Nodes.add(LiteralText(Emoji))
                     Pos = End + 1
                     StartOfText = Pos
                 }

@@ -20,15 +20,26 @@ object ClientUtils {
     /** 2000 is reasonable, and we can still send it to Discord this way. */
     const val MAX_CHAT_LENGTH = 2000
 
-    /** Emojis we support. */
-    val EMOJI_REPLACEMENTS: Map<String, String> = Gson().fromJson(
-        ClientUtils.javaClass.getResource("/assets/nguhcraft/emoji_replacements.json")!!.readText(),
-        object : TypeToken<Map<String, String>>() {}.type
-    )
+    /**
+     * Emojis we support.
+     *
+     * Some of these are our server emojis, but the images and data for all
+     * Unicode emoji are taken from https://github.com/AmberWat/PixelTwemojiMC-9.
+     */
+    val EMOJI_REPLACEMENTS = buildMap {
+        putAll(LoadEmojiReplacements("/assets/nguhcraft/emoji/twemoji.json"))
+        putAll(LoadEmojiReplacements("/assets/nguhcraft/emoji/nguhmoji.json"))
+    }
 
     /** Get the client instance. */
     @JvmStatic
     fun Client(): MinecraftClient = MinecraftClient.getInstance()
+
+    /** Load emoji replacement data from a resource. */
+    private fun LoadEmojiReplacements(Path: String): Map<String, String> = Gson().fromJson(
+        ClientUtils.javaClass.getResource(Path)!!.readText(),
+        object : TypeToken<Map<String, String>>() {}.type
+    )
 
     /** Preprocess text for rendering. */
     @JvmStatic
