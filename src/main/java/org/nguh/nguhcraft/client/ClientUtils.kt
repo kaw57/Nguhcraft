@@ -25,7 +25,7 @@ object ClientUtils {
         "ngold_nguh" to '\uE203',
         "red_nguh" to '\uE204',
         "red_ng" to '\uE205',
-        "red_agma" to '\uE206',
+        "red_schwa" to '\uE206',
         "red_amogus" to '\uE207',
         "bigyus" to '\uE208',
         "emoji_1" to '\uE209',
