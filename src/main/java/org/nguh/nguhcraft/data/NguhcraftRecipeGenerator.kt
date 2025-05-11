@@ -224,7 +224,7 @@ class NguhcraftRecipeGenerator(
             }
         }
 
-        offerShaped(Items.TUFF, 2) {
+        offerShaped(Items.TUFF, 2, "from_blackstone_and_quartz") {
             pattern("BQ")
             pattern("QB")
             cinput('B', Items.BLACKSTONE)
