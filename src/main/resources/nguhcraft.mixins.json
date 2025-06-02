@@ -96,6 +96,7 @@
 		"client.ClientPlayNetworkHandlerMixin",
 		"client.KeyboardMixin",
 		"client.MinecraftClientMixin",
+		"client.chat.ChatHudMixin",
 		"client.chat.ChatOptionsScreenMixin",
 		"client.chat.ChatScreenMixin",
 		"client.chat.MessageIndicatorMixin",
