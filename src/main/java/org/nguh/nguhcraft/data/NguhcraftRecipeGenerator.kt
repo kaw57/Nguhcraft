@@ -69,6 +69,13 @@ class NguhcraftRecipeGenerator(
             cinput('r', Items.REDSTONE)
         }
 
+        offerShaped(NguhItems.KEY_CHAIN) {
+            pattern(" i ")
+            pattern("i i")
+            pattern(" i ")
+            cinput('i', Items.IRON_NUGGET)
+        }
+
         offerShaped(NguhItems.LOCK, 3) {
             pattern(" i ")
             pattern("i i")
