@@ -61,41 +61,8 @@ class KeyItem : Item(
         Ty: TooltipType
     ) = AppendLockTooltip(S, TT, Ty, KEY_PREFIX)
 
-    override fun useOnBlock(Ctx: ItemUsageContext): ActionResult {
-        // If this is not a lockable block, do nothing.
-        val W = Ctx.world
-        val BE = GetLockableEntity(W, Ctx.blockPos) ?: return ActionResult.PASS
-
-        // If the block is not locked, do nothing; if it is, and the
-        // key doesn’t match, then we fail here.
-        if (BE.lock == ContainerLock.EMPTY) return ActionResult.PASS
-        if (!BE.lock.canOpen(Ctx.stack)) return ActionResult.FAIL
-
-        // Key matches. Drop the lock and clear it.
-        if (W is ServerWorld) {
-            // This could theoretically fail if someone creates a container
-            // lock that uses some other random item predicate, so only drop
-            // a lock if we can extract a stored key.
-            val Key = BE.lock.GetKey()
-            if (Key != null) {
-                val Lock = LockItem.Create(Key)
-                Block.dropStack(W, Ctx.blockPos, Lock)
-            }
-
-            // Remove the component from the block entity either way.
-            UpdateLock(BE, ContainerLock.EMPTY)
-        }
-
-        W.playSound(
-            Ctx.player,
-            Ctx.blockPos,
-            SoundEvents.BLOCK_CHAIN_BREAK,
-            SoundCategory.BLOCKS,
-            1.0f,
-            1.0f
-        )
-
-        return ActionResult.SUCCESS
+    override fun useOnBlock(Ctx: ItemUsageContext) = UseOnBlock(Ctx) {
+        it.lock.canOpen(Ctx.stack)
     }
 
     companion object {
@@ -182,5 +149,61 @@ class KeyItem : Item(
             val E = GetLockableEntity(W, BE.pos) ?: return false
             return E.lock != ContainerLock.EMPTY
         }
+
+        /** Run when a key is used on a block. */
+        fun UseOnBlock(
+            Ctx: ItemUsageContext,
+            CanOpen: (BE: LockableBlockEntity) -> Boolean
+        ): ActionResult {
+            // If this is not a lockable block, do nothing.
+            val W = Ctx.world
+            val BE = GetLockableEntity(W, Ctx.blockPos) ?: return ActionResult.PASS
+
+            // If the block is not locked, do nothing; if it is, and the
+            // key doesn’t match, then we fail here.
+            if (BE.lock == ContainerLock.EMPTY) return ActionResult.PASS
+            if (!CanOpen(BE)) return ActionResult.FAIL
+
+            // Key matches. Drop the lock and clear it.
+            if (W is ServerWorld) {
+                // This could theoretically fail if someone creates a container
+                // lock that uses some other random item predicate, so only drop
+                // a lock if we can extract a stored key.
+                val Key = BE.lock.GetKey()
+                if (Key != null) {
+                    val Lock = LockItem.Create(Key)
+                    Block.dropStack(W, Ctx.blockPos, Lock)
+                }
+
+                // Remove the component from the block entity either way.
+                UpdateLock(BE, ContainerLock.EMPTY)
+            }
+
+            W.playSound(
+                Ctx.player,
+                Ctx.blockPos,
+                SoundEvents.BLOCK_CHAIN_BREAK,
+                SoundCategory.BLOCKS,
+                1.0f,
+                1.0f
+            )
+
+            return ActionResult.SUCCESS
+        }
+    }
+}
+
+class MasterKeyItem : Item(
+    Settings()
+        .fireproof()
+        .rarity(Rarity.EPIC)
+        .registryKey(RegistryKey.of(RegistryKeys.ITEM, ID))
+) {
+    override fun useOnBlock(Ctx: ItemUsageContext) = KeyItem.UseOnBlock(Ctx) {
+        Ctx.player?.isCreative == true
+    }
+
+    companion object {
+        @JvmField val ID = Id("master_key")
     }
 }
