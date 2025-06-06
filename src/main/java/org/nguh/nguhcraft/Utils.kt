@@ -251,6 +251,20 @@ object Utils {
         return EnchantmentHelper.getLevel(R.getOrThrow(E), Stack)
     }
 
+    /** If this iterable contains a single element, return it, else return null. */
+    fun<T> GetSingleElement(Iter: Iterable<T>?): T? {
+        if (Iter == null) return null
+
+        // For lists, just extract the first element directly.
+        if (Iter is List) return if (Iter.size == 1) Iter.first() else null
+
+        // For anything else, use an iterator.
+        val It = Iter.iterator()
+        if (!It.hasNext()) return null
+        val First = It.next()
+        return if (It.hasNext()) null else First
+    }
+
     /** Normalise a string for fuzzy matching against another string  */
     fun NormaliseNFKCLower(S: String) = Normalizer.normalize(S, Normalizer.Form.NFKC).lowercase(Locale.getDefault())
 

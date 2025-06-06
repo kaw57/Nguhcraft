@@ -9,6 +9,7 @@
         "common.ChestBlockEntityMixin",
         "common.ChestBlockMixin",
         "common.ComponentPredicateAccessor",
+        "common.ContainerLockMixin",
         "common.EnchantmentMixin",
         "common.EnderEyeItemMixin",
         "common.ExperimentalMinecartControllerMixin",
@@ -93,6 +94,7 @@
     ],
     "client": [
         "client.AnvilScreenMixin",
+        "client.BundleTooltipSubmenuHandlerMixin",
         "client.ClientPlayNetworkHandlerMixin",
         "client.KeyboardMixin",
         "client.MinecraftClientMixin",
