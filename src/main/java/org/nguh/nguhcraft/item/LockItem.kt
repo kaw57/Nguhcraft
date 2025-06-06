@@ -66,7 +66,7 @@ class LockItem : Item(
         Ctx: TooltipContext,
         TT: MutableList<Text>,
         Ty: TooltipType
-    ) = KeyItem.AppendLockTooltip(S, TT, Ty, LOCK_PREFIX)
+    ) { TT.add(KeyItem.GetLockTooltip(S, Ty, LOCK_PREFIX)) }
 
     override fun useOnBlock(Ctx: ItemUsageContext): ActionResult {
         val W = Ctx.world

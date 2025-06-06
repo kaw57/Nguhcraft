@@ -6,6 +6,7 @@
     "mixins": [
         "common.AbstractMinecartEntityMixin",
         "common.AnvilScreenHandlerMixin",
+        "common.BundleItemMixin",
         "common.ChestBlockEntityMixin",
         "common.ChestBlockMixin",
         "common.ComponentPredicateAccessor",
@@ -106,6 +107,7 @@
         "client.chat.SocialInteractionsPlayerListEntryMixin",
         "client.chat.TitleScreenMixin",
         "client.chat.YggdrasilUserApiServiceMixin",
+        "client.render.BundleTooltipComponentMixin",
         "client.render.EntityRenderDispatcherMixin",
         "client.render.GameMenuScreenMixin",
         "client.render.InGameHudMixin",

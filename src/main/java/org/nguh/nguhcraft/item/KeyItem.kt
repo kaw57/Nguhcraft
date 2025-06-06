@@ -12,6 +12,7 @@ import net.minecraft.block.enums.DoubleBlockHalf
 import net.minecraft.component.ComponentType
 import net.minecraft.component.DataComponentTypes
 import net.minecraft.component.type.BundleContentsComponent
+import net.minecraft.entity.Entity
 import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.inventory.ContainerLock
@@ -29,6 +30,7 @@ import net.minecraft.screen.slot.Slot
 import net.minecraft.server.world.ServerWorld
 import net.minecraft.sound.SoundCategory
 import net.minecraft.sound.SoundEvents
+import net.minecraft.text.MutableText
 import net.minecraft.text.Text
 import net.minecraft.util.ActionResult
 import net.minecraft.util.ClickType
@@ -60,7 +62,7 @@ class KeyItem : Item(
         Ctx: TooltipContext,
         TT: MutableList<Text>,
         Ty: TooltipType
-    ) = AppendLockTooltip(S, TT, Ty, KEY_PREFIX)
+    ) { TT.add(GetLockTooltip(S, Ty, KEY_PREFIX)) }
 
     override fun useOnBlock(Ctx: ItemUsageContext) = UseOnBlock(Ctx)
 
@@ -87,12 +89,6 @@ class KeyItem : Item(
 
             override fun getFrom(BE: ChestBlockEntity) = BE
             override fun getFallback() = null
-        }
-
-        fun AppendLockTooltip(S: ItemStack, TT: MutableList<Text>, Ty: TooltipType, Prefix: Text) {
-            val Key = S.get(COMPONENT) ?: return
-            val Str = Text.literal(if (Ty.isAdvanced || Key.length < 13) Key else Key.substring(0..<13) + "...")
-            TT.add(Prefix.copy().append(Str.formatted(Formatting.LIGHT_PURPLE)))
         }
 
         /** Create an instance with the specified key. */
@@ -139,6 +135,13 @@ class KeyItem : Item(
             // All other containers are not double blocks.
             if (BE is LockableContainerBlockEntity) return BE as LockableBlockEntity
             return null
+        }
+
+        /** Get the UUID tooltip for a key or lock item. */
+        fun GetLockTooltip(S: ItemStack, Ty: TooltipType, Prefix: Text): Text {
+            val Key = S.get(COMPONENT) ?: return Prefix
+            val Str = Text.literal(if (Ty.isAdvanced || Key.length < 13) Key else Key.substring(0..<13) + "...")
+            return Text.empty().append(Prefix).append(Str.formatted(Formatting.LIGHT_PURPLE))
         }
 
         /** Check if a chest is locked. */
@@ -240,6 +243,14 @@ class KeyChainItem : BundleItem(
     companion object {
         @JvmField val ID = Id("key_chain")
         @JvmStatic fun `is`(S: ItemStack) = S.isOf(NguhItems.KEY_CHAIN)
+
+        /** Get the tooltip to render for the selected key. */
+        @JvmStatic
+        fun GetKeyTooltip(St: ItemStack) = KeyItem.GetLockTooltip(
+            St,
+            TooltipType.BASIC,
+            Text.empty().append(St.formattedName).append(": ")
+        )
 
         /** We don’t allow adding master keys to keychains because that’s kind of pointless. */
         private fun IsEmptyOrKey(St: ItemStack): Boolean = St.isEmpty || St.isOf(NguhItems.KEY)
