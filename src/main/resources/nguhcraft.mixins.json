@@ -15,6 +15,7 @@
         "common.EnderEyeItemMixin",
         "common.ExperimentalMinecartControllerMixin",
         "common.HopperBlockAcessor",
+        "common.LivingEntityMixin",
         "common.PotionContentsComponentMixin",
         "common.TridentEntityMixin",
         "datafixer.ItemStackComponentizationFixMixin",
