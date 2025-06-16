@@ -17,6 +17,7 @@
         "common.ExperimentalMinecartControllerMixin",
         "common.HopperBlockAcessor",
         "common.LivingEntityMixin",
+        "common.MangroveLeavesBlockMixin",
         "common.PotionContentsComponentMixin",
         "common.TridentEntityMixin",
         "datafixer.ItemStackComponentizationFixMixin",
