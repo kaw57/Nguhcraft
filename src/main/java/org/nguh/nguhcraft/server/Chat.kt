@@ -46,7 +46,7 @@ object Chat {
     }
 
     /** Actually send a message. */
-    private fun DispatchMessage(S: MinecraftServer, Sender: ServerPlayerEntity?, Message: String) {
+    fun DispatchMessage(S: MinecraftServer, Sender: ServerPlayerEntity?, Message: String) {
         // On the integrated server, don’t bother with the linking.
         if (IsIntegratedServer()) {
             S.Broadcast(ClientboundChatPacket(

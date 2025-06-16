@@ -96,6 +96,7 @@ object Commands {
             D.register(EnchantCommand(A))              // /enchant
             D.register(EntityCountCommand())           // /entity_count
             D.register(FixCommand())                   // /fix
+            D.register(HereCommand())                  // /here
             D.register(HomeCommand())                  // /home
             D.register(HomesCommand())                 // /homes
             D.register(KeyCommand())                   // /key
@@ -936,6 +937,14 @@ object Commands {
         .requires { it.isExecutedByPlayer && it.hasPermissionLevel(4) }
         .then(literal("all").executes { FixCommand.FixAll(it.source, it.source.playerOrThrow) })
         .executes { FixCommand.Fix(it.source, it.source.playerOrThrow) }
+
+    private fun HereCommand(): LiteralArgumentBuilder<ServerCommandSource> = literal("here")
+        .requires { it.isExecutedByPlayer }
+        .executes {
+            val P = it.source.playerOrThrow.blockPos
+            Chat.DispatchMessage(it.source.server, it.source.playerOrThrow, "${P.x} ${P.y} ${P.z}")
+            1
+        }
 
     private fun HomeCommand(): LiteralArgumentBuilder<ServerCommandSource> = literal("home")
         .requires { it.isExecutedByPlayer }
