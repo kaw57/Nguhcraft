@@ -6,6 +6,7 @@
     "mixins": [
         "common.AbstractMinecartEntityMixin",
         "common.AnvilScreenHandlerMixin",
+        "common.BoneMealItemMixin",
         "common.BundleItemMixin",
         "common.ChestBlockEntityMixin",
         "common.ChestBlockMixin",

@@ -73,6 +73,21 @@ class NguhcraftBlockTagProvider(
         getOrCreateTagBuilder(BlockTags.WOODEN_STAIRS).add(NguhBlocks.TINTED_OAK_STAIRS)
         getOrCreateTagBuilder(BlockTags.WOODEN_FENCES).add(NguhBlocks.TINTED_OAK_FENCE)
 
+        // Block tag for bonemealing flowers.
+        getOrCreateTagBuilder(NguhBlocks.CAN_DUPLICATE_WITH_BONEMEAL)
+            .add(Blocks.DANDELION)
+            .add(Blocks.POPPY)
+            .add(Blocks.BLUE_ORCHID)
+            .add(Blocks.ALLIUM)
+            .add(Blocks.AZURE_BLUET)
+            .add(Blocks.RED_TULIP)
+            .add(Blocks.ORANGE_TULIP)
+            .add(Blocks.WHITE_TULIP)
+            .add(Blocks.PINK_TULIP)
+            .add(Blocks.OXEYE_DAISY)
+            .add(Blocks.CORNFLOWER)
+            .add(Blocks.LILY_OF_THE_VALLEY)
+
         // Add blocks from families.
         val Fences = getOrCreateTagBuilder(BlockTags.FENCES)
         val Walls = getOrCreateTagBuilder(BlockTags.WALLS)
