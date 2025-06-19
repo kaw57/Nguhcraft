@@ -1,6 +1,7 @@
 package org.nguh.nguhcraft
 
 import com.mojang.logging.LogUtils
+import com.mojang.serialization.Codec
 import com.mojang.serialization.JavaOps
 import net.minecraft.component.ComponentChanges
 import net.minecraft.enchantment.Enchantment
@@ -298,3 +299,11 @@ fun String?.toUUID(): UUID? {
     return try { UUID.fromString(this) }
     catch (E: IllegalArgumentException) { null }
 }
+
+/** Decode a value. */
+fun <T> Codec<T>.Decode(Val: NbtElement): T =
+    parse(NbtOps.INSTANCE, Val).getOrThrow()
+
+/** Encode a value. */
+fun <T> Codec<T>.Encode(Val: T): NbtElement =
+    encodeStart(NbtOps.INSTANCE, Val).getOrThrow()

@@ -55,6 +55,7 @@ import org.nguh.nguhcraft.Utils.EnchantLvl
 import org.nguh.nguhcraft.accessors.TridentEntityAccessor
 import org.nguh.nguhcraft.block.LockableBlockEntity
 import org.nguh.nguhcraft.enchantment.NguhcraftEnchantments
+import org.nguh.nguhcraft.entity.EntitySpawnManager
 import org.nguh.nguhcraft.network.ClientFlags
 import org.nguh.nguhcraft.protect.ProtectionManager
 import org.nguh.nguhcraft.server.accessors.LivingEntityAccessor
@@ -358,6 +359,13 @@ object ServerUtils {
         set("Yaw", Target.yaw)
         set("Pitch", Target.pitch)
         set("World", Target.world.registryKey.value.toString())
+    }
+
+    /** Called during the world tick on the server. */
+    @JvmStatic
+    fun TickWorld(SW: ServerWorld) {
+        TreeToChop.Tick(SW)
+        SW.server.EntitySpawnManager.Tick(SW)
     }
 
     /** Result of smelting a stack. */

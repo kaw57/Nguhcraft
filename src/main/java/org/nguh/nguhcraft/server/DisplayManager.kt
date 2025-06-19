@@ -104,45 +104,29 @@ class DisplayManager(private val S: MinecraftServer): Manager("Displays") {
         set(TAG_ACTIVE_DISPLAYS, Nbt { for ((Id, Display) in ActiveDisplays) set(Id.toString(), Display.Id) })
     }
 
-    override fun Sync(SP: ServerPlayerEntity) {
-        val D = ActiveDisplays[SP.uuid]
-        if (D != null) SyncDisplay(SP, D)
-    }
-
-    override fun Sync(S: MinecraftServer) {
-        // The displays differ by player, so we need to sync each player individually.
-        for (SP in S.playerManager.playerList) Sync(SP)
+    override fun ToPacket(SP: ServerPlayerEntity): CustomPayload? {
+        return ClientboundSyncDisplayPacket(ActiveDisplays[SP.uuid]?.Lines ?: listOf())
     }
 
     /** Set the active display for a player. */
     fun SetActiveDisplay(SP: ServerPlayerEntity, D: DisplayHandle?) {
         if (D != null) {
             ActiveDisplays[SP.uuid] = D as SyncedDisplay
-            SyncDisplay(SP, D)
+            Sync(SP)
         } else {
             ActiveDisplays.remove(SP.uuid)
-            SyncDisplay(SP, null)
+            Sync(SP)
         }
-    }
-
-    /** Sync a display to all clients that care about it. */
-    private fun Sync(D: SyncedDisplay) {
-        for ((PlayerId, D) in ActiveDisplays.filter { it.value == D }) {
-            val SP = S.playerManager.getPlayer(PlayerId)
-            if (SP != null) SyncDisplay(SP, D)
-        }
-    }
-
-    /** Sync a display to a player. */
-    private fun SyncDisplay(SP: ServerPlayerEntity, D: SyncedDisplay?) {
-        ServerPlayNetworking.send(SP, ClientboundSyncDisplayPacket(D?.Lines ?: listOf()))
     }
 
     /** Update a display and sync it to the client. Creates the display if it doesn’t exist. */
     fun UpdateDisplay(Id: String, Callback: (D: SyncedDisplay) -> Unit) {
         val D = Displays.getOrPut(Id) { SyncedDisplay(Id) }
         Callback(D)
-        Sync(D)
+        for ((PlayerId) in ActiveDisplays.filter { it.value == D }) {
+            val SP = S.playerManager.getPlayer(PlayerId)
+            if (SP != null) Sync(SP)
+        }
     }
 
     companion object {

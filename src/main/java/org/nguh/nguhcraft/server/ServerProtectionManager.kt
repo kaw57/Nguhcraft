@@ -474,7 +474,7 @@ class ServerProtectionManager(private val S: MinecraftServer) : ProtectionManage
     fun ServerRegionListFor(SW: RegistryKey<World>) = (super.RegionListFor(SW) as ServerRegionList)
 
     /** Write the manager state to a packet. */
-    override fun ToPacket() = ClientboundSyncProtectionMgrPacket(
+    override fun ToPacket(SP: ServerPlayerEntity) = ClientboundSyncProtectionMgrPacket(
         OverworldRegions = RegionListFor(ServerWorld.OVERWORLD),
         NetherRegions = RegionListFor(ServerWorld.NETHER),
         EndRegions = RegionListFor(ServerWorld.END)
