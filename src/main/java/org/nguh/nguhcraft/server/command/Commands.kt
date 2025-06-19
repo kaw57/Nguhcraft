@@ -494,12 +494,14 @@ object Commands {
             try {
                 val R = ServerRegion(
                     S.server,
-                    Name,
                     W.registryKey,
-                    FromX = From.x,
-                    FromZ = From.z,
-                    ToX = To.x,
-                    ToZ = To.z
+                    Region(
+                        Name,
+                        FromX = From.x,
+                        FromZ = From.z,
+                        ToX = To.x,
+                        ToZ = To.z
+                    )
                 )
 
                 S.server.ProtectionManager.AddRegion(S.server, R)
@@ -724,11 +726,11 @@ object Commands {
                 .append(" in ")
                 .append(Text.literal(W.World.value.path.toString()).withColor(Constants.Lavender))
                 .append(" at [")
-                .append(Text.literal("${W.Pos.x.toInt()}").formatted(Formatting.GRAY))
+                .append(Text.literal("${W.X.toInt()}").formatted(Formatting.GRAY))
                 .append(", ")
-                .append(Text.literal("${W.Pos.y.toInt()}").formatted(Formatting.GRAY))
+                .append(Text.literal("${W.Y.toInt()}").formatted(Formatting.GRAY))
                 .append(", ")
-                .append(Text.literal("${W.Pos.z.toInt()}").formatted(Formatting.GRAY))
+                .append(Text.literal("${W.Z.toInt()}").formatted(Formatting.GRAY))
                 .append("]")
 
 
@@ -749,7 +751,7 @@ object Commands {
         }
 
         fun Set(S: ServerCommandSource, SP: ServerPlayerEntity, Name: String): Int {
-            val W = WarpManager.Warp(Name, SP.serverWorld.registryKey, SP.pos, SP.yaw, SP.pitch)
+            val W = WarpManager.Warp(Name, SP.serverWorld.registryKey, SP.pos.x, SP.pos.y, SP.pos.z, SP.yaw, SP.pitch)
             S.server.WarpManager.Warps[Name] = W
             S.Reply(Text.literal("Set warp ").append(FormatWarp(W)))
             return 1
