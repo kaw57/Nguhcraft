@@ -5,9 +5,11 @@ import net.fabricmc.api.EnvType
 import net.fabricmc.api.Environment
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents
+import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry
 import net.minecraft.util.math.ColorHelper
 import net.minecraft.util.math.Vec3d
 import org.joml.Matrix4fStack
+import org.nguh.nguhcraft.Nguhcraft.Companion.Id
 
 /** RAII helper to avoid leaking rendering state. */
 @Environment(EnvType.CLIENT)
@@ -17,8 +19,8 @@ object Renderer {
     }
 
     fun Init() {
-        /*WorldRenderEvents.BEFORE_DEBUG_RENDER.register { Ctx -> WorldRendering.RenderWorld(Ctx) }
-        HudRenderCallback.EVENT.register { Ctx, _ -> HUDRenderer.RenderHUD(Ctx) }*/
+        WorldRenderEvents.BEFORE_DEBUG_RENDER.register { Ctx -> WorldRendering.RenderWorld(Ctx) }
+        HUDRenderer.Init()
     }
 
     /*fun PushModelViewMatrix(Translation: Vec3d, C: (MS: Matrix4fStack) -> Unit) {
