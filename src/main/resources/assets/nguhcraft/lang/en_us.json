@@ -143,6 +143,8 @@
 	"chest_variant.nguhcraft.christmas": "Christmas Chest",
 	"chest_variant.nguhcraft.pale_oak": "Pale Oak Chest",
 
+    "death.attack.arcane": "%1$s was unmade by %2$s",
+    "death.attack.arcane.item": "%1$s was unmade by %2$s with %3$s",
 	"death.attack.minecart_run_over": "%1$s was run over by a minecart",
 	"death.attack.minecart_run_over.player": "%1$s was run over by %2$s",
 	"death.attack.minecart_run_over.item": "%1$s was run over by %2$s",
@@ -156,6 +158,7 @@
 	"death.attack.obliterated.player": "%1$s was obliterated while trying to escape %2$s",
 	"death.fell.accident.water": "%1$s succumbed to their own antics",
 
+    "enchantment.nguhcraft.arcane": "Arcane",
 	"enchantment.nguhcraft.homing": "Homing",
 	"enchantment.nguhcraft.hypershot": "Hypershot",
 	"enchantment.nguhcraft.smelting": "Smelting",

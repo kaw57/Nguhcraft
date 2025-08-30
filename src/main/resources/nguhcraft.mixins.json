@@ -16,6 +16,7 @@
         "common.EntityEquipmentMapAccessor",
         "common.ExperimentalMinecartControllerMixin",
         "common.HopperBlockAcessor",
+        "common.ItemMixin",
         "common.LivingEntityEquipmentAccessor",
         "common.LivingEntityMixin",
         "common.MangroveLeavesBlockMixin",
