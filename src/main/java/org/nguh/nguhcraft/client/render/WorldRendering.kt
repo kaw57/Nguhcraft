@@ -105,7 +105,7 @@ object WorldRendering {
             if (RenderRegions) RenderRegions(Ctx)
 
             // Render spawn positions.
-            // if (RenderSpawns) Layers.LINES.Use { RenderSpawns(Ctx, it) }
+            if (RenderSpawns) RenderSpawns(Ctx)
         }
         Profilers.get().pop()
     }
@@ -260,22 +260,21 @@ object WorldRendering {
         }
     }
 
-    /*private fun RenderSpawns(Ctx: WorldRenderContext, VA: VertexAllocator) {
-        VA.Draw {
-            for (S in Spawns) VertexRendering.drawBox(
-                Ctx.matrixStack(),
-                it,
-                S.SpawnPos.x - .15,
-                S.SpawnPos.y + .15,
-                S.SpawnPos.z - .15,
-                S.SpawnPos.x + .15,
-                S.SpawnPos.y + .45,
-                S.SpawnPos.z + .15,
-                .4f,
-                .4f,
-                .8f,
-                1f,
-            )
-        }
-    }*/
+    private fun RenderSpawns(Ctx: WorldRenderContext) {
+        val VC = Ctx.consumers()!!.getBuffer(RenderLayer.getLines())
+        for (S in Spawns) VertexRendering.drawBox(
+            Ctx.matrixStack(),
+            VC,
+            S.SpawnPos.x - .15,
+            S.SpawnPos.y + .15,
+            S.SpawnPos.z - .15,
+            S.SpawnPos.x + .15,
+            S.SpawnPos.y + .45,
+            S.SpawnPos.z + .15,
+            .4f,
+            .4f,
+            .8f,
+            1f,
+        )
+    }
 }
