@@ -238,6 +238,26 @@ class NguhcraftRecipeGenerator(
         offerShapelessRecipe(NguhBlocks.CINNABAR, 2, Items.NETHERRACK to 1, Items.COBBLESTONE to 1)
 
         // =========================================================================
+        //  Brocade Blocks
+        // =========================================================================
+        offerBrocade(NguhBlocks.BROCADE_BLACK, Blocks.BLACK_WOOL)
+        offerBrocade(NguhBlocks.BROCADE_BLUE, Blocks.BLUE_WOOL)
+        offerBrocade(NguhBlocks.BROCADE_BROWN, Blocks.BROWN_WOOL)
+        offerBrocade(NguhBlocks.BROCADE_CYAN, Blocks.CYAN_WOOL)
+        offerBrocade(NguhBlocks.BROCADE_GREEN, Blocks.GREEN_WOOL)
+        offerBrocade(NguhBlocks.BROCADE_GREY, Blocks.GRAY_WOOL)
+        offerBrocade(NguhBlocks.BROCADE_LIGHT_BLUE, Blocks.LIGHT_BLUE_WOOL)
+        offerBrocade(NguhBlocks.BROCADE_LIGHT_GREY, Blocks.LIGHT_GRAY_WOOL)
+        offerBrocade(NguhBlocks.BROCADE_LIME, Blocks.LIME_WOOL)
+        offerBrocade(NguhBlocks.BROCADE_MAGENTA, Blocks.MAGENTA_WOOL)
+        offerBrocade(NguhBlocks.BROCADE_ORANGE, Blocks.ORANGE_WOOL)
+        offerBrocade(NguhBlocks.BROCADE_PINK, Blocks.PINK_WOOL)
+        offerBrocade(NguhBlocks.BROCADE_PURPLE, Blocks.PURPLE_WOOL)
+        offerBrocade(NguhBlocks.BROCADE_RED, Blocks.RED_WOOL)
+        offerBrocade(NguhBlocks.BROCADE_WHITE, Blocks.WHITE_WOOL)
+        offerBrocade(NguhBlocks.BROCADE_YELLOW, Blocks.YELLOW_WOOL)
+
+        // =========================================================================
         //  Vertical Slabs
         // =========================================================================
         for (V in NguhBlockModels.VERTICAL_SLABS) offerShaped(V.VerticalSlab, 6) {
@@ -269,6 +289,17 @@ class NguhcraftRecipeGenerator(
         // =========================================================================
         ComplexRecipeJsonBuilder.create(::KeyLockPairingRecipe).offerTo(E, "key_lock_pairing")
         ComplexRecipeJsonBuilder.create(::KeyDuplicationRecipe).offerTo(E, "key_duplication")
+    }
+
+    /** Add a recipe for a brocade block. */
+    fun offerBrocade(B: Block, Wool: Block) {
+        offerShaped(B, 4) {
+            pattern("SWS")
+            pattern("WSW")
+            pattern("SWS")
+            cinput('W', Wool)
+            cinput('S', Items.STRING)
+        }
     }
 
     /** Add stonecutting recipes for a family. */

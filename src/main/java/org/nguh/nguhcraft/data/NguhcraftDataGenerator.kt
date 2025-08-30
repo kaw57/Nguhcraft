@@ -60,6 +60,10 @@ class NguhcraftBlockTagProvider(
             for (B in NguhBlockModels.VERTICAL_SLABS.filter { !it.Wood }) T.add(B.VerticalSlab)
         }
 
+        valueLookupBuilder(BlockTags.WOOL).let {
+            for (B in NguhBlocks.ALL_BROCADE_BLOCKS) it.add(B)
+        }
+
         // Block tags for miscellaneous custom blocks.
         valueLookupBuilder(BlockTags.PLANKS).add(NguhBlocks.TINTED_OAK_PLANKS)
         valueLookupBuilder(BlockTags.DOORS).add(NguhBlocks.LOCKED_DOOR)

@@ -250,6 +250,9 @@ object NguhBlockModels {
             ChainModelTemplate().upload(Chain, G.modelCollector)
         }
 
+        // Brocade blocks.
+        for (B in NguhBlocks.ALL_BROCADE_BLOCKS) G.registerSimpleCubeAll(B)
+
         // Bars.
         RegisterBarsModel(G, NguhBlocks.WROUGHT_IRON_BARS)
         RegisterBarsModel(G, NguhBlocks.GOLD_BARS)
