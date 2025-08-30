@@ -12,6 +12,7 @@ import net.minecraft.client.render.RenderLayer.MultiPhaseParameters
 import net.minecraft.client.render.RenderLayer.of
 import net.minecraft.util.Colors
 import net.minecraft.util.Util
+import net.minecraft.util.math.Direction
 import net.minecraft.util.math.Vec3d
 import net.minecraft.util.profiler.Profilers
 import org.joml.Matrix4f
@@ -22,6 +23,7 @@ import org.nguh.nguhcraft.protect.ProtectionManager
 import org.nguh.nguhcraft.protect.Region
 import org.nguh.nguhcraft.unaryMinus
 import java.util.*
+import kotlin.math.min
 
 @Environment(EnvType.CLIENT)
 object WorldRendering {
@@ -56,6 +58,17 @@ object WorldRendering {
             .build(false)
     )
 
+    val REGION_BARRIERS: RenderLayer = of(
+        "nguhcraft:barriers",
+        1536,
+        RenderPipelines.RENDERTYPE_WORLD_BORDER,
+        MultiPhaseParameters.builder()
+            .texture(RenderPhase.Texture(WorldBorderRendering.FORCEFIELD, false))
+            .lightmap(RenderPhase.Lightmap.ENABLE_LIGHTMAP)
+            .target(RenderPhase.Target.WEATHER_TARGET)
+            .build(false)
+    )
+
     // =========================================================================
     //  Setup
     // =========================================================================
@@ -77,8 +90,8 @@ object WorldRendering {
             translate(-Ctx.camera().pos)
 
             // Render barriers.
-            // val DT = -(Util.getMeasuringTimeMs() % 3000L).toFloat() / 3000.0f
-            // Layers.BARRIERS.Use { RenderBarriers(Ctx, it, DT) }
+            val DT = -(Util.getMeasuringTimeMs() % 3000L).toFloat() / 3000.0f
+            RenderBarriers(Ctx, DT)
 
             // Render regions.
             if (RenderRegions) RenderRegions(Ctx)
@@ -92,23 +105,24 @@ object WorldRendering {
     // =========================================================================
     //  Region Barriers
     // =========================================================================
-
-    /*private fun RenderBarriers(Ctx: WorldRenderContext, VA: VertexAllocator, DT: Float) {
+    private fun RenderBarriers(Ctx: WorldRenderContext, DT: Float) {
+        val VC = Ctx.consumers()!!.getBuffer(REGION_BARRIERS)
         val CW = Ctx.world()
         val WR = Ctx.worldRenderer()
         val MinY = CW.bottomY
         val MaxY = CW.topYInclusive + 1
         val CameraPos = Ctx.camera().pos
+        val MTX = Ctx.matrixStack()!!.peek().positionMatrix
 
         // Render barriers for each region.
         for (R in ProtectionManager.GetRegions(CW)) {
             if (!R.ShouldRenderEntryExitBarrier()) continue
             if (R.DistanceFrom(CameraPos) > WR.viewDistance * 16) continue
-            VA.Draw { RenderBarrier(it, R, MinY = MinY, MaxY = MaxY, DT) }
+            RenderBarrier(VC, MTX, R, MinY = MinY, MaxY = MaxY, DT)
         }
     }
 
-    private fun RenderBarrier(VC: VertexConsumer, R: Region, MinY: Int, MaxY: Int, DT: Float) {
+    private fun RenderBarrier(VC: VertexConsumer, MTX: Matrix4f, R: Region, MinY: Int, MaxY: Int, DT: Float) {
         val Colour = when {
             R.ColourOverride != null -> R.ColourOverride!!
             !R.AllowsPlayerEntry() && !R.AllowsPlayerExit() -> GOLD
@@ -118,7 +132,7 @@ object WorldRendering {
         }
 
         // Set shader colour. This is why we need to render each barrier separately.
-        Renderer.SetShaderColour(Colour)
+        //Renderer.SetShaderColour(Colour)
 
         // Helper to add a quad from (x, y, z).
         val MinX = R.MinX
@@ -143,10 +157,10 @@ object WorldRendering {
             }
 
             // Draw the quad.
-            VC.vertex(X.toFloat(), Y.toFloat(), Z.toFloat()).texture(U, DT)
-            VC.vertex(EndX.toFloat(), Y.toFloat(), EndZ.toFloat()).texture(EndU, DT)
-            VC.vertex(EndX.toFloat(), EndY.toFloat(), EndZ.toFloat()).texture(EndU, DT + 1F)
-            VC.vertex(X.toFloat(), EndY.toFloat(), Z.toFloat()).texture(U, DT + 1F)
+            VC.vertex(MTX, X.toFloat(), Y.toFloat(), Z.toFloat()).texture(U, DT)
+            VC.vertex(MTX, EndX.toFloat(), Y.toFloat(), EndZ.toFloat()).texture(EndU, DT)
+            VC.vertex(MTX, EndX.toFloat(), EndY.toFloat(), EndZ.toFloat()).texture(EndU, DT + 1F)
+            VC.vertex(MTX, X.toFloat(), EndY.toFloat(), Z.toFloat()).texture(U, DT + 1F)
         }
 
         // XY min.
@@ -168,7 +182,7 @@ object WorldRendering {
         for (Z in MinZ..<MaxZ step 2)
             for (Y in MinY..<MaxY step 2)
                 Quad(Direction.SOUTH, MaxX, Y, Z, false)
-    }*/
+    }
 
     // =========================================================================
     //  Region Outlines
