@@ -25,6 +25,7 @@
         "datafixer.LockComponentPredicateFixMixin",
         "datafixer.SchemasMixin",
         "discord.common.EntityMixin",
+        "entity.HappyGhastEntityMixin",
         "protect.BeaconBlockEntityMixin",
         "protect.BlockItemMixin",
         "protect.Entity_ArmorStand_Warden_IsImmuneToExplosionMixin",
