@@ -12,11 +12,14 @@ import net.minecraft.client.render.RenderLayer.MultiPhaseParameters
 import net.minecraft.client.render.RenderLayer.of
 import net.minecraft.util.Colors
 import net.minecraft.util.Util
+import net.minecraft.util.math.ColorHelper
 import net.minecraft.util.math.Direction
 import net.minecraft.util.math.Vec3d
 import net.minecraft.util.profiler.Profilers
 import org.joml.Matrix4f
 import org.joml.Matrix4fStack
+import org.joml.Vector4f
+import org.joml.Vector4fc
 import org.nguh.nguhcraft.client.Push
 import org.nguh.nguhcraft.entity.EntitySpawnManager
 import org.nguh.nguhcraft.protect.ProtectionManager
@@ -24,6 +27,11 @@ import org.nguh.nguhcraft.protect.Region
 import org.nguh.nguhcraft.unaryMinus
 import java.util.*
 import kotlin.math.min
+
+@Environment(EnvType.CLIENT)
+interface RenderLayerMultiPhaseShaderColourAccessor {
+    fun `Nguhcraft$SetShaderColour`(Colour: Vector4f)
+}
 
 @Environment(EnvType.CLIENT)
 object WorldRendering {
@@ -106,7 +114,6 @@ object WorldRendering {
     //  Region Barriers
     // =========================================================================
     private fun RenderBarriers(Ctx: WorldRenderContext, DT: Float) {
-        val VC = Ctx.consumers()!!.getBuffer(REGION_BARRIERS)
         val CW = Ctx.world()
         val WR = Ctx.worldRenderer()
         val MinY = CW.bottomY
@@ -118,7 +125,9 @@ object WorldRendering {
         for (R in ProtectionManager.GetRegions(CW)) {
             if (!R.ShouldRenderEntryExitBarrier()) continue
             if (R.DistanceFrom(CameraPos) > WR.viewDistance * 16) continue
+            val VC = Tessellator.getInstance().begin(REGION_BARRIERS.drawMode, REGION_BARRIERS.vertexFormat)
             RenderBarrier(VC, MTX, R, MinY = MinY, MaxY = MaxY, DT)
+            REGION_BARRIERS.draw(VC.endNullable() ?: continue)
         }
     }
 
@@ -132,7 +141,14 @@ object WorldRendering {
         }
 
         // Set shader colour. This is why we need to render each barrier separately.
-        //Renderer.SetShaderColour(Colour)
+        (REGION_BARRIERS as RenderLayerMultiPhaseShaderColourAccessor).`Nguhcraft$SetShaderColour`(
+            Vector4f(
+                ColorHelper.getRedFloat(Colour),
+                ColorHelper.getGreenFloat(Colour),
+                ColorHelper.getBlueFloat(Colour),
+                1.0f
+            )
+        )
 
         // Helper to add a quad from (x, y, z).
         val MinX = R.MinX
