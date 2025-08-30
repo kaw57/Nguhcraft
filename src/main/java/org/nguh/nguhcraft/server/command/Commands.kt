@@ -19,6 +19,10 @@ import net.minecraft.enchantment.Enchantment
 import net.minecraft.entity.Entity
 import net.minecraft.entity.EntityType
 import net.minecraft.entity.LightningEntity
+import net.minecraft.entity.LivingEntity
+import net.minecraft.entity.effect.StatusEffectCategory
+import net.minecraft.entity.effect.StatusEffectInstance
+import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.item.ItemStack
 import net.minecraft.nbt.NbtCompound
 import net.minecraft.registry.RegistryKey
@@ -100,6 +104,7 @@ object Commands {
             D.register(EnchantCommand(A))              // /enchant
             D.register(EntityCountCommand())           // /entity_count
             D.register(FixCommand())                   // /fix
+            D.register(HealCommand())                  // /heal
             D.register(HereCommand())                  // /here
             D.register(HomeCommand())                  // /home
             D.register(HomesCommand())                 // /homes
@@ -248,6 +253,37 @@ object Commands {
             if (St.isEmpty) return
             St.remove(DataComponentTypes.LORE)
             St.set(DataComponentTypes.TOOLTIP_DISPLAY, TooltipDisplayComponent.DEFAULT)
+        }
+    }
+
+    object HealCommand {
+        fun Heal(S: ServerCommandSource, Entities: Collection<Entity>): Int {
+            for (E in Entities) {
+                if (E is LivingEntity) {
+                    // Heal to maximum health.
+                    E.heal(Float.MAX_VALUE)
+
+                    // Remove status effects. Take care to copy the list first so we
+                    // don’t try to modify it while iterating over it.
+                    for (S in E.activeStatusEffects.values.filter {
+                        it.effectType.value().category == StatusEffectCategory.HARMFUL
+                    }) E.removeStatusEffect(S.effectType)
+
+                    // Replenish saturation.
+                    if (E is PlayerEntity) E.hungerManager.add(10000, 10000.0F)
+                }
+
+                // Extinguish fire.
+                E.extinguish()
+
+                // Reset oxygen level.
+                E.air = E.maxAir
+            }
+
+            val Size = Entities.size
+            if (Size == 1) S.Success(Text.literal("Healed ").append(Entities.first().displayName))
+            else S.Success("Healed $Size entities")
+            return Size
         }
     }
 
@@ -1012,6 +1048,13 @@ object Commands {
             Chat.DispatchMessage(it.source.server, it.source.playerOrThrow, "${P.x} ${P.y} ${P.z}")
             1
         }
+
+    private fun HealCommand(): LiteralArgumentBuilder<ServerCommandSource> = literal("heal")
+        .requires { it.hasPermissionLevel(2) }
+        .then(argument("entities", EntityArgumentType.entities())
+            .executes { HealCommand.Heal(it.source, EntityArgumentType.getEntities(it, "entities")) }
+        )
+        .executes { HealCommand.Heal(it.source, listOf(it.source.entityOrThrow)) }
 
     private fun HomeCommand(): LiteralArgumentBuilder<ServerCommandSource> = literal("home")
         .requires { it.isExecutedByPlayer }
