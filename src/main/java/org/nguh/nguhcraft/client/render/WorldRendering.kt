@@ -30,7 +30,7 @@ import kotlin.math.min
 
 @Environment(EnvType.CLIENT)
 interface RenderLayerMultiPhaseShaderColourAccessor {
-    fun `Nguhcraft$SetShaderColour`(Colour: Vector4f)
+    fun `Nguhcraft$SetShaderColour`(Colour: Vector4fc)
 }
 
 @Environment(EnvType.CLIENT)

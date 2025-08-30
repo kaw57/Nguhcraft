@@ -13,8 +13,8 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(RenderLayer.MultiPhase.class)
 public abstract class RenderLayerMultiPhaseMixin implements RenderLayerMultiPhaseShaderColourAccessor {
-    @Unique private Vector4f ColourModulator = new Vector4f(1.0f);
-    @Override public void Nguhcraft$SetShaderColour(@NotNull Vector4f Colour) {
+    @Unique private Vector4fc ColourModulator = new Vector4f(1.0f);
+    @Override public void Nguhcraft$SetShaderColour(@NotNull Vector4fc Colour) {
         this.ColourModulator = Colour;
     }
 
