@@ -3,12 +3,10 @@ package org.nguh.nguhcraft
 import com.mojang.logging.LogUtils
 import com.mojang.serialization.Codec
 import com.mojang.serialization.JavaOps
-import com.mojang.serialization.MapCodec
 import io.netty.buffer.ByteBuf
 import net.minecraft.component.ComponentChanges
 import net.minecraft.enchantment.Enchantment
 import net.minecraft.enchantment.EnchantmentHelper
-import net.minecraft.entity.EquipmentSlot
 import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.item.Item
@@ -36,11 +34,14 @@ import org.nguh.nguhcraft.mixin.common.EntityEquipmentMapAccessor
 import org.nguh.nguhcraft.mixin.common.LivingEntityEquipmentAccessor
 import java.text.Normalizer
 import java.util.*
-import java.util.stream.Stream
+import kotlin.collections.toList
+import kotlin.collections.toMutableSet
 import kotlin.enums.EnumEntries
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.reflect.KMutableProperty1
+import kotlin.text.uppercase
 
 typealias MojangPair<A, B> = com.mojang.datafixers.util.Pair<A, B>
 operator fun <A, B> MojangPair<A, B>.component1(): A = this.first
@@ -84,13 +85,8 @@ class SmallEnumSet<T : Enum<T>> private constructor(var Encoded: Long = 0L) {
 
         /** Create a codec for an enum set. */
         inline fun <reified T: Enum<T>> CreateCodec(Entries: EnumEntries<T>): Codec<SmallEnumSet<T>> {
-            val EnumeratorCodec = Codec.stringResolver(
-                { it.name.lowercase() },
-                { enumValueOf<T>(it.uppercase()) }
-            )
-
             return Codec.unboundedMap(
-                EnumeratorCodec,
+                MakeEnumCodec<T>(),
                 Codec.BOOL
             ).xmap(
                 ::SmallEnumSet,
@@ -186,6 +182,44 @@ class NguhErrorReporter : ErrorReporter.Context {
     override fun getName() = "Nguhcraft"
 }
 
+/**
+ * Codec-like class that serialises a list of fields inline without
+ * creating a wrapper object.
+ */
+class ClassSerialiser<R> private constructor(
+    private val Fields: List<Field<R, *>>
+) {
+    private class Field<R, T>(
+        val Codec: Codec<T>,
+        val Name: String,
+        val Prop: KMutableProperty1<R, T>
+    ) {
+        fun Read(Object: R, RV: ReadView) = RV.read(Name, Codec).ifPresent { Prop.set(Object, it) }
+        fun Write(Object: R, WV: WriteView) = WV.put(Name, Codec, Prop.get(Object))
+    }
+
+    class BuilderImpl<R> {
+        private val Fields = mutableListOf<Field<R, *>>()
+        fun build(): ClassSerialiser<R> = ClassSerialiser(Fields)
+        fun<T> add(Codec: Codec<T>, Name: String, Prop: KMutableProperty1<R, T>) = also {
+            if (Fields.find { it.Name == Name } != null)
+                throw IllegalArgumentException("Duplicate field name: '$Name'")
+
+            Fields.add(Field(Codec, Name, Prop))
+        }
+    }
+
+    fun Read(Object: R, RV: ReadView) = Fields.forEach { it.Read(Object, RV) }
+    fun Write(Object: R, WV: WriteView) = Fields.forEach { it.Write(Object, WV) }
+    companion object { fun<R> Builder(): BuilderImpl<R> = BuilderImpl() }
+}
+
+/** A codec for serialising enums. */
+inline fun <reified T : Enum<T>> MakeEnumCodec(): Codec<T> = Codec.stringResolver(
+    { it.name.lowercase() },
+    { enumValueOf<T>(it.uppercase()) }
+)
+
 /** A named codec. */
 data class NamedCodec<T>(val Name: String, val Codec: Codec<T>)
 
@@ -209,6 +243,9 @@ fun ReadView.WithList(Name: String, Reader: ReadView.ListReadView.() -> Unit) = 
 
 /** Write to a child view. */
 fun WriteView.WithList(Name: String, Writer: WriteView.ListView.() -> Unit) = getList(Name).Writer()
+
+/** Create a mutable set codec. */
+fun<T> Codec<T>.MutableSetOf() = listOf().xmap({ it.toMutableSet() }, { it.toList() })
 
 /** Get an entity’s equipped items. */
 fun LivingEntity.Equipment(): List<ItemStack> {

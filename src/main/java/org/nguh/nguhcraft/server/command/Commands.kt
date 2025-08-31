@@ -20,8 +20,8 @@ import net.minecraft.entity.Entity
 import net.minecraft.entity.EntityType
 import net.minecraft.entity.LightningEntity
 import net.minecraft.entity.LivingEntity
+import net.minecraft.entity.attribute.EntityAttributes
 import net.minecraft.entity.effect.StatusEffectCategory
-import net.minecraft.entity.effect.StatusEffectInstance
 import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.item.ItemStack
 import net.minecraft.nbt.NbtCompound
@@ -49,6 +49,9 @@ import org.nguh.nguhcraft.server.MCBASIC
 import org.nguh.nguhcraft.Nguhcraft.Companion.Id
 import org.nguh.nguhcraft.SyncedGameRule
 import org.nguh.nguhcraft.entity.EntitySpawnManager
+import org.nguh.nguhcraft.event.EventDifficulty
+import org.nguh.nguhcraft.event.EventManager
+import org.nguh.nguhcraft.event.NguhMobType
 import org.nguh.nguhcraft.item.KeyItem
 import org.nguh.nguhcraft.network.ClientFlags
 import org.nguh.nguhcraft.protect.ProtectionManager
@@ -103,6 +106,7 @@ object Commands {
             D.register(DisplayCommand())               // /display
             D.register(EnchantCommand(A))              // /enchant
             D.register(EntityCountCommand())           // /entity_count
+            D.register(EventCommand())                 // /event
             D.register(FixCommand())                   // /fix
             D.register(HealCommand())                  // /heal
             D.register(HereCommand())                  // /here
@@ -135,6 +139,7 @@ object Commands {
         ArgType("procedure", ProcedureArgumentType::Procedure)
         ArgType("region", RegionArgumentType::Region)
         ArgType("warp", WarpArgumentType::Warp)
+        ArgType("mob", MobArgumentType::Mob)
     }
 
     fun Exn(message: String): SimpleCommandExceptionType {
@@ -225,10 +230,75 @@ object Commands {
                 Text.translatable(
                     "commands.enchant.success.single", *arrayOf<Any>(
                         Enchantment.getName(E, Lvl),
-                        SP.displayName!!,
+                        SP.Name,
                     )
                 )
             )
+            return 1
+        }
+    }
+
+    object EventCommand {
+        private val SPAWN_FAILED = Exn("Failed to spawn mob")
+
+        fun AddPlayer(S: ServerCommandSource, SP: ServerPlayerEntity): Int {
+            if (S.server.EventManager.Add(SP)) S.Success("Added player '${SP.nameForScoreboard}' to the event")
+            else S.Reply("Player '${SP.nameForScoreboard}' is already participating")
+            return 1
+            1
+        }
+
+        fun ListPlayers(S: ServerCommandSource): Int {
+            val Players = S.server.EventManager.Players
+            if (Players.isEmpty()) {
+                S.Reply("No players are participating in the event")
+                return 0
+            }
+
+            // Only print online players here; we *could* go to the trouble of
+            // getting offline player’s names (via NguhPlayerList) and print
+            // them too, but most players during an event are probably online,
+            // so we don’t really care.
+            val Msg = Text.literal("Players:")
+            for (Id in Players) {
+                val SP = S.server.playerManager.getPlayer(Id)
+                Msg.append(Text.literal("\n  - ").append(SP?.Name ?: Text.literal(Id.toString()).formatted(Formatting.GRAY)))
+            }
+            S.Reply(Msg)
+            return Players.size
+        }
+
+        fun RemovePlayer(S: ServerCommandSource, SP: ServerPlayerEntity): Int {
+            if (S.server.EventManager.Remove(SP)) S.Success("Removed player '${SP.nameForScoreboard}' from the event")
+            else S.Error("Player '${SP.nameForScoreboard}' is not participating")
+            return 1
+        }
+
+        fun SetDifficulty(S: ServerCommandSource, D: EventDifficulty): Int {
+            if (S.server.EventManager.Difficulty == D) S.Reply("Event difficulty is already set to $D")
+            else {
+                S.server.EventManager.Difficulty = D
+                S.Success("Set event difficulty to $D")
+            }
+            return 1
+        }
+
+        fun SpawnEventMob(S: ServerCommandSource, Type: NguhMobType, Where: Vec3d): Int {
+            Type.Spawn(S.world, Where) ?: throw SPAWN_FAILED.create()
+            return 1
+        }
+
+        fun SpawnEventMobTesting(S: ServerCommandSource, Type: NguhMobType): Int {
+            val SP = S.playerOrThrow
+            val Rot = SP.getRotationVec(1.0F)
+            val Dir = Direction.getFacing(Rot.x, 0.0, Rot.z)
+            val Orth = if (Dir.axis == Direction.Axis.X) Direction.NORTH else Direction.WEST
+            val Pos = SP.blockPos.mutableCopy().move(Dir, 2).move(Orth, -7)
+            for (D in EventDifficulty.entries) {
+                val E = Type.Spawn(SP.world, Pos.move(Orth, 2).toBottomCenterPos(), D)
+                if (E is LivingEntity) E.getAttributeInstance(EntityAttributes.MOVEMENT_SPEED)?.baseValue = 0.0
+                E?.isSilent = true
+            }
             return 1
         }
     }
@@ -1034,6 +1104,48 @@ object Commands {
                 it.source.Reply("There are ${E.size} entities that match the given selector.")
                 E.size
             }
+        )
+
+    fun EventCommand(): LiteralArgumentBuilder<ServerCommandSource> = literal("event")
+        .requires { it.hasPermissionLevel(2) }
+        .then(literal("add-player")
+            .then(argument("player", EntityArgumentType.player())
+                .executes { EventCommand.AddPlayer(it.source, EntityArgumentType.getPlayer(it, "player")) }
+            )
+        )
+        .then(literal("difficulty")
+            .executes { it.source.Reply("The current difficulty is: ${it.source.server.EventManager.Difficulty.name}"); 1 }
+            .also {
+                for (E in EventDifficulty.entries) it.then(literal(E.name)
+                    .executes { EventCommand.SetDifficulty(it.source, E) }
+                )
+            }
+        )
+        .then(literal("list-players")
+            .executes { EventCommand.ListPlayers(it.source) }
+        )
+        .then(literal("remove-player")
+            .then(argument("player", EntityArgumentType.player())
+                .executes { EventCommand.RemovePlayer(it.source, EntityArgumentType.getPlayer(it, "player")) }
+            )
+        )
+        .then(literal("spawn")
+            .requires { it.isExecutedByPlayer }
+            .then(argument("mob", MobArgumentType.Mob())
+                .then(argument("where", Vec3ArgumentType.vec3())
+                    .executes { EventCommand.SpawnEventMob(
+                        it.source,
+                        MobArgumentType.Resolve(it, "mob"),
+                        Vec3ArgumentType.getVec3(it, "where")
+                    ) }
+                )
+            )
+        )
+        .then(literal("spawn-test")
+            .requires { it.isExecutedByPlayer }
+            .then(argument("mob", MobArgumentType.Mob())
+                .executes { EventCommand.SpawnEventMobTesting(it.source, MobArgumentType.Resolve(it, "mob")) }
+            )
         )
 
     private fun FixCommand(): LiteralArgumentBuilder<ServerCommandSource> = literal("fix")
