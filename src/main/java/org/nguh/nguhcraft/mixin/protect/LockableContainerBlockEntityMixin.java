@@ -33,7 +33,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import static org.nguh.nguhcraft.item.LockableBlockEntityKt.CheckCanOpen;
 import static org.nguh.nguhcraft.item.LockableBlockEntityKt.DeserialiseLock;
-import static org.nguh.nguhcraft.server.ExtensionsKt.CreateUpdate;
+import static org.nguh.nguhcraft.server.ExtensionsKt.CreateUpdateBlockEntityUpdatePacket;
 
 @Mixin(LockableContainerBlockEntity.class)
 public abstract class LockableContainerBlockEntityMixin extends BlockEntity implements LockableBlockEntity {
@@ -106,7 +106,7 @@ public abstract class LockableContainerBlockEntityMixin extends BlockEntity impl
     /** Send lock in initial chunk data. */
     @Override
     public NbtCompound toInitialChunkDataNbt(RegistryWrapper.WrapperLookup WL) {
-        return CreateUpdate(this, Tag -> {
+        return CreateUpdateBlockEntityUpdatePacket(Tag -> {
             Tag.putNullable(TAG_NGUHCRAFT_LOCK, Codec.STRING, NguhcraftLock);
             return Unit.INSTANCE;
         });

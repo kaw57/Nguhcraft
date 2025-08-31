@@ -1,7 +1,6 @@
 package org.nguh.nguhcraft.server
 
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
-import net.minecraft.block.entity.BlockEntity
 import net.minecraft.entity.Entity
 import net.minecraft.nbt.NbtCompound
 import net.minecraft.network.packet.CustomPayload
@@ -20,8 +19,7 @@ import org.nguh.nguhcraft.network.ClientboundSyncFlagPacket
 import org.nguh.nguhcraft.set
 import java.util.*
 
-@JvmStatic
-fun BlockEntity.CreateUpdate(Update: NbtCompound.() -> Unit) = Nbt {
+fun CreateUpdateBlockEntityUpdatePacket(Update: NbtCompound.() -> Unit) = Nbt {
     Update()
 
     // An empty tag prevents deserialisation on the client, so
@@ -125,7 +123,6 @@ fun MinecraftServer.PlayerByUUID(ID: String?): ServerPlayerEntity? {
 }
 
 /** Save the player’s current position as a teleport target. */
-@JvmStatic
 fun ServerPlayerEntity.SavePositionBeforeTeleport() {
     Data.LastPositionBeforeTeleport = SerialisedTeleportTarget(
         this.world.registryKey,

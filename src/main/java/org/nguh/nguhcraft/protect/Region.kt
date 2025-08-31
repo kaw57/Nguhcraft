@@ -93,6 +93,9 @@ open class Region(
          */
         HOSTILE_MOB_SPAWNING,
 
+        /** Allow attaching and detaching leashes to mobs, fences, etc. */
+        LEASHING,
+
         /** Allow players to enter this region. */
         PLAYER_ENTRY,
 
@@ -197,6 +200,9 @@ open class Region(
 
     /** Check if this region allows natural spawning of hostile mobs. */
     fun AllowsHostileMobSpawning() = Test(Flags.HOSTILE_MOB_SPAWNING)
+
+    /** Check if this region allows leashes to be used. */
+    fun AllowsLeashing() = Test(Flags.LEASHING)
 
     /** Check if this region allows players to enter. */
     fun AllowsPlayerEntry() = Test(Flags.PLAYER_ENTRY)

@@ -3,9 +3,11 @@ package org.nguh.nguhcraft.protect
 import net.minecraft.block.Blocks
 import net.minecraft.block.LecternBlock
 import net.minecraft.entity.Entity
+import net.minecraft.entity.Leashable
 import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.SpawnReason
 import net.minecraft.entity.damage.DamageSource
+import net.minecraft.entity.decoration.LeashKnotEntity
 import net.minecraft.entity.mob.Monster
 import net.minecraft.entity.passive.HappyGhastEntity
 import net.minecraft.entity.passive.VillagerEntity
@@ -13,6 +15,8 @@ import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.entity.vehicle.VehicleEntity
 import net.minecraft.item.BoatItem
 import net.minecraft.item.ItemStack
+import net.minecraft.item.Items
+import net.minecraft.item.LeadItem
 import net.minecraft.item.MinecartItem
 import net.minecraft.registry.RegistryKey
 import net.minecraft.registry.tag.BlockTags
@@ -134,7 +138,9 @@ abstract class ProtectionManager(protected val Regions: RegionLists) : Manager()
         val R = _FindRegionContainingBlock(E.world, E.blockPos) ?: return true
         return when (E) {
             is VehicleEntity, is HappyGhastEntity -> R.AllowsVehicleUse()
+            is LeashKnotEntity -> R.AllowsLeashing()
             is VillagerEntity -> R.AllowsVillagerTrading()
+            is Leashable if (PE.mainHandStack isa Items.LEAD) -> R.AllowsLeashing()
             else -> R.AllowsEntityInteraction()
         }
     }
@@ -276,6 +282,12 @@ abstract class ProtectionManager(protected val Regions: RegionLists) : Manager()
         if (Stack != null && Stack.item is MinecartItem && St isa BlockTags.RAILS) {
             val R = _FindRegionContainingBlock(W, Pos) ?: return ActionResult.SUCCESS
             return if (R.AllowsVehicleUse()) ActionResult.SUCCESS else ActionResult.FAIL
+        }
+
+        // Leashing entities to fences is also a separate flag.
+        if (Stack != null && Stack.item is LeadItem && St isa BlockTags.FENCES) {
+            val R = _FindRegionContainingBlock(W, Pos) ?: return ActionResult.SUCCESS
+            return if (R.AllowsLeashing()) ActionResult.SUCCESS else ActionResult.FAIL
         }
 
         // Block is within the bounds of a protected region. Deny.
