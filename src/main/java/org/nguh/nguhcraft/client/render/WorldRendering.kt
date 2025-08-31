@@ -26,6 +26,7 @@ import org.nguh.nguhcraft.protect.ProtectionManager
 import org.nguh.nguhcraft.protect.Region
 import org.nguh.nguhcraft.unaryMinus
 import java.util.*
+import kotlin.math.absoluteValue
 import kotlin.math.min
 
 @Environment(EnvType.CLIENT)
@@ -150,54 +151,31 @@ object WorldRendering {
             )
         )
 
-        // Helper to add a quad from (x, y, z).
         val MinX = R.MinX
         val MaxX = R.OutsideMaxX
         val MinZ = R.MinZ
         val MaxZ = R.OutsideMaxZ
-
-        // Helper to draw a 2×2 quad in the XY or ZY plane.
-        fun Quad(Dir: Direction, X: Int, Y: Int, Z: Int, InvertScroll: Boolean) {
-            // Make sure we don’t draw outside the bounds of the barrier.
-            val EndX = min(MaxX, X + Dir.offsetX * 2)
-            val EndY = Y + 2
-            val EndZ = min(MaxZ, Z + Dir.offsetZ * 2)
-
-            // Clamp the U coordinate so we don’t stretch the texture if the last
-            // square happens to be 1×2 instead of 2×2.
+        val DX = (MinX - MaxX).toFloat().absoluteValue / 2
+        val DY = (MinY - MaxY).toFloat().absoluteValue / 2
+        val DZ = (MinZ - MaxZ).toFloat().absoluteValue / 2
+        fun Quad(X1: Int, Y1: Int, X2: Int, Y2: Int, Z1: Int, Z2: Int, InvertScroll: Boolean) {
             var U = DT
-            var EndU = U + (if (Dir == Direction.EAST) EndX - X else EndZ - Z).toFloat() / 2
+            var EndU = U + if (X1 == X2) DZ else DX
             if (InvertScroll) {
                 U = EndU
                 EndU = DT
             }
 
-            // Draw the quad.
-            VC.vertex(MTX, X.toFloat(), Y.toFloat(), Z.toFloat()).texture(U, DT)
-            VC.vertex(MTX, EndX.toFloat(), Y.toFloat(), EndZ.toFloat()).texture(EndU, DT)
-            VC.vertex(MTX, EndX.toFloat(), EndY.toFloat(), EndZ.toFloat()).texture(EndU, DT + 1F)
-            VC.vertex(MTX, X.toFloat(), EndY.toFloat(), Z.toFloat()).texture(U, DT + 1F)
+            VC.vertex(MTX, X1.toFloat(), Y1.toFloat(), Z1.toFloat()).texture(U, DT)
+            VC.vertex(MTX, X2.toFloat(), Y1.toFloat(), Z2.toFloat()).texture(EndU, DT)
+            VC.vertex(MTX, X2.toFloat(), Y2.toFloat(), Z2.toFloat()).texture(EndU, DT + DY)
+            VC.vertex(MTX, X1.toFloat(), Y2.toFloat(), Z1.toFloat()).texture(U, DT + DY)
         }
 
-        // XY min.
-        for (X in MinX..<MaxX step 2)
-            for (Y in MinY..<MaxY step 2)
-                Quad(Direction.EAST, X, Y, MinZ, false)
-
-        // XY max.
-        for (X in MinX..<MaxX step 2)
-            for (Y in MinY..<MaxY step 2)
-                Quad(Direction.EAST, X, Y, MaxZ, true)
-
-        // ZY min.
-        for (Z in MinZ..<MaxZ step 2)
-            for (Y in MinY..<MaxY step 2)
-                Quad(Direction.SOUTH, MinX, Y, Z, true)
-
-        // ZY max.
-        for (Z in MinZ..<MaxZ step 2)
-            for (Y in MinY..<MaxY step 2)
-                Quad(Direction.SOUTH, MaxX, Y, Z, false)
+        Quad(MinX, MinY, MaxX, MaxY, MinZ, MinZ, false)
+        Quad(MinX, MinY, MaxX, MaxY, MaxZ, MaxZ, true)
+        Quad(MinX, MinY, MinX, MaxY, MinZ, MaxZ, true)
+        Quad(MaxX, MinY, MaxX, MaxY, MinZ, MaxZ, false)
     }
 
     // =========================================================================
