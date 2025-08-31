@@ -14,8 +14,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import static org.nguh.nguhcraft.UtilsKt.Read;
-import static org.nguh.nguhcraft.UtilsKt.Write;
+import static org.nguh.nguhcraft.SerialisationKt.Read;
+import static org.nguh.nguhcraft.SerialisationKt.Write;
 
 @Mixin(GhastEntity.class)
 public abstract class GhastEntityMixin implements GhastModeAccessor {
