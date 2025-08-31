@@ -15,10 +15,16 @@ import net.minecraft.block.Blocks
 import net.minecraft.block.SlabBlock
 import net.minecraft.client.data.BlockStateModelGenerator
 import net.minecraft.client.data.ItemModelGenerator
+import net.minecraft.client.render.entity.equipment.EquipmentModel
 import net.minecraft.component.DataComponentTypes
+import net.minecraft.data.DataOutput
+import net.minecraft.data.DataProvider
+import net.minecraft.data.DataWriter
 import net.minecraft.data.recipe.RecipeExporter
 import net.minecraft.entity.damage.DamageType
 import net.minecraft.entity.decoration.painting.PaintingVariant
+import net.minecraft.item.Items
+import net.minecraft.item.equipment.EquipmentAsset
 import net.minecraft.loot.LootPool
 import net.minecraft.loot.LootTable
 import net.minecraft.loot.condition.BlockStatePropertyLootCondition
@@ -28,14 +34,17 @@ import net.minecraft.loot.function.SetCountLootFunction
 import net.minecraft.loot.provider.number.ConstantLootNumberProvider
 import net.minecraft.predicate.StatePredicate
 import net.minecraft.registry.RegistryBuilder
+import net.minecraft.registry.RegistryKey
 import net.minecraft.registry.RegistryKeys
 import net.minecraft.registry.RegistryWrapper
 import net.minecraft.registry.tag.BlockTags
 import net.minecraft.registry.tag.DamageTypeTags
+import net.minecraft.registry.tag.ItemTags
 import net.minecraft.registry.tag.PaintingVariantTags
 import net.minecraft.registry.tag.TagKey
 import org.nguh.nguhcraft.NguhDamageTypes
 import org.nguh.nguhcraft.NguhPaintings
+import org.nguh.nguhcraft.Nguhcraft.Companion.Id
 import org.nguh.nguhcraft.block.Fence
 import org.nguh.nguhcraft.block.NguhBlockModels
 import org.nguh.nguhcraft.block.NguhBlocks
@@ -140,6 +149,54 @@ class NguhcraftDamageTypeTagProvider(
 
     fun AddBypassDamageTypesTo(T: TagKey<DamageType>) {
         builder(T).let { for (DT in NguhDamageTypes.BYPASSES_RESISTANCES) it.add(DT) }
+    }
+}
+
+class NguhcraftEquipmentAssetProvider(
+    O: FabricDataOutput,
+    RF: CompletableFuture<RegistryWrapper.WrapperLookup>
+) : DataProvider {
+    val Resolver = O.getResolver(DataOutput.OutputType.RESOURCE_PACK, "equipment")
+
+    private fun Bootstrap(Add: (RegistryKey<EquipmentAsset>, EquipmentModel) -> Unit) {
+        Add(
+            NguhItems.AMETHYST_EQUIPMENT_ASSET_KEY,
+            EquipmentModel.builder().addHumanoidLayers(Id("amethyst")).build()
+        )
+    }
+
+    override fun run(W: DataWriter): CompletableFuture<*> {
+        val Map = mutableMapOf<RegistryKey<EquipmentAsset>, EquipmentModel>()
+        Bootstrap { K, M -> if (Map.putIfAbsent(K, M) != null) throw IllegalStateException("Duplicate key: $K") }
+        return DataProvider.writeAllToPath(W, EquipmentModel.CODEC, Resolver::resolveJson, Map)
+    }
+
+    override fun getName() = "Nguhcraft Equipment Asset Definitions"
+}
+
+class NguhcraftItemTagProvider(
+    O: FabricDataOutput,
+    RF: CompletableFuture<RegistryWrapper.WrapperLookup>
+) : FabricTagProvider.ItemTagProvider(O, RF) {
+    override fun configure(WL: RegistryWrapper.WrapperLookup) {
+        valueLookupBuilder(ItemTags.HEAD_ARMOR).add(NguhItems.AMETHYST_HELMET)
+        valueLookupBuilder(ItemTags.CHEST_ARMOR).add(NguhItems.AMETHYST_CHESTPLATE)
+        valueLookupBuilder(ItemTags.LEG_ARMOR).add(NguhItems.AMETHYST_LEGGINGS)
+        valueLookupBuilder(ItemTags.FOOT_ARMOR).add(NguhItems.AMETHYST_BOOTS)
+        valueLookupBuilder(ItemTags.TRIMMABLE_ARMOR)
+            .add(NguhItems.AMETHYST_HELMET)
+            .add(NguhItems.AMETHYST_CHESTPLATE)
+            .add(NguhItems.AMETHYST_LEGGINGS)
+            .add(NguhItems.AMETHYST_BOOTS)
+
+        valueLookupBuilder(NguhItems.REPAIRS_AMETHYST_ARMOUR)
+            .add(Items.AMETHYST_CLUSTER)
+
+        valueLookupBuilder(ItemTags.SWORDS).add(NguhItems.AMETHYST_SWORD)
+        valueLookupBuilder(ItemTags.SHOVELS).add(NguhItems.AMETHYST_SHOVEL)
+        valueLookupBuilder(ItemTags.PICKAXES).add(NguhItems.AMETHYST_PICKAXE)
+        valueLookupBuilder(ItemTags.AXES).add(NguhItems.AMETHYST_AXE)
+        valueLookupBuilder(ItemTags.HOES).add(NguhItems.AMETHYST_HOE)
     }
 }
 
@@ -257,6 +314,8 @@ class NguhcraftDataGenerator : DataGeneratorEntrypoint {
         P.addProvider(::NguhcraftBlockTagProvider)
         P.addProvider(::NguhcraftDamageTypeTagProvider)
         P.addProvider(::NguhcraftDynamicRegistryProvider)
+        P.addProvider(::NguhcraftEquipmentAssetProvider)
+        P.addProvider(::NguhcraftItemTagProvider)
         P.addProvider(::NguhcraftLootTableProvider)
         P.addProvider(::NguhcraftModelGenerator)
         P.addProvider(::NguhcraftPaintingVariantTagProvider)

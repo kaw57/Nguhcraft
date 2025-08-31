@@ -183,6 +183,15 @@
 
     "instrument.nguhcraft.nguh_goat_horn": "Nguh",
 
+    "item.nguhcraft.amethyst_axe": "Amethyst Axe",
+    "item.nguhcraft.amethyst_boots": "Amethyst Boots",
+    "item.nguhcraft.amethyst_chestplate": "Amethyst Chestplate",
+    "item.nguhcraft.amethyst_helmet": "Amethyst Helmet",
+    "item.nguhcraft.amethyst_hoe": "Amethyst Hoe",
+    "item.nguhcraft.amethyst_leggings": "Amethyst Leggings",
+    "item.nguhcraft.amethyst_pickaxe": "Amethyst Pickaxe",
+    "item.nguhcraft.amethyst_shovel": "Amethyst Shovel",
+    "item.nguhcraft.amethyst_sword": "Amethyst Sword",
     "item.nguhcraft.lock": "Lock",
     "item.nguhcraft.key": "Key",
     "item.nguhcraft.key_chain": "Key Chain",
@@ -231,6 +240,8 @@
     "painting.nguhcraft.great_wave.title": "Great Wave",
 
     "subtitles.nguhcraft.nguh": "Nguh",
+
+    "tag.item.nguhcraft.repairs_amethyst_armour": "Repairs amethyst armour and tools",
 
     "trim_pattern.nguhcraft.atlantic": "Atlantic Armor Trim",
     "trim_pattern.nguhcraft.cenrail": "Cenrail Armor Trim",
