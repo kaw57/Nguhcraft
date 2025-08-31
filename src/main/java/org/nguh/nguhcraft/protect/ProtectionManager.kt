@@ -7,6 +7,7 @@ import net.minecraft.entity.LivingEntity
 import net.minecraft.entity.SpawnReason
 import net.minecraft.entity.damage.DamageSource
 import net.minecraft.entity.mob.Monster
+import net.minecraft.entity.passive.HappyGhastEntity
 import net.minecraft.entity.passive.VillagerEntity
 import net.minecraft.entity.player.PlayerEntity
 import net.minecraft.entity.vehicle.VehicleEntity
@@ -132,7 +133,7 @@ abstract class ProtectionManager(protected val Regions: RegionLists) : Manager()
         // Check region flags.
         val R = _FindRegionContainingBlock(E.world, E.blockPos) ?: return true
         return when (E) {
-            is VehicleEntity -> R.AllowsVehicleUse()
+            is VehicleEntity, is HappyGhastEntity -> R.AllowsVehicleUse()
             is VillagerEntity -> R.AllowsVillagerTrading()
             else -> R.AllowsEntityInteraction()
         }
