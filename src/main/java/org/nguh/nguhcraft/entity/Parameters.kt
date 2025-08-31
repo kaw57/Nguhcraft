@@ -20,6 +20,7 @@ import net.minecraft.item.Items
 import net.minecraft.registry.DynamicRegistryManager
 import net.minecraft.registry.RegistryKey
 import net.minecraft.registry.entry.RegistryEntry
+import net.minecraft.world.explosion.ExplosionBehavior
 import org.nguh.nguhcraft.MakeEnumCodec
 import org.nguh.nguhcraft.event.EventDifficulty
 import org.nguh.nguhcraft.mixin.entity.CreeperEntityAccessor
