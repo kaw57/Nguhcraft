@@ -11,6 +11,7 @@
         "common.BundleItemMixin",
         "common.ChestBlockEntityMixin",
         "common.ChestBlockMixin",
+        "common.ClampedEntityAttributeMixin",
         "common.EnchantmentMixin",
         "common.EnderEyeItemMixin",
         "common.EntityEquipmentMapAccessor",
