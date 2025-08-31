@@ -113,6 +113,20 @@ class NguhcraftRecipeGenerator(
             cinput('#', NguhBlocks.WROUGHT_IRON_BLOCK)
         }
 
+        offerShaped(NguhBlocks.IRON_GRATE, 4) {
+            pattern(" # ")
+            pattern("# #")
+            pattern(" # ")
+            cinput('#', Items.IRON_BLOCK)
+        }
+
+        offerShaped(NguhBlocks.WROUGHT_IRON_GRATE, 4) {
+            pattern(" # ")
+            pattern("# #")
+            pattern(" # ")
+            cinput('#', NguhBlocks.WROUGHT_IRON_BLOCK)
+        }
+
         offerShaped(NguhBlocks.GOLD_BARS, 16) {
             pattern("###")
             pattern("###")
@@ -166,14 +180,6 @@ class NguhcraftRecipeGenerator(
             pattern("##")
             pattern("##")
             cinput('#', Items.CALCITE)
-        }
-
-        offerShaped(NguhBlocks.TINTED_OAK_PLANKS, 4) {
-            pattern(" # ")
-            pattern("#A#")
-            pattern(" # ")
-            cinput('#', Items.PALE_OAK_PLANKS)
-            cinput('A', Items.AMETHYST_SHARD)
         }
 
         // Usual crafting recipes for custom stone types.
@@ -236,6 +242,49 @@ class NguhcraftRecipeGenerator(
         }
 
         offerShapelessRecipe(NguhBlocks.CINNABAR, 2, Items.NETHERRACK to 1, Items.COBBLESTONE to 1)
+
+        // =========================================================================
+        //  Tinted Oak
+        // =========================================================================
+        offerShaped(NguhBlocks.TINTED_OAK_PLANKS, 4) {
+            pattern(" # ")
+            pattern("#A#")
+            pattern(" # ")
+            cinput('#', Items.PALE_OAK_PLANKS)
+            cinput('A', Items.AMETHYST_SHARD)
+        }
+
+        offerShaped(NguhBlocks.TINTED_OAK_LOG, 2) {
+            pattern("P")
+            pattern("A")
+            pattern("P")
+            cinput('P', Blocks.PALE_OAK_LOG)
+            cinput('A', Items.AMETHYST_SHARD)
+        }
+
+        offerShaped(NguhBlocks.TINTED_OAK_WOOD, 2) {
+            pattern("P")
+            pattern("A")
+            pattern("P")
+            cinput('P', Blocks.PALE_OAK_WOOD)
+            cinput('A', Items.AMETHYST_SHARD)
+        }
+
+        offerShaped(NguhBlocks.STRIPPED_TINTED_OAK_LOG, 2) {
+            pattern("P")
+            pattern("A")
+            pattern("P")
+            cinput('P', Blocks.STRIPPED_PALE_OAK_LOG)
+            cinput('A', Items.AMETHYST_SHARD)
+        }
+
+        offerShaped(NguhBlocks.STRIPPED_TINTED_OAK_WOOD, 2) {
+            pattern("P")
+            pattern("A")
+            pattern("P")
+            cinput('P', Blocks.STRIPPED_PALE_OAK_WOOD)
+            cinput('A', Items.AMETHYST_SHARD)
+        }
 
         // =========================================================================
         //  Brocade Blocks

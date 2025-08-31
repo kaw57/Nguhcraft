@@ -76,6 +76,11 @@ class NguhcraftBlockTagProvider(
 
         valueLookupBuilder(BlockTags.WOODEN_STAIRS).add(NguhBlocks.TINTED_OAK_STAIRS)
         valueLookupBuilder(BlockTags.WOODEN_FENCES).add(NguhBlocks.TINTED_OAK_FENCE)
+        valueLookupBuilder(BlockTags.LOGS_THAT_BURN)
+            .add(NguhBlocks.TINTED_OAK_LOG)
+            .add(NguhBlocks.TINTED_OAK_WOOD)
+            .add(NguhBlocks.STRIPPED_TINTED_OAK_LOG)
+            .add(NguhBlocks.STRIPPED_TINTED_OAK_WOOD)
 
         // Block tag for bonemealing flowers.
         valueLookupBuilder(NguhBlocks.CAN_DUPLICATE_WITH_BONEMEAL)

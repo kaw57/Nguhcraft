@@ -225,6 +225,8 @@ object NguhBlockModels {
         VSlab(NguhBlocks.POLISHED_CALCITE_SLAB_VERTICAL, NguhBlocks.POLISHED_CALCITE),
         VSlab(NguhBlocks.POLISHED_CINNABAR_SLAB_VERTICAL, NguhBlocks.POLISHED_CINNABAR),
         VSlab(NguhBlocks.TINTED_OAK_SLAB_VERTICAL, NguhBlocks.TINTED_OAK_PLANKS, true),
+        VSlab(NguhBlocks.PYRITE_BRICK_SLAB_VERTICAL, NguhBlocks.PYRITE_BRICKS),
+        VSlab(NguhBlocks.DRIPSTONE_BRICK_SLAB_VERTICAL, NguhBlocks.DRIPSTONE_BRICKS),
     ).toTypedArray()
 
     @Environment(EnvType.CLIENT)
@@ -238,9 +240,10 @@ object NguhBlockModels {
 
         // Simple blocks.
         G.registerSimpleCubeAll(NguhBlocks.WROUGHT_IRON_BLOCK)
+        G.registerSimpleCubeAll(NguhBlocks.IRON_GRATE)
+        G.registerSimpleCubeAll(NguhBlocks.WROUGHT_IRON_GRATE)
         G.registerSimpleCubeAll(NguhBlocks.COMPRESSED_STONE)
         G.registerSimpleCubeAll(NguhBlocks.PYRITE)
-        G.registerSimpleCubeAll(NguhBlocks.PYRITE_BRICKS)
 
         // Chains and lanterns.
         for ((Chain, Lantern) in NguhBlocks.CHAINS_AND_LANTERNS) {
@@ -249,6 +252,15 @@ object NguhBlockModels {
             G.registerAxisRotated(Chain, createWeightedVariant(getBlockModelId(Chain)))
             ChainModelTemplate().upload(Chain, G.modelCollector)
         }
+
+        // Tinted oak logs.
+        G.createLogTexturePool(NguhBlocks.TINTED_OAK_LOG)
+            .log(NguhBlocks.TINTED_OAK_LOG)
+            .wood(NguhBlocks.TINTED_OAK_WOOD)
+
+        G.createLogTexturePool(NguhBlocks.STRIPPED_TINTED_OAK_LOG)
+            .log(NguhBlocks.STRIPPED_TINTED_OAK_LOG)
+            .wood(NguhBlocks.STRIPPED_TINTED_OAK_WOOD)
 
         // Brocade blocks.
         for (B in NguhBlocks.ALL_BROCADE_BLOCKS) G.registerSimpleCubeAll(B)
@@ -283,6 +295,8 @@ object NguhBlockModels {
     fun InitRenderLayers() {
         BlockRenderLayer.CUTOUT.let {
             BlockRenderLayerMap.putBlock(NguhBlocks.LOCKED_DOOR, it)
+            BlockRenderLayerMap.putBlock(NguhBlocks.IRON_GRATE, it)
+            BlockRenderLayerMap.putBlock(NguhBlocks.WROUGHT_IRON_GRATE, it)
             for (B in NguhBlocks.CHAINS_AND_LANTERNS.flatten()) BlockRenderLayerMap.putBlock(B, it)
         }
 
