@@ -1,7 +1,6 @@
 package org.nguh.nguhcraft.client.render
 
 import com.mojang.blaze3d.pipeline.RenderPipeline
-import com.mojang.blaze3d.systems.RenderSystem
 import com.mojang.blaze3d.vertex.VertexFormat
 import net.fabricmc.api.EnvType
 import net.fabricmc.api.Environment
@@ -13,11 +12,8 @@ import net.minecraft.client.render.RenderLayer.of
 import net.minecraft.util.Colors
 import net.minecraft.util.Util
 import net.minecraft.util.math.ColorHelper
-import net.minecraft.util.math.Direction
-import net.minecraft.util.math.Vec3d
 import net.minecraft.util.profiler.Profilers
 import org.joml.Matrix4f
-import org.joml.Matrix4fStack
 import org.joml.Vector4f
 import org.joml.Vector4fc
 import org.nguh.nguhcraft.client.Push
@@ -27,7 +23,6 @@ import org.nguh.nguhcraft.protect.Region
 import org.nguh.nguhcraft.unaryMinus
 import java.util.*
 import kotlin.math.absoluteValue
-import kotlin.math.min
 
 @Environment(EnvType.CLIENT)
 interface RenderLayerMultiPhaseShaderColourAccessor {
@@ -124,23 +119,15 @@ object WorldRendering {
 
         // Render barriers for each region.
         for (R in ProtectionManager.GetRegions(CW)) {
-            if (!R.ShouldRenderEntryExitBarrier()) continue
             if (R.DistanceFrom(CameraPos) > WR.viewDistance * 16) continue
+            val Colour = R.BarrierColor() ?: continue
             val VC = Tessellator.getInstance().begin(REGION_BARRIERS.drawMode, REGION_BARRIERS.vertexFormat)
-            RenderBarrier(VC, MTX, R, MinY = MinY, MaxY = MaxY, DT)
+            RenderBarrier(VC, MTX, R, Colour, MinY = MinY, MaxY = MaxY, DT)
             REGION_BARRIERS.draw(VC.endNullable() ?: continue)
         }
     }
 
-    private fun RenderBarrier(VC: VertexConsumer, MTX: Matrix4f, R: Region, MinY: Int, MaxY: Int, DT: Float) {
-        val Colour = when {
-            R.ColourOverride != null -> R.ColourOverride!!
-            !R.AllowsPlayerEntry() && !R.AllowsPlayerExit() -> GOLD
-            !R.AllowsPlayerExit() -> Colors.LIGHT_RED
-            !R.AllowsPlayerEntry() -> Colors.CYAN
-            else -> return
-        }
-
+    private fun RenderBarrier(VC: VertexConsumer, MTX: Matrix4f, R: Region, Colour: Int, MinY: Int, MaxY: Int, DT: Float) {
         // Set shader colour. This is why we need to render each barrier separately.
         (REGION_BARRIERS as RenderLayerMultiPhaseShaderColourAccessor).`Nguhcraft$SetShaderColour`(
             Vector4f(
@@ -190,6 +177,7 @@ object WorldRendering {
         val MaxY = CW.topYInclusive + 1
         val CameraPos = Ctx.camera().pos
         for (R in ProtectionManager.GetRegions(CW)) {
+            if (R.ShouldRenderEntryExitBarrier()) continue
             if (R.DistanceFrom(CameraPos) > WR.viewDistance * 16) continue
             RenderRegion(VC, MTX, R, Colour = R.ColourOverride ?: Colors.LIGHT_YELLOW, MinY = MinY, MaxY = MaxY)
         }
