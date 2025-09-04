@@ -113,14 +113,14 @@ class NguhcraftRecipeGenerator(
             cinput('#', NguhBlocks.WROUGHT_IRON_BLOCK)
         }
 
-        offerShaped(NguhBlocks.IRON_GRATE, 4) {
+        offerShaped(NguhBlocks.IRON_GRATE, 16) {
             pattern(" # ")
             pattern("# #")
             pattern(" # ")
             cinput('#', Items.IRON_BLOCK)
         }
 
-        offerShaped(NguhBlocks.WROUGHT_IRON_GRATE, 4) {
+        offerShaped(NguhBlocks.WROUGHT_IRON_GRATE, 16) {
             pattern(" # ")
             pattern("# #")
             pattern(" # ")
