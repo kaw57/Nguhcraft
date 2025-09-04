@@ -716,7 +716,9 @@ object NguhBlocks {
         WROUGHT_IRON_BARS,
         GOLD_BARS,
         COMPRESSED_STONE,
-        PYRITE
+        PYRITE,
+        IRON_GRATE,
+        WROUGHT_IRON_GRATE,
     ).also {
         it.addAll(CHAINS_AND_LANTERNS.flatten())
         it.addAll(STONE_VARIANT_FAMILY_BLOCKS)
@@ -733,6 +735,8 @@ object NguhBlocks {
         TINTED_OAK_WOOD,
         STRIPPED_TINTED_OAK_LOG,
         STRIPPED_TINTED_OAK_WOOD,
+        IRON_GRATE,
+        WROUGHT_IRON_GRATE,
     ).also {
         it.addAll(CHAINS_AND_LANTERNS.flatten())
         it.addAll(ALL_BROCADE_BLOCKS)
