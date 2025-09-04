@@ -182,6 +182,18 @@ class NguhcraftRecipeGenerator(
             cinput('#', Items.CALCITE)
         }
 
+        offerShaped(NguhBlocks.CALCITE_BRICKS, 4) {
+            pattern("##")
+            pattern("##")
+            cinput('#', NguhBlocks.POLISHED_CALCITE)
+        }
+
+        offerShaped(NguhBlocks.GILDED_CALCITE_BRICKS, 4) {
+            pattern("##")
+            pattern("##")
+            cinput('#', NguhBlocks.GILDED_POLISHED_CALCITE)
+        }
+
         // Usual crafting recipes for custom stone types.
         for (F in NguhBlocks.ALL_VARIANT_FAMILIES) {
             F.Fence?.let {
