@@ -22,6 +22,7 @@
         "common.LivingEntityMixin",
         "common.MangroveLeavesBlockMixin",
         "common.PotionContentsComponentMixin",
+        "common.StonecutterBlockMixin",
         "common.TridentEntityMixin",
         "datafixer.ItemStackComponentizationFixMixin",
         "datafixer.LockComponentPredicateFixMixin",

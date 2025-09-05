@@ -138,6 +138,10 @@ class NguhcraftDamageTypeTagProvider(
         builder(DamageTypeTags.BYPASSES_INVULNERABILITY).add(NguhDamageTypes.OBLITERATED)
         builder(DamageTypeTags.NO_KNOCKBACK).add(NguhDamageTypes.OBLITERATED)
 
+        // The 'stonecutter' damage type behaves a bit like 'hot_floor'
+        builder(DamageTypeTags.BYPASSES_SHIELD).add(NguhDamageTypes.STONECUTTER)
+        builder(DamageTypeTags.NO_KNOCKBACK).add(NguhDamageTypes.STONECUTTER)
+
         // The 'arcane' damage type acts like magic damage.
         builder(DamageTypeTags.IS_PLAYER_ATTACK).add(NguhDamageTypes.ARCANE)
         builder(DamageTypeTags.BYPASSES_ARMOR).add(NguhDamageTypes.ARCANE)
