@@ -51,11 +51,22 @@ enum class ChestVariant : StringIdentifiable {
 }
 
 val BlockFamily.Chiseled get() = this.variants[BlockFamily.Variant.CHISELED]
+val BlockFamily.Door get() = this.variants[BlockFamily.Variant.DOOR]
 val BlockFamily.Fence get() = this.variants[BlockFamily.Variant.FENCE]
+val BlockFamily.FenceGate get() = this.variants[BlockFamily.Variant.FENCE_GATE]
 val BlockFamily.Polished get() = this.variants[BlockFamily.Variant.POLISHED]
 val BlockFamily.Slab get() = this.variants[BlockFamily.Variant.SLAB]
 val BlockFamily.Stairs get() = this.variants[BlockFamily.Variant.STAIRS]
+val BlockFamily.Trapdoor get() = this.variants[BlockFamily.Variant.TRAPDOOR]
 val BlockFamily.Wall get() = this.variants[BlockFamily.Variant.WALL]
+
+data class WoodFamily(
+    val PlanksFamily: BlockFamily,
+    val Log: Block,
+    val Wood: Block,
+    val StrippedLog: Block,
+    val StrippedWood: Block,
+)
 
 object NguhBlocks {
     // Components.
@@ -637,6 +648,105 @@ object NguhBlocks {
     }.toTypedArray()
 
     val ALL_VARIANT_FAMILY_BLOCKS = STONE_VARIANT_FAMILY_BLOCKS + WOOD_VARIANT_FAMILY_BLOCKS
+
+    // Information about a wood family and the logs and wood blocks that belong to it.
+    val VANILLA_AND_NGUHCRAFT_EXTENDED_WOOD_FAMILIES = arrayOf(
+        WoodFamily(
+            BlockFamilies.ACACIA,
+            Log = Blocks.ACACIA_LOG,
+            Wood = Blocks.ACACIA_WOOD,
+            StrippedLog = Blocks.STRIPPED_ACACIA_LOG,
+            StrippedWood = Blocks.STRIPPED_ACACIA_WOOD,
+        ),
+
+        WoodFamily(
+            BlockFamilies.BIRCH,
+            Log = Blocks.BIRCH_LOG,
+            Wood = Blocks.BIRCH_WOOD,
+            StrippedLog = Blocks.STRIPPED_BIRCH_LOG,
+            StrippedWood = Blocks.STRIPPED_BIRCH_WOOD,
+        ),
+
+        WoodFamily(
+            BlockFamilies.CHERRY,
+            Log = Blocks.CHERRY_LOG,
+            Wood = Blocks.CHERRY_WOOD,
+            StrippedLog = Blocks.STRIPPED_CHERRY_LOG,
+            StrippedWood = Blocks.STRIPPED_CHERRY_WOOD,
+        ),
+
+        WoodFamily(
+            BlockFamilies.CRIMSON,
+            Log = Blocks.CRIMSON_STEM,
+            Wood = Blocks.CRIMSON_HYPHAE,
+            StrippedLog = Blocks.STRIPPED_CRIMSON_STEM,
+            StrippedWood = Blocks.STRIPPED_CRIMSON_HYPHAE,
+        ),
+
+        WoodFamily(
+            BlockFamilies.DARK_OAK,
+            Log = Blocks.DARK_OAK_LOG,
+            Wood = Blocks.DARK_OAK_WOOD,
+            StrippedLog = Blocks.STRIPPED_DARK_OAK_LOG,
+            StrippedWood = Blocks.STRIPPED_DARK_OAK_WOOD,
+        ),
+
+        WoodFamily(
+            BlockFamilies.JUNGLE,
+            Log = Blocks.JUNGLE_LOG,
+            Wood = Blocks.JUNGLE_WOOD,
+            StrippedLog = Blocks.STRIPPED_JUNGLE_LOG,
+            StrippedWood = Blocks.STRIPPED_JUNGLE_WOOD,
+        ),
+
+        WoodFamily(
+            BlockFamilies.MANGROVE,
+            Log = Blocks.MANGROVE_LOG,
+            Wood = Blocks.MANGROVE_WOOD,
+            StrippedLog = Blocks.STRIPPED_MANGROVE_LOG,
+            StrippedWood = Blocks.STRIPPED_MANGROVE_WOOD,
+        ),
+
+        WoodFamily(
+            BlockFamilies.OAK,
+            Log = Blocks.OAK_LOG,
+            Wood = Blocks.OAK_WOOD,
+            StrippedLog = Blocks.STRIPPED_OAK_LOG,
+            StrippedWood = Blocks.STRIPPED_OAK_WOOD,
+        ),
+
+        WoodFamily(
+            BlockFamilies.PALE_OAK,
+            Log = Blocks.PALE_OAK_LOG,
+            Wood = Blocks.PALE_OAK_WOOD,
+            StrippedLog = Blocks.STRIPPED_PALE_OAK_LOG,
+            StrippedWood = Blocks.STRIPPED_PALE_OAK_WOOD,
+        ),
+
+        WoodFamily(
+            BlockFamilies.SPRUCE,
+            Log = Blocks.SPRUCE_LOG,
+            Wood = Blocks.SPRUCE_WOOD,
+            StrippedLog = Blocks.STRIPPED_SPRUCE_LOG,
+            StrippedWood = Blocks.STRIPPED_SPRUCE_WOOD,
+        ),
+
+        WoodFamily(
+            BlockFamilies.WARPED,
+            Log = Blocks.WARPED_STEM,
+            Wood = Blocks.WARPED_HYPHAE,
+            StrippedLog = Blocks.STRIPPED_WARPED_STEM,
+            StrippedWood = Blocks.STRIPPED_WARPED_HYPHAE,
+        ),
+
+        WoodFamily(
+            TINTED_OAK_FAMILY,
+            Log = TINTED_OAK_LOG,
+            Wood = TINTED_OAK_WOOD,
+            StrippedLog = STRIPPED_TINTED_OAK_LOG,
+            StrippedWood = STRIPPED_TINTED_OAK_WOOD,
+        ),
+    )
 
     // =========================================================================
     //  Vertical Slabs for Vanilla Blocks

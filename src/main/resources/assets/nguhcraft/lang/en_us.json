@@ -172,6 +172,9 @@
     "death.attack.obliterated": "%1$s was obliterated",
     "death.attack.obliterated.item": "%1$s was obliterated while trying to escape %2$s",
     "death.attack.obliterated.player": "%1$s was obliterated while trying to escape %2$s",
+    "death.attack.stonecutter": "%1$s was sawed in half",
+    "death.attack.stonecutter.item": "%1$s was sawed in half while trying to escape %2$s",
+    "death.attack.stonecutter.player": "%1$s was sawed in half while trying to escape %2$s",
     "death.fell.accident.water": "%1$s succumbed to their own antics",
 
     "enchantment.nguhcraft.arcane": "Arcane",
