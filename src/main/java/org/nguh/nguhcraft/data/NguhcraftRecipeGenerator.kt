@@ -81,7 +81,12 @@ class NguhcraftRecipeGenerator(
             cinput('r', Items.REDSTONE)
         }
 
+        // =========================================================================
+        // Vanilla Block Decompositions
+        // =========================================================================
         offerShapelessRecipe(Items.STRING, 4, ItemTags.WOOL to 1)
+        offerShapelessRecipe(Items.AMETHYST_SHARD, 4, Items.AMETHYST_BLOCK to 1)
+        offerShapelessRecipe(Items.QUARTZ, 4, Items.QUARTZ_BLOCK to 1)
 
         // =========================================================================
         //  Miscellaneous Blocks
