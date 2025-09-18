@@ -55,6 +55,11 @@ class NguhcraftRecipeGenerator(
             offerShapelessRecipe(Greater, 1, Lesser to 2)
         }
 
+        offerShapelessRecipe(NguhItems.SLAB_SHAVINGS_1, 8, NguhItems.SLAB_SHAVINGS_8 to 1)
+        offerShapelessRecipe(NguhItems.SLAB_SHAVINGS_8, 1, NguhItems.SLAB_SHAVINGS_1 to 8)
+        offerShapelessRecipe(NguhItems.SLABLET_1, 1, NguhItems.SLAB_SHAVINGS_8 to 8)
+        offerShapelessRecipe(NguhItems.SLAB_SHAVINGS_8, 8, NguhItems.SLABLET_1 to 1)
+
         // =========================================================================
         //  Items
         // =========================================================================
