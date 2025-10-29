@@ -563,7 +563,7 @@ object NguhBlocks {
      val MAGMA_BRICKS = Register(
         "magma_bricks",
         ::Block,
-        AbstractBlock.Settings.copy(Blocks.MAGMA)
+        AbstractBlock.Settings.copy(Blocks.MAGMA_BLOCK)
     )
     
     val MAGMA_BRICK_SLAB = RegisterVariant(MAGMA_BRICKS, "slab", ::SlabBlock)
